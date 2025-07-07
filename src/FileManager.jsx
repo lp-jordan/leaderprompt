@@ -4,6 +4,8 @@ function FileManager({ onScriptSelect }) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
+  const [renaming, setRenaming] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
   useEffect(() => {
     loadProjects();
@@ -35,6 +37,24 @@ function FileManager({ onScriptSelect }) {
     await loadProjects();
   };
 
+  const startRename = (name) => {
+    setRenaming(name);
+    setRenameValue(name);
+  };
+
+  const cancelRename = () => {
+    setRenaming(null);
+    setRenameValue('');
+  };
+
+  const confirmRename = async (oldName) => {
+    if (!renameValue.trim()) return;
+    const success = await window.electronAPI.renameProject(oldName, renameValue.trim());
+    if (!success) alert('Failed to rename project');
+    cancelRename();
+    await loadProjects();
+  };
+
   return (
     <div className="file-manager">
       <div className="file-manager-header">
@@ -58,8 +78,23 @@ function FileManager({ onScriptSelect }) {
         {projects.map((project) => (
           <div className="project-group" key={project.name}>
             <div className="project-header">
-              <h4>{project.name}</h4>
-              <button onClick={() => handleImportClick(project.name)}>+</button>
+              {renaming === project.name ? (
+                <>
+                  <input
+                    type="text"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue(e.target.value)}
+                  />
+                  <button onClick={() => confirmRename(project.name)}>Save</button>
+                  <button onClick={cancelRename}>Cancel</button>
+                </>
+              ) : (
+                <>
+                  <h4>{project.name}</h4>
+                  <button onClick={() => handleImportClick(project.name)}>+</button>
+                  <button onClick={() => startRename(project.name)}>Rename</button>
+                </>
+              )}
             </div>
             <ul>
               {project.scripts.map((script) => (

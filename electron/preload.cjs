@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onScriptLoaded: (callback) => ipcRenderer.on('load-script', (_, data) => callback(data)),
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
   createNewProject: (name) => ipcRenderer.invoke('create-new-project', name),
+  renameProject: (oldName, newName) =>
+    ipcRenderer.invoke('rename-project', oldName, newName),
 
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>
