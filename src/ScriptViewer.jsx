@@ -1,7 +1,14 @@
 import './ScriptViewer.css';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
+import { useEffect } from 'react';
 
 function ScriptViewer({ scriptHtml, showLogo, onSend }) {
+  useEffect(() => {
+    if (scriptHtml) {
+      window.electronAPI.sendUpdatedScript(scriptHtml);
+    }
+  }, [scriptHtml]);
+
   return (
     <div className="script-viewer">
       {showLogo ? (

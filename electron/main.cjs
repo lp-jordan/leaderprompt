@@ -4,6 +4,7 @@ const fs = require('fs');
 const mammoth = require('mammoth');
 
 let mainWindow;
+const prompterWindows = new Set();
 
 const log = (...args) => console.log('[LOG]', ...args);
 const error = (...args) => console.error('[ERROR]', ...args);
@@ -77,6 +78,10 @@ function createPrompterWindow(html) {
   });
 
   win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  prompterWindows.add(win);
+  win.on('closed', () => {
+    prompterWindows.delete(win);
+  });
   log('Prompter window opened');
 }
 
@@ -96,6 +101,14 @@ app.whenReady().then(() => {
   ipcMain.on('open-prompter', (_, html) => {
     log('Received request to open prompter');
     createPrompterWindow(html);
+  });
+
+  ipcMain.on('update-script', (_, html) => {
+    prompterWindows.forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('load-script', html);
+      }
+    });
   });
 
   ipcMain.handle('get-all-projects-with-scripts', async () => {
