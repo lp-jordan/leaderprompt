@@ -17,4 +17,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAllProjectsWithScripts: () =>
     ipcRenderer.invoke('get-all-projects-with-scripts'),
   selectFiles: () => ipcRenderer.invoke('select-files'),
+  loadScript: (projectName, scriptName) =>
+    ipcRenderer.invoke('load-script', projectName, scriptName),
 });

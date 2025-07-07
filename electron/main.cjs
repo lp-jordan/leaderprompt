@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const mammoth = require('mammoth');
 
 let mainWindow;
 
@@ -221,6 +222,18 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     log(`Fetching scripts for project: ${projectName}`);
     const folderPath = path.join(getProjectsPath(), projectName);
     return fs.readdirSync(folderPath).filter((f) => f.endsWith('.docx'));
+  });
+
+  ipcMain.handle('load-script', async (_, projectName, scriptName) => {
+    const scriptPath = path.join(getProjectsPath(), projectName, scriptName);
+    log(`Loading script: ${scriptPath}`);
+    try {
+      const result = await mammoth.convertToHtml({ path: scriptPath });
+      return result.value;
+    } catch (err) {
+      error('Failed to load script:', err);
+      return null;
+    }
   });
 });
 

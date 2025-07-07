@@ -1,9 +1,7 @@
 import './App.css';
-import _leaderLogo from './assets/LeaderPass-Logo-white.png';
 import { useState } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
-import mammoth from 'mammoth';
 
 function App() {
   const [_selectedScript, setSelectedScript] = useState(null);
@@ -14,11 +12,8 @@ function App() {
     setSelectedProject(projectName);
     setSelectedScript(scriptName);
     try {
-      const scriptPath = `C:/Users/LeaderPass 1/LeaderPrompt/projects/${projectName}/${scriptName}`;
-      const response = await fetch(`file://${scriptPath}`);
-      const arrayBuffer = await response.arrayBuffer();
-      const result = await mammoth.convertToHtml({ arrayBuffer });
-      setScriptHtml(result.value);
+      const html = await window.electronAPI.loadScript(projectName, scriptName);
+      setScriptHtml(html);
     } catch (err) {
       console.error('Failed to load script:', err);
     }
