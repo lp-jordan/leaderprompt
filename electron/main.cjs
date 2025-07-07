@@ -4,7 +4,7 @@ const fs = require('fs');
 const mammoth = require('mammoth');
 
 let mainWindow;
-let prompterWindow;
+const prompterWindows = new Set();
 
 const log = (...args) => console.log('[LOG]', ...args);
 const error = (...args) => console.error('[ERROR]', ...args);
@@ -78,11 +78,10 @@ function createPrompterWindow(initialHtml) {
     backgroundColor: '#000000',
   });
 
-  prompterWindow.loadURL('http://localhost:5173/#/prompter');
-  prompterWindow.webContents.on('did-finish-load', () => {
-    if (initialHtml) {
-      prompterWindow.webContents.send('load-script', initialHtml);
-    }
+  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  prompterWindows.add(win);
+  win.on('closed', () => {
+    prompterWindows.delete(win);
   });
   log('Prompter window opened');
 }
@@ -114,6 +113,14 @@ app.whenReady().then(() => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.webContents.send('update-script', html);
     }
+  });
+
+  ipcMain.on('update-script', (_, html) => {
+    prompterWindows.forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('load-script', html);
+      }
+    });
   });
 
   ipcMain.handle('get-all-projects-with-scripts', async () => {

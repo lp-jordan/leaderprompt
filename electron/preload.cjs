@@ -6,7 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Prompter & project controls
   openPrompter: (html) => ipcRenderer.send('open-prompter', html),
   onScriptLoaded: (callback) => ipcRenderer.on('load-script', (_, data) => callback(data)),
-  onScriptUpdated: (callback) => ipcRenderer.on('update-script', (_, data) => callback(data)),
+  sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
+=======
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
   createNewProject: (name) => ipcRenderer.invoke('create-new-project', name),
 
