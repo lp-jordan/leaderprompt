@@ -1,0 +1,21 @@
+.prompter-container {
+  height: 100vh;
+  overflow-y: scroll;
+  background: black;
+  color: white;
+  font-size: 2rem;
+  line-height: 1.6;
+  font-family: 'Georgia', serif;
+}
+
+.prompter-controls {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 999;
+  background: rgba(0,0,0,0.6);
+  padding: 1rem;
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+}

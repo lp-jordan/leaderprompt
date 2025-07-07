@@ -1,0 +1,162 @@
+/* App.css */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background-color: #000;
+  color: #fff;
+}
+
+.main-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.left-panel {
+  width: 300px;
+  background-color: #111;
+  border-right: 1px solid #333;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.right-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.import-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  background-color: #1f80e0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.import-button:hover {
+  background-color: #1466b8;
+}
+
+/* FileManager styles */
+.file-manager {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.file-manager-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.file-manager-header button {
+  padding: 6px 12px;
+  background-color: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.file-manager-header button:hover {
+  background-color: #555;
+}
+
+.new-project-input {
+  margin: 0.5rem 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.new-project-input input {
+  flex: 1;
+  padding: 0.25rem;
+  background-color: #222;
+  border: 1px solid #444;
+  color: white;
+  border-radius: 4px;
+}
+
+.new-project-input button {
+  padding: 0.25rem 0.5rem;
+  background-color: #444;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.new-project-input button:hover {
+  background-color: #666;
+}
+
+/* Project and script list */
+.project-group {
+  margin-bottom: 20px;
+}
+
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.project-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #ccc;
+}
+
+.project-header button {
+  background: #333;
+  border: none;
+  color: white;
+  padding: 2px 6px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.project-header button:hover {
+  background: #555;
+}
+
+.project-group ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.project-group li {
+  margin-bottom: 4px;
+}
+
+.project-group li button {
+  background: none;
+  border: none;
+  color: #1f80e0;
+  text-align: left;
+  padding: 4px 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.project-group li button:hover {
+  text-decoration: underline;
+}
