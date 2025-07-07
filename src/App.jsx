@@ -25,6 +25,11 @@ function App() {
     }
   };
 
+  const handleScriptEdit = (html) => {
+    setScriptHtml(html);
+    window.electronAPI.sendUpdatedScript(html);
+  };
+
   return (
     <div className="main-layout">
       <div className="left-panel">
@@ -35,6 +40,7 @@ function App() {
           scriptHtml={scriptHtml}
           showLogo={!scriptHtml}
           onSend={handleSendToPrompter}
+          onEdit={handleScriptEdit}
         />
       </div>
     </div>
