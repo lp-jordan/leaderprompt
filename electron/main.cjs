@@ -3,6 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const mammoth = require('mammoth');
 
+const pathToFile = (file, hash = '') =>
+  `file://${path.resolve(__dirname, '..', file).replace(/\\/g, '/')}${hash}`;
+
 let mainWindow;
 const prompterWindows = new Set();
 
@@ -78,10 +81,14 @@ function createPrompterWindow(initialHtml) {
     backgroundColor: '#000000',
   });
 
-  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-  prompterWindows.add(win);
-  win.on('closed', () => {
-    prompterWindows.delete(win);
+  const url = app.isPackaged
+    ? pathToFile('index.html', '#/prompter')
+    : 'http://localhost:5173/#/prompter';
+
+  win.loadURL(url);
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.send('load-script', html);
+
   });
   log('Prompter window opened');
 }
