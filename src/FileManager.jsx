@@ -1,11 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 
 function FileManager({ onScriptSelect }) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
-  const fileInputRef = useRef(null);
-  const [importTarget, setImportTarget] = useState(null);
 
   useEffect(() => {
     loadProjects();
@@ -29,21 +27,12 @@ function FileManager({ onScriptSelect }) {
     }
   };
 
-  const handleImportClick = (projectName) => {
-    setImportTarget(projectName);
-    fileInputRef.current.click();
-  };
+  const handleImportClick = async (projectName) => {
+    const filePaths = await window.electronAPI.selectFiles();
+    if (!filePaths) return;
 
-  const handleFileChange = async (event) => {
-    const files = Array.from(event.target.files);
-    if (!files.length || !importTarget) return;
-
-    const filePaths = files.map((file) => file.path);
-    await window.electronAPI.importScriptsToProject(filePaths, importTarget);
+    await window.electronAPI.importScriptsToProject(filePaths, projectName);
     await loadProjects();
-
-    setImportTarget(null);
-    event.target.value = null; // reset input
   };
 
   return (
@@ -64,15 +53,6 @@ function FileManager({ onScriptSelect }) {
           <button onClick={handleNewProject}>Create</button>
         </div>
       )}
-
-      <input
-        type="file"
-        accept=".docx"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        multiple
-        onChange={handleFileChange}
-      />
 
       <div className="file-manager-list">
         {projects.map((project) => (
