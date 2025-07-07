@@ -1,13 +1,13 @@
 import './App.css';
-import leaderLogo from './assets/LeaderPass-Logo-white.png';
+import _leaderLogo from './assets/LeaderPass-Logo-white.png';
 import { useState } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 import mammoth from 'mammoth';
 
 function App() {
-  const [selectedScript, setSelectedScript] = useState(null);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [_selectedScript, setSelectedScript] = useState(null);
+  const [_selectedProject, setSelectedProject] = useState(null);
   const [scriptHtml, setScriptHtml] = useState(null);
 
   const handleScriptSelect = async (projectName, scriptName) => {
