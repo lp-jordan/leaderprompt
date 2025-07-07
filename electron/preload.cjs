@@ -19,4 +19,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectFiles: () => ipcRenderer.invoke('select-files'),
   loadScript: (projectName, scriptName) =>
     ipcRenderer.invoke('load-script', projectName, scriptName),
+  deleteScript: (projectName, scriptName) =>
+    ipcRenderer.invoke('delete-script', projectName, scriptName),
 });
