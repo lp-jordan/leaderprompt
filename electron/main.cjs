@@ -3,6 +3,9 @@ const path = require('path');
 const fs = require('fs');
 const mammoth = require('mammoth');
 
+const pathToFile = (file, hash = '') =>
+  `file://${path.resolve(__dirname, '..', file).replace(/\\/g, '/')}${hash}`;
+
 let mainWindow;
 
 const log = (...args) => console.log('[LOG]', ...args);
@@ -70,13 +73,21 @@ function createPrompterWindow(html) {
     width: 1200,
     height: 800,
     webPreferences: {
+      preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
       sandbox: true,
     },
     backgroundColor: '#000000',
   });
 
-  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  const url = app.isPackaged
+    ? pathToFile('index.html', '#/prompter')
+    : 'http://localhost:5173/#/prompter';
+
+  win.loadURL(url);
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.send('load-script', html);
+  });
   log('Prompter window opened');
 }
 
