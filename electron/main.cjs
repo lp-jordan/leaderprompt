@@ -4,6 +4,7 @@ const fs = require('fs');
 const mammoth = require('mammoth');
 
 let mainWindow;
+let prompterWindow;
 
 const log = (...args) => console.log('[LOG]', ...args);
 const error = (...args) => console.error('[ERROR]', ...args);
@@ -65,18 +66,24 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
-function createPrompterWindow(html) {
-  const win = new BrowserWindow({
+function createPrompterWindow(initialHtml) {
+  prompterWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
+      preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
       sandbox: true,
     },
     backgroundColor: '#000000',
   });
 
-  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  prompterWindow.loadURL('http://localhost:5173/#/prompter');
+  prompterWindow.webContents.on('did-finish-load', () => {
+    if (initialHtml) {
+      prompterWindow.webContents.send('load-script', initialHtml);
+    }
+  });
   log('Prompter window opened');
 }
 
@@ -95,7 +102,18 @@ app.whenReady().then(() => {
   // --- IPC Handlers ---
   ipcMain.on('open-prompter', (_, html) => {
     log('Received request to open prompter');
-    createPrompterWindow(html);
+    if (!prompterWindow || prompterWindow.isDestroyed()) {
+      createPrompterWindow(html);
+    } else {
+      prompterWindow.focus();
+      prompterWindow.webContents.send('load-script', html);
+    }
+  });
+
+  ipcMain.on('update-script', (_, html) => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.webContents.send('update-script', html);
+    }
   });
 
   ipcMain.handle('get-all-projects-with-scripts', async () => {
