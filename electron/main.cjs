@@ -235,6 +235,21 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
       return null;
     }
   });
+
+  ipcMain.handle('delete-script', async (_, projectName, scriptName) => {
+    const scriptPath = path.join(getProjectsPath(), projectName, scriptName);
+    log(`Deleting script: ${scriptPath}`);
+    try {
+      if (fs.existsSync(scriptPath) && scriptPath.endsWith('.docx')) {
+        fs.unlinkSync(scriptPath);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      error('Failed to delete script:', err);
+      return false;
+    }
+  });
 });
 
 // --- App Exit Handler ---
