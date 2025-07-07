@@ -154,7 +154,7 @@ app.whenReady().then(() => {
   ipcMain.handle('create-new-project', async (_, projectName) => {
   log(`Creating new project: ${projectName}`);
   try {
-    const projectPath = path.join(getProjectsPath(), projectName); // <-- FIXED
+    const projectPath = path.join(getProjectsPath(), projectName);
     if (!fs.existsSync(projectPath)) {
       fs.mkdirSync(projectPath, { recursive: true });
       updateProjectMetadata(projectName);
