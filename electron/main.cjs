@@ -170,6 +170,15 @@ app.whenReady().then(() => {
   }
 });
 
+  ipcMain.handle('select-files', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'Word Docs', extensions: ['docx'] }],
+    });
+
+    return canceled ? null : filePaths;
+  });
+
 ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) => {
   log(`Importing scripts to project: ${projectName}`);
   if (!Array.isArray(filePaths) || !filePaths.length || !projectName) {
@@ -199,17 +208,8 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     }
   }
 
-  ipcMain.handle('select-files', async () => {
-  const { canceled, filePaths } = await dialog.showOpenDialog({
-    properties: ['openFile', 'multiSelections'],
-    filters: [{ name: 'Word Docs', extensions: ['docx'] }],
-  });
-
-  return canceled ? null : filePaths;
-});
-
   updateProjectMetadata(projectName);
-})
+});
 
   ipcMain.handle('get-projects', () => {
     log('Fetching list of projects');
