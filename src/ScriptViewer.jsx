@@ -1,7 +1,14 @@
 import './ScriptViewer.css';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
+import { useEffect } from 'react';
 
 function ScriptViewer({ scriptHtml, showLogo, onSend }) {
+  useEffect(() => {
+    if (scriptHtml) {
+      window.electronAPI.sendUpdatedScript(scriptHtml);
+    }
+  }, [scriptHtml]);
+  
   return (
     <div className="script-viewer">
       {showLogo ? (
@@ -12,6 +19,8 @@ function ScriptViewer({ scriptHtml, showLogo, onSend }) {
         <>
           <div
             className="script-content"
+            contentEditable
+            onInput={(e) => onEdit(e.currentTarget.innerHTML)}
             dangerouslySetInnerHTML={{ __html: scriptHtml }}
           />
           <div className="send-button-wrapper">

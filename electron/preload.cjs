@@ -6,8 +6,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Prompter & project controls
   openPrompter: (html) => ipcRenderer.send('open-prompter', html),
   onScriptLoaded: (callback) => ipcRenderer.on('load-script', (_, data) => callback(data)),
+  sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
+=======
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
   createNewProject: (name) => ipcRenderer.invoke('create-new-project', name),
+
+  // Live update support
+  sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
 
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>
@@ -19,4 +24,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectFiles: () => ipcRenderer.invoke('select-files'),
   loadScript: (projectName, scriptName) =>
     ipcRenderer.invoke('load-script', projectName, scriptName),
+  deleteScript: (projectName, scriptName) =>
+    ipcRenderer.invoke('delete-script', projectName, scriptName),
 });
