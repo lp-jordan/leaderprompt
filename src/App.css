@@ -145,18 +145,32 @@ body {
 
 .project-group li {
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
 }
 
-.project-group li button {
+.script-button {
+  flex-grow: 1;
   background: none;
   border: none;
   color: #1f80e0;
   text-align: left;
   padding: 4px 0;
   cursor: pointer;
-  width: 100%;
 }
 
-.project-group li button:hover {
+.script-button:hover {
+  text-decoration: underline;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: #e04040;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.delete-button:hover {
   text-decoration: underline;
 }

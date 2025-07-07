@@ -12,6 +12,9 @@ function Prompter() {
     window.electronAPI.onScriptLoaded((html) => {
       setContent(html)
     })
+    window.electronAPI.onScriptUpdated((html) => {
+      setContent(html)
+    })
   }, [])
 
   useEffect(() => {

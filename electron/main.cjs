@@ -66,11 +66,12 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
-function createPrompterWindow(html) {
-  const win = new BrowserWindow({
+function createPrompterWindow(initialHtml) {
+  prompterWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
+      preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
       sandbox: true,
     },
@@ -100,7 +101,18 @@ app.whenReady().then(() => {
   // --- IPC Handlers ---
   ipcMain.on('open-prompter', (_, html) => {
     log('Received request to open prompter');
-    createPrompterWindow(html);
+    if (!prompterWindow || prompterWindow.isDestroyed()) {
+      createPrompterWindow(html);
+    } else {
+      prompterWindow.focus();
+      prompterWindow.webContents.send('load-script', html);
+    }
+  });
+
+  ipcMain.on('update-script', (_, html) => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.webContents.send('update-script', html);
+    }
   });
 
   ipcMain.on('update-script', (_, html) => {
@@ -246,6 +258,21 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     } catch (err) {
       error('Failed to load script:', err);
       return null;
+    }
+  });
+
+  ipcMain.handle('delete-script', async (_, projectName, scriptName) => {
+    const scriptPath = path.join(getProjectsPath(), projectName, scriptName);
+    log(`Deleting script: ${scriptPath}`);
+    try {
+      if (fs.existsSync(scriptPath) && scriptPath.endsWith('.docx')) {
+        fs.unlinkSync(scriptPath);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      error('Failed to delete script:', err);
+      return false;
     }
   });
 });
