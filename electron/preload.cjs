@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onScriptUpdated: (callback) => ipcRenderer.on('update-script', (_, data) => callback(data)),
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
   createNewProject: (name) => ipcRenderer.invoke('create-new-project', name),
+  renameProject: (oldName, newName) =>
+    ipcRenderer.invoke('rename-project', oldName, newName),
 
   // Live update support
   sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),

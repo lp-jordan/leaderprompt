@@ -214,6 +214,29 @@ app.whenReady().then(() => {
     return canceled ? null : filePaths;
   });
 
+  ipcMain.handle('rename-project', async (_, oldName, newName) => {
+    log(`Renaming project: ${oldName} -> ${newName}`);
+    if (!oldName || !newName || oldName === newName) return false;
+    try {
+      const oldPath = path.join(getProjectsPath(), oldName);
+      const newPath = path.join(getProjectsPath(), newName);
+      if (!fs.existsSync(oldPath) || fs.existsSync(newPath)) {
+        error('Rename failed: source missing or destination exists');
+        return false;
+      }
+      fs.renameSync(oldPath, newPath);
+      const metadata = getProjectMetadata();
+      const project = metadata.projects.find((p) => p.name === oldName);
+      if (project) project.name = newName;
+      fs.writeFileSync(getProjectMetadataPath(), JSON.stringify(metadata, null, 2));
+      log('Project rename complete');
+      return true;
+    } catch (err) {
+      error('Error renaming project:', err);
+      return false;
+    }
+  });
+
 ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) => {
   log(`Importing scripts to project: ${projectName}`);
   if (!Array.isArray(filePaths) || !filePaths.length || !projectName) {
