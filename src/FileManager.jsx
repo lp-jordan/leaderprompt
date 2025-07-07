@@ -35,6 +35,15 @@ function FileManager({ onScriptSelect }) {
     await loadProjects();
   };
 
+  const handleDeleteScript = async (projectName, scriptName) => {
+    const success = await window.electronAPI.deleteScript(projectName, scriptName);
+    if (success) {
+      loadProjects();
+    } else {
+      alert('Failed to delete script');
+    }
+  };
+
   return (
     <div className="file-manager">
       <div className="file-manager-header">
@@ -63,9 +72,18 @@ function FileManager({ onScriptSelect }) {
             </div>
             <ul>
               {project.scripts.map((script) => (
-                <li key={script}>
-                  <button onClick={() => onScriptSelect(project.name, script)}>
+                <li key={script} className="script-item">
+                  <button
+                    className="script-button"
+                    onClick={() => onScriptSelect(project.name, script)}
+                  >
                     {script.replace(/\.[^/.]+$/, '')}
+                  </button>
+                  <button
+                    className="delete-button"
+                    onClick={() => handleDeleteScript(project.name, script)}
+                  >
+                    ✖
                   </button>
                 </li>
               ))}
@@ -78,3 +96,4 @@ function FileManager({ onScriptSelect }) {
 }
 
 export default FileManager;
+
