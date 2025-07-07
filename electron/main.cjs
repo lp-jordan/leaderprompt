@@ -78,7 +78,7 @@ function createPrompterWindow(initialHtml) {
     backgroundColor: '#000000',
   });
 
- win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
   prompterWindows.add(win);
   win.on('closed', () => {
     prompterWindows.delete(win);
@@ -107,6 +107,14 @@ app.whenReady().then(() => {
       prompterWindow.focus();
       prompterWindow.webContents.send('load-script', html);
     }
+  });
+
+  ipcMain.on('update-script', (_, html) => {
+    prompterWindows.forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('load-script', html);
+      }
+    });
   });
 
   ipcMain.on('update-script', (_, html) => {
