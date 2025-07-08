@@ -18,27 +18,29 @@ function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit }) {
   };
   
   return (
-    <div className="script-viewer">
-      {showLogo ? (
-        <div className="logo-wrapper">
-          <img src={leaderLogo} alt="LeaderPrompt Logo" className="viewer-logo" />
+      <div className="script-viewer">
+        <div className="viewer-header">
+          {!showLogo && <h2 className="header-title">Script Editor</h2>}
+          <img src={leaderLogo} alt="LeaderPrompt Logo" className="header-logo" />
         </div>
-      ) : (
-        <>
-          <div
-            ref={contentRef}
-            className="script-content"
-            contentEditable
-            onBlur={handleBlur}
-          />
-          <div className="send-button-wrapper">
-            <button className="send-button" onClick={onSend}>
-              Let&apos;s Go!
-            </button>
-          </div>
-        </>
-      )}
-    </div>
+        {showLogo ? (
+          <div className="load-placeholder">Please load a script</div>
+        ) : (
+          <>
+            <div
+              ref={contentRef}
+              className="script-content"
+              contentEditable
+              onBlur={handleBlur}
+            />
+            <div className="send-button-wrapper">
+              <button className="send-button" onClick={onSend}>
+                Let&apos;s Go!
+              </button>
+            </div>
+          </>
+        )}
+      </div>
   );
 }
 
