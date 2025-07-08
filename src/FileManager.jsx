@@ -1,6 +1,44 @@
 import { useEffect, useState } from 'react';
 import ActionMenu from './ActionMenu';
 
+function PencilIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-.8 2.685 2.685-.8a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
+      />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+      />
+    </svg>
+  );
+}
+
 function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
@@ -97,6 +135,13 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     await loadProjects();
   };
 
+  const toggleCollapse = (projectName) => {
+    setCollapsed((prev) => ({
+      ...prev,
+      [projectName]: !prev[projectName],
+    }));
+  };
+
   return (
     <div className="file-manager">
       <div className="file-manager-header">
@@ -135,7 +180,15 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
                 </>
               ) : (
                 <>
-                  <h4>{project.name}</h4>
+                  <div className="project-title">
+                    <button
+                      className="toggle-button"
+                      onClick={() => toggleCollapse(project.name)}
+                    >
+                      {collapsed[project.name] ? '▶' : '▼'}
+                    </button>
+                    <h4>{project.name}</h4>
+                  </div>
                   <ActionMenu
                     actions={[
                       { label: 'Add File', onClick: () => handleImportClick(project.name) },
@@ -180,20 +233,22 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
                         {isLoaded && (
                           <span className="loaded-indicator">(loaded)</span>
                         )}
-                        <ActionMenu
-                          actions={[
-                            {
-                              label: 'Rename',
-                              onClick: () =>
-                                startRenameScript(project.name, script),
-                            },
-                            {
-                              label: 'Delete',
-                              onClick: () =>
-                                handleDeleteScript(project.name, script),
-                            },
-                          ]}
-                        />
+                        <div className="script-actions">
+                          <button
+                            className="icon-button"
+                            onClick={() => startRenameScript(project.name, script)}
+                            aria-label="Rename"
+                          >
+                            <PencilIcon />
+                          </button>
+                          <button
+                            className="icon-button"
+                            onClick={() => handleDeleteScript(project.name, script)}
+                            aria-label="Delete"
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
                       </>
                     )}
                   </li>
