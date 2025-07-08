@@ -27,7 +27,6 @@ function Prompter() {
     return () => clearInterval(interval)
   }, [autoscroll, speed])
 
-  // ✅ YOUR return MUST be inside the function
   return (
     <div className="prompter-controls">
       <label>
