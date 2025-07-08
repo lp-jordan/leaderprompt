@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const mammoth = require('mammoth');
+const { spawn } = require('child_process');
 
 const pathToFile = (file, hash = '') =>
   `file://${path.resolve(__dirname, '..', file).replace(/\\/g, '/')}${hash}`;
@@ -9,9 +10,26 @@ const pathToFile = (file, hash = '') =>
 let mainWindow;
 let prompterWindow;
 const prompterWindows = new Set();
+let viteProcess;
 
 const log = (...args) => console.log('[LOG]', ...args);
 const error = (...args) => console.error('[ERROR]', ...args);
+
+function startViteServer() {
+  if (viteProcess || app.isPackaged) return;
+  viteProcess = spawn('npm', ['run', 'dev'], {
+    cwd: path.resolve(__dirname, '..'),
+    stdio: 'inherit',
+    shell: true,
+  });
+}
+
+function stopViteServer() {
+  if (viteProcess) {
+    viteProcess.kill('SIGTERM');
+    viteProcess = null;
+  }
+}
 
 const getUserDataPath = () => path.join(app.getPath('home'), 'LeaderPrompt');
 const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
@@ -99,6 +117,7 @@ function createPrompterWindow(initialHtml) {
 // --- Electron App Lifecycle ---
 app.whenReady().then(() => {
   log('App ready');
+  startViteServer();
   ensureDirectories();
   createMainWindow();
 
@@ -314,4 +333,14 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
 // --- App Exit Handler ---
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('quit', () => {
+  stopViteServer();
+});
+
+process.on('exit', stopViteServer);
+process.on('SIGINT', () => {
+  stopViteServer();
+  process.exit(0);
 });
