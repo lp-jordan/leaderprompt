@@ -3,8 +3,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: #000;
-  color: #fff;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
 }
 
 .viewer-header {
@@ -34,7 +34,7 @@
   flex-grow: 1;
   overflow-y: auto;
   padding: 2rem;
-  background-color: #000;
+  background-color: #1e1e1e;
   line-height: 1.6;
   font-size: 16px;
   max-width: 800px;
@@ -56,7 +56,7 @@
 .close-button {
   background: none;
   border: none;
-  color: #fff;
+  color: #e0e0e0;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   font-size: 0.9rem;
@@ -70,8 +70,8 @@
   margin: 1rem auto 2rem auto;
   padding: 12px 24px;
   font-size: 16px;
-  background-color: #1f80e0;
-  color: white;
+  background-color: var(--accent-color);
+  color: #e0e0e0;
   border: none;
   border-radius: 6px;
   cursor: pointer;
