@@ -6,9 +6,7 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
   const [renaming, setRenaming] = useState(null);
   const [renameValue, setRenameValue] = useState('');
-  const [renamingScript, setRenamingScript] = useState(null);
-  const [renameScriptValue, setRenameScriptValue] = useState('');
-  const [openMenu, setOpenMenu] = useState(null);
+  const [collapsed, setCollapsed] = useState({});
 
   useEffect(() => {
     loadProjects();
@@ -69,37 +67,14 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     await loadProjects();
   };
 
-  const startScriptRename = (projectName, scriptName) => {
-    setRenamingScript({ project: projectName, script: scriptName });
-    setRenameScriptValue(scriptName.replace(/\.[^/.]+$/, ''));
-    setOpenMenu(null);
-  };
-
-  const cancelScriptRename = () => {
-    setRenamingScript(null);
-    setRenameScriptValue('');
-  };
-
-  const confirmScriptRename = async (projectName, oldName) => {
-    if (!renameScriptValue.trim()) return;
-    const success = await window.electronAPI.renameScript(
-      projectName,
-      oldName,
-      renameScriptValue.trim()
-    );
-    if (!success) alert('Failed to rename script');
-    cancelScriptRename();
-    await loadProjects();
-  };
-
-  const toggleMenu = (projectName, scriptName) => {
-    const key = `${projectName}/${scriptName}`;
-    setOpenMenu(openMenu === key ? null : key);
-
+  const toggleCollapse = (name) => {
+    setCollapsed((prev) => ({
+      ...prev,
+      [name]: !prev[name],
+    }));
   };
 
   const handleDeleteScript = async (projectName, scriptName) => {
-    setOpenMenu(null);
     const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
     if (!deleted) alert('Failed to delete script');
     await loadProjects();
@@ -166,56 +141,24 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
               {project.scripts.map((script) => {
                 const isLoaded =
                   loadedProject === project.name && loadedScript === script;
-                const menuKey = `${project.name}/${script}`;
-                const isRenaming =
-                  renamingScript &&
-                  renamingScript.project === project.name &&
-                  renamingScript.script === script;
                 return (
                   <li
                     key={script}
                     className={`script-item${isLoaded ? ' loaded' : ''}`}
-                    style={{ position: 'relative' }}
                   >
-                    {isRenaming ? (
-                      <>
-                        <input
-                          type="text"
-                          value={renameScriptValue}
-                          onChange={(e) => setRenameScriptValue(e.target.value)}
-                        />
-                        <button onClick={() => confirmScriptRename(project.name, script)}>
-                          Save
-                        </button>
-                        <button onClick={cancelScriptRename}>Cancel</button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="script-button"
-                          onClick={() => onScriptSelect(project.name, script)}
-                        >
-                          {script.replace(/\.[^/.]+$/, '')}
-                        </button>
-                        {isLoaded && <span className="loaded-indicator">(loaded)</span>}
-                        <button
-                          className="script-menu-button"
-                          onClick={() => toggleMenu(project.name, script)}
-                        >
-                          ⋮
-                        </button>
-                        {openMenu === menuKey && (
-                          <div className="script-menu">
-                            <button onClick={() => startScriptRename(project.name, script)}>
-                              Rename
-                            </button>
-                            <button onClick={() => handleDeleteScript(project.name, script)}>
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </>
-                    )}
+                    <button
+                      className="script-button"
+                      onClick={() => onScriptSelect(project.name, script)}
+                    >
+                      {script.replace(/\.[^/.]+$/, '')}
+                    </button>
+                    {isLoaded && <span className="loaded-indicator">(loaded)</span>}
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDeleteScript(project.name, script)}
+                    >
+                      ✖
+                    </button>
                   </li>
                 );
               })}
