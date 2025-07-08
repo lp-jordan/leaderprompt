@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import ActionMenu from './ActionMenu';
 
 function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
-  const [renaming, setRenaming] = useState(null);
+  const [renamingProject, setRenamingProject] = useState(null);
+  const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
 
@@ -49,17 +51,25 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     await loadProjects();
   };
 
-  const startRename = (name) => {
-    setRenaming(name);
+  const startRenameProject = (name) => {
+    setRenamingScript(null);
+    setRenamingProject(name);
     setRenameValue(name);
   };
 
+  const startRenameScript = (projectName, scriptName) => {
+    setRenamingProject(null);
+    setRenamingScript({ projectName, scriptName });
+    setRenameValue(scriptName);
+  };
+
   const cancelRename = () => {
-    setRenaming(null);
+    setRenamingProject(null);
+    setRenamingScript(null);
     setRenameValue('');
   };
 
-  const confirmRename = async (oldName) => {
+  const confirmRenameProject = async (oldName) => {
     if (!renameValue.trim()) return;
     const success = await window.electronAPI.renameProject(oldName, renameValue.trim());
     if (!success) alert('Failed to rename project');
@@ -67,11 +77,18 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     await loadProjects();
   };
 
-  const toggleCollapse = (name) => {
-    setCollapsed((prev) => ({
-      ...prev,
-      [name]: !prev[name],
-    }));
+  const confirmRenameScript = async (projectName, oldName) => {
+    if (!renameValue.trim()) return;
+    const success = await window.electronAPI.renameScript(projectName, oldName, renameValue.trim());
+    if (!success) alert('Failed to rename script');
+    cancelRename();
+    await loadProjects();
+  };
+
+  const handleDeleteProject = async (projectName) => {
+    const deleted = await window.electronAPI.deleteProject(projectName);
+    if (!deleted) alert('Failed to delete project');
+    await loadProjects();
   };
 
   const handleDeleteScript = async (projectName, scriptName) => {
@@ -106,59 +123,79 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
             key={project.name}
           >
             <div className="project-header">
-              <div className="project-title">
-                <button
-                  className="toggle-button"
-                  onClick={() => toggleCollapse(project.name)}
-                >
-                  {collapsed[project.name] ? '▶' : '▼'}
-                </button>
-                {renaming === project.name ? (
+              {renamingProject === project.name ? (
+                <>
                   <input
                     type="text"
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
                   />
-                ) : (
+                  <button onClick={() => confirmRenameProject(project.name)}>Save</button>
+                  <button onClick={cancelRename}>Cancel</button>
+                </>
+              ) : (
+                <>
                   <h4>{project.name}</h4>
-                )}
-              </div>
-              <div className="project-controls">
-                {renaming === project.name ? (
-                  <>
-                    <button onClick={() => confirmRename(project.name)}>Save</button>
-                    <button onClick={cancelRename}>Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => handleImportClick(project.name)}>+</button>
-                    <button onClick={() => startRename(project.name)}>Rename</button>
-                  </>
-                )}
-              </div>
+                  <ActionMenu
+                    actions={[
+                      { label: 'Add File', onClick: () => handleImportClick(project.name) },
+                      { label: 'Rename', onClick: () => startRenameProject(project.name) },
+                      { label: 'Delete', onClick: () => handleDeleteProject(project.name) },
+                    ]}
+                  />
+                </>
+              )}
             </div>
             <ul>
               {project.scripts.map((script) => {
                 const isLoaded =
                   loadedProject === project.name && loadedScript === script;
+                const isRenaming =
+                  renamingScript &&
+                  renamingScript.projectName === project.name &&
+                  renamingScript.scriptName === script;
                 return (
                   <li
                     key={script}
                     className={`script-item${isLoaded ? ' loaded' : ''}`}
                   >
-                    <button
-                      className="script-button"
-                      onClick={() => onScriptSelect(project.name, script)}
-                    >
-                      {script.replace(/\.[^/.]+$/, '')}
-                    </button>
-                    {isLoaded && <span className="loaded-indicator">(loaded)</span>}
-                    <button
-                      className="delete-button"
-                      onClick={() => handleDeleteScript(project.name, script)}
-                    >
-                      ✖
-                    </button>
+                    {isRenaming ? (
+                      <>
+                        <input
+                          type="text"
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                        />
+                        <button onClick={() => confirmRenameScript(project.name, script)}>Save</button>
+                        <button onClick={cancelRename}>Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="script-button"
+                          onClick={() => onScriptSelect(project.name, script)}
+                        >
+                          {script.replace(/\.[^/.]+$/, '')}
+                        </button>
+                        {isLoaded && (
+                          <span className="loaded-indicator">(loaded)</span>
+                        )}
+                        <ActionMenu
+                          actions={[
+                            {
+                              label: 'Rename',
+                              onClick: () =>
+                                startRenameScript(project.name, script),
+                            },
+                            {
+                              label: 'Delete',
+                              onClick: () =>
+                                handleDeleteScript(project.name, script),
+                            },
+                          ]}
+                        />
+                      </>
+                    )}
                   </li>
                 );
               })}
