@@ -10,3 +10,15 @@ Currently, two official plugins are available:
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Electron API
+
+The preload script exposes an `electronAPI` object on `window` for renderer processes. Alongside other helpers, you can listen for live script updates with:
+
+```javascript
+window.electronAPI.onScriptUpdated((html) => {
+  // handle updated HTML
+});
+```
+
+This pairs with `sendUpdatedScript(html)` to keep the prompter view in sync.
