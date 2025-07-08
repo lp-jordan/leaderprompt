@@ -125,6 +125,8 @@ body {
 /* Project and script list */
 .project-group {
   margin-bottom: 20px;
+  position: relative;
+  overflow: visible;
 }
 
 .project-header {
@@ -132,6 +134,8 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
 }
 
 .project-title {
