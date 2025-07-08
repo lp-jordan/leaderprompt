@@ -55,6 +55,13 @@ function FileManager({ onScriptSelect }) {
     await loadProjects();
   };
 
+  const handleDeleteScript = async (projectName, scriptName) => {
+    if (!window.confirm('Delete this script?')) return;
+    const success = await window.electronAPI.deleteScript(projectName, scriptName);
+    if (!success) alert('Failed to delete script');
+    await loadProjects();
+  };
+
   return (
     <div className="file-manager">
       <div className="file-manager-header">
