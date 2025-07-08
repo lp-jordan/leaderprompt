@@ -26,3 +26,5 @@ Thumbs.db
 
 # Optional: Ignore local project scripts/documents if needed
 LeaderPrompt/projects/
+# Ignore font binaries
+public/fonts/*.otf
