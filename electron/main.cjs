@@ -16,7 +16,6 @@ const error = (...args) => console.error('[ERROR]', ...args);
 const getUserDataPath = () => path.join(app.getPath('home'), 'LeaderPrompt');
 const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
 const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json');
-const projectsDir = path.join(app.getPath('userData'), 'projects');
 
 function ensureDirectories() {
   if (!fs.existsSync(getUserDataPath())) {
@@ -34,10 +33,6 @@ function ensureDirectories() {
     log('Created projects.json metadata file');
   }
 
-  if (!fs.existsSync(projectsDir)) {
-    fs.mkdirSync(projectsDir, { recursive: true });
-    log('Created sandboxed projects directory (userData path)');
-  }
 }
 
 function getProjectMetadata() {
