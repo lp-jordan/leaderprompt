@@ -1,5 +1,5 @@
 import './App.css';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 
@@ -7,6 +7,36 @@ function App() {
   const [_selectedScript, setSelectedScript] = useState(null);
   const [_selectedProject, setSelectedProject] = useState(null);
   const [scriptHtml, setScriptHtml] = useState(null);
+  const [leftWidth, setLeftWidth] = useState(300);
+  const leftRef = useRef(null);
+  const isDragging = useRef(false);
+
+  const onDrag = (e) => {
+    if (!isDragging.current) return;
+    const newWidth = Math.min(
+      Math.max(150, e.clientX),
+      window.innerWidth - 150,
+    );
+    if (leftRef.current) {
+      leftRef.current.style.width = `${newWidth}px`;
+    }
+  };
+
+  const stopDrag = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    window.removeEventListener('mousemove', onDrag);
+    window.removeEventListener('mouseup', stopDrag);
+    if (leftRef.current) {
+      setLeftWidth(parseInt(leftRef.current.style.width, 10));
+    }
+  };
+
+  const startDrag = () => {
+    isDragging.current = true;
+    window.addEventListener('mousemove', onDrag);
+    window.addEventListener('mouseup', stopDrag);
+  };
 
   const handleScriptSelect = async (projectName, scriptName) => {
     setSelectedProject(projectName);
@@ -31,9 +61,10 @@ function App() {
 
   return (
     <div className="main-layout">
-      <div className="left-panel">
+      <div className="left-panel" ref={leftRef} style={{ width: leftWidth }}>
         <FileManager onScriptSelect={handleScriptSelect} />
       </div>
+      <div className="divider" onMouseDown={startDrag} />
       <div className="right-panel">
         <ScriptViewer
           scriptHtml={scriptHtml}
