@@ -314,26 +314,6 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     }
   });
 
-  ipcMain.handle('rename-script', async (_, projectName, oldName, newName) => {
-    log(`Renaming script in ${projectName}: ${oldName} -> ${newName}`);
-    if (!projectName || !oldName || !newName || oldName === newName) return false;
-    try {
-      const oldPath = path.join(getProjectsPath(), projectName, oldName);
-      const finalNew = newName.endsWith('.docx') ? newName : `${newName}.docx`;
-      const newPath = path.join(getProjectsPath(), projectName, finalNew);
-      if (!fs.existsSync(oldPath) || fs.existsSync(newPath)) {
-        error('Script rename failed: source missing or destination exists');
-        return false;
-      }
-      fs.renameSync(oldPath, newPath);
-      log('Script rename complete');
-      return true;
-    } catch (err) {
-      error('Failed to rename script:', err);
-      return false;
-    }
-  });
-
   ipcMain.handle('delete-script', async (_, projectName, scriptName) => {
     const scriptPath = path.join(getProjectsPath(), projectName, scriptName);
     log(`Deleting script: ${scriptPath}`);
