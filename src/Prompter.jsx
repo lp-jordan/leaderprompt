@@ -9,12 +9,20 @@ function Prompter() {
   const containerRef = useRef(null)
 
   useEffect(() => {
-    window.electronAPI.onScriptLoaded((html) => {
+    const handleLoaded = (html) => {
       setContent(html)
-    })
-    window.electronAPI.onScriptUpdated((html) => {
+    }
+    const handleUpdated = (html) => {
       setContent(html)
-    })
+    }
+
+    window.electronAPI.onScriptLoaded(handleLoaded)
+    window.electronAPI.onScriptUpdated(handleUpdated)
+
+    return () => {
+      window.ipcRenderer?.removeListener('load-script', handleLoaded)
+      window.ipcRenderer?.removeListener('update-script', handleUpdated)
+    }
   }, [])
 
   useEffect(() => {
