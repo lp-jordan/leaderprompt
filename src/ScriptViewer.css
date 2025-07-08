@@ -14,8 +14,15 @@
   margin-bottom: 1rem;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .header-logo {
   width: 120px;
+  margin-left: auto;
 }
 
 .header-title {
@@ -40,9 +47,23 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  
+  text-align: center;
   font-size: 1.2rem;
   color: #aaa;
 }
+
+.close-button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+}
+
+.close-button:hover {
+  text-decoration: underline;
 
 .lets-go-button {
   margin: 1rem auto 2rem auto;
