@@ -3,9 +3,9 @@
   overflow-y: scroll;
   background: #000000;
   color: #e0e0e0;
-  font-size: 2rem;
   line-height: 1.6;
   font-family: sans-serif;
+  transform-origin: center;
 }
 
 .prompter-controls {
