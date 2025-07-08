@@ -7,14 +7,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openPrompter: (html) => ipcRenderer.send('open-prompter', html),
   onScriptLoaded: (callback) => ipcRenderer.on('load-script', (_, data) => callback(data)),
   sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
-=======
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
   createNewProject: (name) => ipcRenderer.invoke('create-new-project', name),
   renameProject: (oldName, newName) =>
     ipcRenderer.invoke('rename-project', oldName, newName),
-
-  // Live update support
-  sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
 
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>
