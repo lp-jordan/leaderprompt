@@ -27,7 +27,6 @@ function App() {
 
   const handleScriptEdit = (html) => {
     setScriptHtml(html);
-    window.electronAPI.sendUpdatedScript(html);
   };
 
   return (

@@ -1,13 +1,22 @@
 import './ScriptViewer.css';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit }) {
+  const contentRef = useRef(null);
+
   useEffect(() => {
-    if (scriptHtml) {
+    if (contentRef.current && scriptHtml) {
+      contentRef.current.innerHTML = scriptHtml;
       window.electronAPI.sendUpdatedScript(scriptHtml);
     }
   }, [scriptHtml]);
+
+  const handleBlur = () => {
+    if (contentRef.current) {
+      onEdit(contentRef.current.innerHTML);
+    }
+  };
   
   return (
     <div className="script-viewer">
@@ -18,10 +27,10 @@ function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit }) {
       ) : (
         <>
           <div
+            ref={contentRef}
             className="script-content"
             contentEditable
-            onInput={(e) => onEdit(e.currentTarget.innerHTML)}
-            dangerouslySetInnerHTML={{ __html: scriptHtml }}
+            onBlur={handleBlur}
           />
           <div className="send-button-wrapper">
             <button className="send-button" onClick={onSend}>
