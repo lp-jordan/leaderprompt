@@ -71,6 +71,11 @@ function App() {
 
   const handleCloseScript = () => {
     setScriptHtml(null);
+    setSelectedProject(null);
+    setSelectedScript(null);
+    setLoadedProject(null);
+    setLoadedScript(null);
+    window.electronAPI.sendUpdatedScript('');
   };
 
   return (
