@@ -6,6 +6,7 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
   const [renaming, setRenaming] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [collapsed, setCollapsed] = useState({});
 
   useEffect(() => {
     loadProjects();
@@ -13,7 +14,18 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
 
   const loadProjects = async () => {
     const result = await window.electronAPI.getAllProjectsWithScripts();
-    if (result) setProjects(result);
+    if (result) {
+      setProjects(result);
+      setCollapsed((prev) => {
+        const next = { ...prev };
+        result.forEach((p) => {
+          if (typeof next[p.name] === 'undefined') {
+            next[p.name] = false;
+          }
+        });
+        return next;
+      });
+    }
   };
 
   const handleNewProject = async () => {
@@ -55,6 +67,13 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     await loadProjects();
   };
 
+  const toggleCollapse = (name) => {
+    setCollapsed((prev) => ({
+      ...prev,
+      [name]: !prev[name],
+    }));
+  };
+
   const handleDeleteScript = async (projectName, scriptName) => {
     const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
     if (!deleted) alert('Failed to delete script');
@@ -82,25 +101,41 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
 
       <div className="file-manager-list">
         {projects.map((project) => (
-          <div className="project-group" key={project.name}>
+          <div
+            className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}
+            key={project.name}
+          >
             <div className="project-header">
-              {renaming === project.name ? (
-                <>
+              <div className="project-title">
+                <button
+                  className="toggle-button"
+                  onClick={() => toggleCollapse(project.name)}
+                >
+                  {collapsed[project.name] ? '▶' : '▼'}
+                </button>
+                {renaming === project.name ? (
                   <input
                     type="text"
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
                   />
-                  <button onClick={() => confirmRename(project.name)}>Save</button>
-                  <button onClick={cancelRename}>Cancel</button>
-                </>
-              ) : (
-                <>
+                ) : (
                   <h4>{project.name}</h4>
-                  <button onClick={() => handleImportClick(project.name)}>+</button>
-                  <button onClick={() => startRename(project.name)}>Rename</button>
-                </>
-              )}
+                )}
+              </div>
+              <div className="project-controls">
+                {renaming === project.name ? (
+                  <>
+                    <button onClick={() => confirmRename(project.name)}>Save</button>
+                    <button onClick={cancelRename}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => handleImportClick(project.name)}>+</button>
+                    <button onClick={() => startRename(project.name)}>Rename</button>
+                  </>
+                )}
+              </div>
             </div>
             <ul>
               {project.scripts.map((script) => {
