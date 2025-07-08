@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-function FileManager({ onScriptSelect }) {
+function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
@@ -103,22 +103,30 @@ function FileManager({ onScriptSelect }) {
               )}
             </div>
             <ul>
-              {project.scripts.map((script) => (
-                <li key={script} className="script-item">
-                  <button
-                    className="script-button"
-                    onClick={() => onScriptSelect(project.name, script)}
+              {project.scripts.map((script) => {
+                const isLoaded =
+                  loadedProject === project.name && loadedScript === script;
+                return (
+                  <li
+                    key={script}
+                    className={`script-item${isLoaded ? ' loaded' : ''}`}
                   >
-                    {script.replace(/\.[^/.]+$/, '')}
-                  </button>
-                  <button
-                    className="delete-button"
-                    onClick={() => handleDeleteScript(project.name, script)}
-                  >
-                    ✖
-                  </button>
-                </li>
-              ))}
+                    <button
+                      className="script-button"
+                      onClick={() => onScriptSelect(project.name, script)}
+                    >
+                      {script.replace(/\.[^/.]+$/, '')}
+                    </button>
+                    {isLoaded && <span className="loaded-indicator">(loaded)</span>}
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDeleteScript(project.name, script)}
+                    >
+                      ✖
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}

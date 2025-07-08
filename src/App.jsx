@@ -4,8 +4,10 @@ import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 
 function App() {
-  const [_selectedScript, setSelectedScript] = useState(null);
-  const [_selectedProject, setSelectedProject] = useState(null);
+  const [selectedScript, setSelectedScript] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [loadedScript, setLoadedScript] = useState(null);
+  const [loadedProject, setLoadedProject] = useState(null);
   const [scriptHtml, setScriptHtml] = useState(null);
   const [leftWidth, setLeftWidth] = useState(300);
   const leftRef = useRef(null);
@@ -52,17 +54,29 @@ function App() {
   const handleSendToPrompter = () => {
     if (scriptHtml) {
       window.electronAPI.openPrompter(scriptHtml);
+      setLoadedProject(selectedProject);
+      setLoadedScript(selectedScript);
     }
   };
 
   const handleScriptEdit = (html) => {
     setScriptHtml(html);
+    if (
+      selectedProject === loadedProject &&
+      selectedScript === loadedScript
+    ) {
+      window.electronAPI.sendUpdatedScript(html);
+    }
   };
 
   return (
     <div className="main-layout">
       <div className="left-panel" ref={leftRef} style={{ width: leftWidth }}>
-        <FileManager onScriptSelect={handleScriptSelect} />
+        <FileManager
+          onScriptSelect={handleScriptSelect}
+          loadedProject={loadedProject}
+          loadedScript={loadedScript}
+        />
       </div>
       <div className="divider" onMouseDown={startDrag} />
       <div className="right-panel">
