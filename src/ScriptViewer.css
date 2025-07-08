@@ -63,7 +63,7 @@
 }
 
 .close-button:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .lets-go-button {

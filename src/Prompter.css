@@ -19,3 +19,8 @@
   color: #e0e0e0;
   font-size: 14px;
 }
+
+.prompter-controls input[type="range"],
+.prompter-controls input[type="checkbox"] {
+  accent-color: var(--accent-color);
+}
