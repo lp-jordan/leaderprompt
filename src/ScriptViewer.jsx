@@ -6,12 +6,22 @@ function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit, onClose }) {
   const contentRef = useRef(null);
 
   useEffect(() => {
-    if (contentRef.current && scriptHtml) {
+    if (
+      contentRef.current &&
+      scriptHtml &&
+      contentRef.current.innerHTML !== scriptHtml
+    ) {
       contentRef.current.innerHTML = scriptHtml;
     }
   }, [scriptHtml]);
 
   const handleBlur = () => {
+    if (contentRef.current) {
+      onEdit(contentRef.current.innerHTML);
+    }
+  };
+
+  const handleInput = () => {
     if (contentRef.current) {
       onEdit(contentRef.current.innerHTML);
     }
@@ -40,6 +50,7 @@ function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit, onClose }) {
               className="script-content"
               contentEditable
               onBlur={handleBlur}
+              onInput={handleInput}
             />
             <div className="send-button-wrapper">
               <button className="send-button" onClick={onSend}>
