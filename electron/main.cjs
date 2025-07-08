@@ -76,6 +76,7 @@ function createMainWindow() {
       contextIsolation: true,
       sandbox: true,
     },
+    icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
     backgroundColor: '#000000',
   });
 
@@ -92,6 +93,7 @@ function createPrompterWindow(initialHtml) {
       contextIsolation: true,
       sandbox: true,
     },
+    icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
     backgroundColor: '#000000',
   });
 
