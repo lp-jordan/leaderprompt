@@ -8,6 +8,7 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
   const [renamingProject, setRenamingProject] = useState(null);
   const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  const [collapsed, setCollapsed] = useState({});
 
   useEffect(() => {
     loadProjects();
@@ -15,7 +16,18 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
 
   const loadProjects = async () => {
     const result = await window.electronAPI.getAllProjectsWithScripts();
-    if (result) setProjects(result);
+    if (result) {
+      setProjects(result);
+      setCollapsed((prev) => {
+        const next = { ...prev };
+        result.forEach((p) => {
+          if (typeof next[p.name] === 'undefined') {
+            next[p.name] = false;
+          }
+        });
+        return next;
+      });
+    }
   };
 
   const handleNewProject = async () => {
@@ -106,7 +118,10 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
 
       <div className="file-manager-list">
         {projects.map((project) => (
-          <div className="project-group" key={project.name}>
+          <div
+            className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}
+            key={project.name}
+          >
             <div className="project-header">
               {renamingProject === project.name ? (
                 <>
