@@ -12,8 +12,8 @@ let prompterWindow;
 const prompterWindows = new Set();
 let viteProcess;
 
-const log = (...args) => console.log('[LOG]', ...args);
-const error = (...args) => console.error('[ERROR]', ...args);
+const log = (...args) => console.log(...args);
+const error = (...args) => console.error(...args);
 
 function startViteServer() {
   if (viteProcess || app.isPackaged) return;
