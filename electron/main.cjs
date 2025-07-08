@@ -280,7 +280,11 @@ app.whenReady().then(() => {
     try {
       const base = path.join(getProjectsPath(), projectName);
       const oldPath = path.join(base, oldName);
-      const newPath = path.join(base, newName);
+      let targetName = newName;
+      if (!targetName.toLowerCase().endsWith('.docx')) {
+        targetName += '.docx';
+      }
+      const newPath = path.join(base, targetName);
       if (!fs.existsSync(oldPath) || fs.existsSync(newPath)) return false;
       fs.renameSync(oldPath, newPath);
       return true;

@@ -117,7 +117,11 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
 
   const confirmRenameScript = async (projectName, oldName) => {
     if (!renameValue.trim()) return;
-    const success = await window.electronAPI.renameScript(projectName, oldName, renameValue.trim());
+    let newName = renameValue.trim();
+    if (!newName.toLowerCase().endsWith('.docx')) {
+      newName += '.docx';
+    }
+    const success = await window.electronAPI.renameScript(projectName, oldName, newName);
     if (!success) alert('Failed to rename script');
     cancelRename();
     await loadProjects();
