@@ -7,6 +7,7 @@ const pathToFile = (file, hash = '') =>
   `file://${path.resolve(__dirname, '..', file).replace(/\\/g, '/')}${hash}`;
 
 let mainWindow;
+let prompterWindow;
 const prompterWindows = new Set();
 
 const log = (...args) => console.log('[LOG]', ...args);
@@ -70,7 +71,7 @@ function createMainWindow() {
 }
 
 function createPrompterWindow(initialHtml) {
-  prompterWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -87,9 +88,16 @@ function createPrompterWindow(initialHtml) {
 
   win.loadURL(url);
   win.webContents.on('did-finish-load', () => {
-    win.webContents.send('load-script', html);
-
+    if (initialHtml) win.webContents.send('load-script', initialHtml);
   });
+
+  prompterWindow = win;
+  prompterWindows.add(win);
+  win.on('closed', () => {
+    prompterWindows.delete(win);
+    if (prompterWindow === win) prompterWindow = null;
+  });
+
   log('Prompter window opened');
 }
 
@@ -117,16 +125,17 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('update-script', (_, html) => {
+    const targets = new Set();
     if (prompterWindow && !prompterWindow.isDestroyed()) {
-      prompterWindow.webContents.send('update-script', html);
+      targets.add(prompterWindow);
     }
-  });
-
-  ipcMain.on('update-script', (_, html) => {
     prompterWindows.forEach((win) => {
-      if (!win.isDestroyed()) {
-        win.webContents.send('load-script', html);
+      if (win && !win.isDestroyed()) {
+        targets.add(win);
       }
+    });
+    targets.forEach((win) => {
+      win.webContents.send('update-script', html);
     });
   });
 
