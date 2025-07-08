@@ -134,6 +134,20 @@ body {
   margin-bottom: 8px;
 }
 
+.project-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
 .project-header h4 {
   margin: 0;
   font-size: 16px;
@@ -152,6 +166,10 @@ body {
 
 .project-header button:hover {
   background: #555;
+}
+
+.project-group.collapsed ul {
+  display: none;
 }
 
 .project-group ul {
