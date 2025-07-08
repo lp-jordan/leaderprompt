@@ -26,13 +26,16 @@ function Prompter() {
   }, [])
 
   useEffect(() => {
-    if (!autoscroll) return
-    const interval = setInterval(() => {
+    if (!autoscroll) return undefined
+    let requestId
+    const step = () => {
       if (containerRef.current) {
         containerRef.current.scrollTop += speed
       }
-    }, 16)
-    return () => clearInterval(interval)
+      requestId = requestAnimationFrame(step)
+    }
+    requestId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(requestId)
   }, [autoscroll, speed])
 
   return (
