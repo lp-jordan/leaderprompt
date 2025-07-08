@@ -182,17 +182,6 @@ body {
   text-decoration: underline;
 }
 
-.delete-button {
-  background: none;
-  border: none;
-  color: #e04040;
-  padding: 4px;
-  cursor: pointer;
-}
-
-.delete-button:hover {
-  text-decoration: underline;
-}
 
 .script-item.loaded .script-button {
   font-weight: bold;
@@ -203,4 +192,50 @@ body {
   margin-left: 0.5rem;
   font-size: 0.8rem;
   color: var(--accent-color);
+}
+
+/* Action menu */
+.menu-container {
+  position: relative;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  font-size: 18px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.menu-toggle:hover {
+  background: #555;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 4px;
+  list-style: none;
+  padding: 4px 0;
+  min-width: 120px;
+  z-index: 10;
+}
+
+.menu li button {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  width: 100%;
+  text-align: left;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.menu li button:hover {
+  background: #333;
 }

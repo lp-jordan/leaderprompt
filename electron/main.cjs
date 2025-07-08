@@ -258,6 +258,38 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('delete-project', async (_, projectName) => {
+    log(`Deleting project: ${projectName}`);
+    try {
+      const projPath = path.join(getProjectsPath(), projectName);
+      if (!fs.existsSync(projPath)) return false;
+      fs.rmSync(projPath, { recursive: true, force: true });
+      const metadata = getProjectMetadata();
+      metadata.projects = metadata.projects.filter((p) => p.name !== projectName);
+      fs.writeFileSync(getProjectMetadataPath(), JSON.stringify(metadata, null, 2));
+      return true;
+    } catch (err) {
+      error('Failed to delete project:', err);
+      return false;
+    }
+  });
+
+  ipcMain.handle('rename-script', async (_, projectName, oldName, newName) => {
+    log(`Renaming script: ${oldName} -> ${newName} in ${projectName}`);
+    if (!projectName || !oldName || !newName || oldName === newName) return false;
+    try {
+      const base = path.join(getProjectsPath(), projectName);
+      const oldPath = path.join(base, oldName);
+      const newPath = path.join(base, newName);
+      if (!fs.existsSync(oldPath) || fs.existsSync(newPath)) return false;
+      fs.renameSync(oldPath, newPath);
+      return true;
+    } catch (err) {
+      error('Error renaming script:', err);
+      return false;
+    }
+  });
+
 ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) => {
   log(`Importing scripts to project: ${projectName}`);
   if (!Array.isArray(filePaths) || !filePaths.length || !projectName) {
