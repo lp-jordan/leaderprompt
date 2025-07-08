@@ -8,7 +8,6 @@ function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit }) {
   useEffect(() => {
     if (contentRef.current && scriptHtml) {
       contentRef.current.innerHTML = scriptHtml;
-      window.electronAPI.sendUpdatedScript(scriptHtml);
     }
   }, [scriptHtml]);
 

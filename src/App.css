@@ -185,3 +185,14 @@ body {
 .delete-button:hover {
   text-decoration: underline;
 }
+
+.script-item.loaded .script-button {
+  font-weight: bold;
+  color: #fff;
+}
+
+.loaded-indicator {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: #1f80e0;
+}
