@@ -47,6 +47,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  
   text-align: center;
   font-size: 1.2rem;
   color: #aaa;
@@ -63,7 +64,6 @@
 
 .close-button:hover {
   text-decoration: underline;
-}
 
 .lets-go-button {
   margin: 1rem auto 2rem auto;

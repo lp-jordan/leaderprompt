@@ -20,6 +20,7 @@ function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit, onClose }) {
   return (
       <div className="script-viewer">
         <div className="viewer-header">
+
           <div className="header-left">
             {!showLogo && <h2 className="header-title">Script Editor</h2>}
             {!showLogo && (
