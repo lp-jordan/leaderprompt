@@ -69,6 +69,10 @@ function App() {
     }
   };
 
+  const handleCloseScript = () => {
+    setScriptHtml(null);
+  };
+
   return (
     <div className="main-layout">
       <div className="left-panel" ref={leftRef} style={{ width: leftWidth }}>
@@ -85,6 +89,7 @@ function App() {
           showLogo={!scriptHtml}
           onSend={handleSendToPrompter}
           onEdit={handleScriptEdit}
+          onClose={handleCloseScript}
         />
       </div>
     </div>
