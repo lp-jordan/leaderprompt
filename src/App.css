@@ -154,7 +154,7 @@ body {
   color: #ccc;
 }
 
-.project-header button {
+.project-header button:not(.toggle-button) {
   background: #333;
   border: none;
   color: #e0e0e0;
@@ -164,7 +164,7 @@ body {
   cursor: pointer;
 }
 
-.project-header button:hover {
+.project-header button:not(.toggle-button):hover {
   background: #555;
 }
 
@@ -210,6 +210,29 @@ body {
   margin-left: 0.5rem;
   font-size: 0.8rem;
   color: var(--accent-color);
+}
+
+.script-actions {
+  display: none;
+  margin-left: auto;
+  gap: 4px;
+}
+
+.script-item:hover .script-actions {
+  display: flex;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.icon-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Action menu */
