@@ -12,6 +12,8 @@ let prompterWindow;
 const prompterWindows = new Set();
 let viteProcess;
 let isAlwaysOnTop = false;
+let currentScriptHtml = '';
+let currentTransparent = false;
 
 const log = (...args) => console.log(...args);
 const error = (...args) => console.error(...args);
@@ -112,6 +114,7 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
 
   const win = new BrowserWindow({ ...baseOptions, ...transparentOptions });
   win.setAlwaysOnTop(isAlwaysOnTop);
+  currentTransparent = transparentMode;
 
   const url = app.isPackaged
     ? pathToFile('index.html', '#/prompter')
@@ -153,18 +156,26 @@ app.whenReady().then(() => {
     log('Received request to open prompter');
 
     const desiredTransparent = !!transparentFlag;
+    currentScriptHtml = html;
 
-    if (!prompterWindow || prompterWindow.isDestroyed()) {
-      createPrompterWindow(html, desiredTransparent);
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      if (currentTransparent !== desiredTransparent) {
+        prompterWindow.close();
+        createPrompterWindow(currentScriptHtml, desiredTransparent);
+      } else {
+        prompterWindow.focus();
+        prompterWindow.webContents.send('load-script', currentScriptHtml);
+        prompterWindow.webContents.send('set-transparent', desiredTransparent);
+      }
+      currentTransparent = desiredTransparent;
       return;
     }
-
-    prompterWindow.focus();
-    prompterWindow.webContents.send('load-script', html);
-    prompterWindow.webContents.send('set-transparent', desiredTransparent);
+    createPrompterWindow(currentScriptHtml, desiredTransparent);
+    currentTransparent = desiredTransparent;
   });
 
   ipcMain.on('update-script', (_, html) => {
+    currentScriptHtml = html;
     const targets = new Set();
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       targets.add(prompterWindow);
@@ -197,6 +208,8 @@ app.whenReady().then(() => {
       prompterWindow.minimize();
     }
   });
+
+  ipcMain.handle('get-current-script', () => currentScriptHtml);
 
   ipcMain.handle('get-prompter-bounds', () => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
   onTransparentChange: (callback) =>
     ipcRenderer.on('set-transparent', (_, flag) => callback(flag)),
+  getCurrentScript: () => ipcRenderer.invoke('get-current-script'),
 
   // Project management
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
