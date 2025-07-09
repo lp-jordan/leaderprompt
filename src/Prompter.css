@@ -27,6 +27,7 @@
 }
 
 .prompter-wrapper:hover .prompter-controls,
+
 .prompter-controls:focus-within {
   opacity: 1;
 }
