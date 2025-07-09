@@ -97,6 +97,7 @@ function createPrompterWindow(initialHtml) {
     backgroundColor: '#00000000',
     frame: true,
     transparent: true,
+    titleBarStyle: 'default',
   });
 
   const url = app.isPackaged
