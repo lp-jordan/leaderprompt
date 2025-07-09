@@ -137,6 +137,7 @@ app.whenReady().then(() => {
     log('Received request to open prompter');
 
     if (transparentFlag) {
+
       const reopen = () => createPrompterWindow(html, true);
       if (prompterWindow && !prompterWindow.isDestroyed()) {
         prompterWindow.once('closed', reopen);
