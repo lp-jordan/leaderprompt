@@ -84,10 +84,8 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
-let prompterIsTransparent = false;
-
 function createPrompterWindow(initialHtml, transparentMode = false) {
-  const baseOptions = {
+  const win = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -97,22 +95,10 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
     },
     icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
     titleBarStyle: 'default',
-  };
-
-  const transparentOptions = transparentMode
-    ? {
-        backgroundColor: '#00000000',
-        frame: false,
-        transparent: true,
-      }
-    : {
-        backgroundColor: '#000000',
-        frame: true,
-        transparent: false,
-      };
-
-  const win = new BrowserWindow({ ...baseOptions, ...transparentOptions });
-  prompterIsTransparent = transparentMode;
+    backgroundColor: '#00000000',
+    frame: false,
+    transparent: true,
+  });
 
   const url = app.isPackaged
     ? pathToFile('index.html', '#/prompter')
@@ -130,7 +116,6 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
     prompterWindows.delete(win);
     if (prompterWindow === win) {
       prompterWindow = null;
-      prompterIsTransparent = false;
     }
   });
 
@@ -161,15 +146,9 @@ app.whenReady().then(() => {
       return;
     }
 
-    if (prompterIsTransparent !== desiredTransparent) {
-      const reopen = () => createPrompterWindow(html, desiredTransparent);
-      prompterWindow.once('closed', reopen);
-      prompterWindow.close();
-      return;
-    }
-
     prompterWindow.focus();
     prompterWindow.webContents.send('load-script', html);
+    prompterWindow.webContents.send('set-transparent', desiredTransparent);
   });
 
   ipcMain.on('update-script', (_, html) => {
@@ -190,6 +169,18 @@ app.whenReady().then(() => {
   ipcMain.on('set-prompter-always-on-top', (_, flag) => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.setAlwaysOnTop(!!flag);
+    }
+  });
+
+  ipcMain.on('close-prompter', () => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.close();
+    }
+  });
+
+  ipcMain.on('minimize-prompter', () => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.minimize();
     }
   });
 

@@ -39,6 +39,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setPrompterAlwaysOnTop: (flag) =>
     ipcRenderer.send('set-prompter-always-on-top', flag),
 
+  closePrompter: () => ipcRenderer.send('close-prompter'),
+  minimizePrompter: () => ipcRenderer.send('minimize-prompter'),
+
   getPrompterBounds: () => ipcRenderer.invoke('get-prompter-bounds'),
   setPrompterBounds: (bounds) =>
     ipcRenderer.send('set-prompter-bounds', bounds),
