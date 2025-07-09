@@ -1,5 +1,12 @@
+@font-face {
+  font-family: 'Metropolis-Bold';
+  src: url('/fonts/Metropolis-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+}
+
 :root {
-  font-family: 'Metropolis', sans-serif;
+  font-family: 'Metropolis-Bold', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 

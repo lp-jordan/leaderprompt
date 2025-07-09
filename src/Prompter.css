@@ -1,11 +1,15 @@
+.prompter-wrapper {
+  height: 100vh;
+}
+
 .prompter-container {
   height: 100vh;
   overflow-y: scroll;
   background: #000000;
   color: #e0e0e0;
-  font-size: 2rem;
   line-height: 1.6;
   font-family: sans-serif;
+  transform-origin: center;
 }
 
 .prompter-controls {
@@ -18,4 +22,17 @@
   border-radius: 8px;
   color: #e0e0e0;
   font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.prompter-wrapper:hover .prompter-controls,
+
+.prompter-controls:focus-within {
+  opacity: 1;
+}
+
+.prompter-controls input[type="range"],
+.prompter-controls input[type="checkbox"] {
+  accent-color: var(--accent-color);
 }
