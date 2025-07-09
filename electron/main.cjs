@@ -11,6 +11,7 @@ let mainWindow;
 let prompterWindow;
 const prompterWindows = new Set();
 let viteProcess;
+let isAlwaysOnTop = false;
 
 const log = (...args) => console.log(...args);
 const error = (...args) => console.error(...args);
@@ -95,10 +96,23 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
     },
     icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
     titleBarStyle: 'default',
-    backgroundColor: '#00000000',
-    frame: false,
-    transparent: true,
-  });
+  };
+
+  const transparentOptions = transparentMode
+    ? {
+        backgroundColor: '#00000000',
+        frame: false,
+        transparent: true,
+      }
+    : {
+        backgroundColor: '#000000',
+        frame: true,
+        transparent: false,
+      };
+
+  const win = new BrowserWindow({ ...baseOptions, ...transparentOptions });
+  win.setAlwaysOnTop(isAlwaysOnTop);
+  prompterIsTransparent = transparentMode;
 
   const url = app.isPackaged
     ? pathToFile('index.html', '#/prompter')
@@ -167,8 +181,9 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('set-prompter-always-on-top', (_, flag) => {
+    isAlwaysOnTop = !!flag;
     if (prompterWindow && !prompterWindow.isDestroyed()) {
-      prompterWindow.setAlwaysOnTop(!!flag);
+      prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
     }
   });
 
