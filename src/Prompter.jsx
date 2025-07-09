@@ -66,6 +66,7 @@ function Prompter() {
 
     window.electronAPI.onScriptLoaded(handleLoaded)
     window.electronAPI.onScriptUpdated(handleUpdated)
+    window.electronAPI.prompterReady()
 
     return () => {
       window.ipcRenderer?.removeListener('load-script', handleLoaded)

@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onScriptUpdated: (callback) =>
     ipcRenderer.on('update-script', (_, data) => callback(data)),
   sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
+  prompterReady: () => ipcRenderer.send('prompter-ready'),
   onTransparentChange: (callback) =>
     ipcRenderer.on('set-transparent', (_, flag) => callback(flag)),
 

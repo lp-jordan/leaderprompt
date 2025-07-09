@@ -85,6 +85,7 @@ function createMainWindow() {
 }
 
 let prompterIsTransparent = false;
+let lastScriptHtml = '';
 
 function createPrompterWindow(initialHtml, transparentMode = false) {
   const baseOptions = {
@@ -120,6 +121,7 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
 
   win.loadURL(url);
   win.webContents.on('did-finish-load', () => {
+    // Fallback for older clients
     if (initialHtml) win.webContents.send('load-script', initialHtml);
     win.webContents.send('set-transparent', transparentMode);
   });
@@ -153,6 +155,7 @@ app.whenReady().then(() => {
   // --- IPC Handlers ---
   ipcMain.on('open-prompter', (_, html, transparentFlag) => {
     log('Received request to open prompter');
+    lastScriptHtml = html;
 
     const desiredTransparent = !!transparentFlag;
 
@@ -173,6 +176,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('update-script', (_, html) => {
+    lastScriptHtml = html;
     const targets = new Set();
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       targets.add(prompterWindow);
@@ -185,6 +189,13 @@ app.whenReady().then(() => {
     targets.forEach((win) => {
       win.webContents.send('update-script', html);
     });
+  });
+
+  ipcMain.on('prompter-ready', (event) => {
+    if (lastScriptHtml) {
+      event.sender.send('load-script', lastScriptHtml);
+    }
+    event.sender.send('set-transparent', prompterIsTransparent);
   });
 
   ipcMain.on('set-prompter-always-on-top', (_, flag) => {
