@@ -51,10 +51,13 @@ function Prompter() {
 
   useEffect(() => {
     window.electronAPI.setPrompterAlwaysOnTop(transparent)
+    const root = document.documentElement
+    root.style.background = transparent ? 'transparent' : ''
   }, [transparent])
 
   return (
-    <div className="prompter-controls">
+    <div className="prompter-wrapper">
+      <div className="prompter-controls">
       <label>
         Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
         <input
@@ -152,6 +155,7 @@ function Prompter() {
         }}
         dangerouslySetInnerHTML={{ __html: content }}
       />
+      </div>
     </div>
   )
 }

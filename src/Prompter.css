@@ -1,3 +1,7 @@
+.prompter-wrapper {
+  height: 100vh;
+}
+
 .prompter-container {
   height: 100vh;
   overflow-y: scroll;
@@ -22,7 +26,8 @@
   transition: opacity 0.3s ease;
 }
 
-.prompter-controls:hover,
+.prompter-wrapper:hover .prompter-controls,
+
 .prompter-controls:focus-within {
   opacity: 1;
 }
