@@ -12,13 +12,31 @@ let prompterWindow;
 let prompterWindowOpaque;
 let prompterWindowTransparent;
 const prompterWindows = new Set();
+let devConsoleWindow;
+const pendingLogs = [];
 let viteProcess;
 let isAlwaysOnTop = false;
 let currentScriptHtml = '';
 let currentTransparent = false;
 
-const log = (...args) => console.log(...args);
-const error = (...args) => console.error(...args);
+function sendLog(msg) {
+  if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
+    devConsoleWindow.webContents.send('log-message', msg)
+  } else {
+    pendingLogs.push(msg)
+  }
+}
+
+const log = (...args) => {
+  const msg = args.join(' ')
+  console.log(...args)
+  sendLog(msg)
+}
+const error = (...args) => {
+  const msg = args.join(' ')
+  console.error(...args)
+  sendLog(`[ERROR] ${msg}`)
+}
 
 function startViteServer() {
   if (viteProcess || app.isPackaged) return;
@@ -27,12 +45,14 @@ function startViteServer() {
     stdio: 'inherit',
     shell: true,
   });
+  log('Vite dev server started');
 }
 
 function stopViteServer() {
   if (viteProcess) {
     viteProcess.kill('SIGTERM');
     viteProcess = null;
+    log('Vite dev server stopped');
   }
 }
 
@@ -41,6 +61,7 @@ const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
 const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json');
 
 function ensureDirectories() {
+  log('Ensuring data directories');
   if (!fs.existsSync(getUserDataPath())) {
     fs.mkdirSync(getUserDataPath());
     log('Created LeaderPrompt user data directory');
@@ -89,7 +110,37 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
+function createDevConsoleWindow() {
+  if (devConsoleWindow) return
+  devConsoleWindow = new BrowserWindow({
+    width: 800,
+    height: 400,
+    webPreferences: {
+      preload: path.resolve(__dirname, 'preload.cjs'),
+      contextIsolation: true,
+      sandbox: true,
+    },
+    title: 'Dev Console',
+  })
+
+  const url = app.isPackaged
+    ? pathToFile('index.html', '#/dev-console')
+    : 'http://localhost:5173/#/dev-console'
+
+  devConsoleWindow.loadURL(url)
+  devConsoleWindow.on('closed', () => {
+    devConsoleWindow = null
+  })
+  devConsoleWindow.webContents.on('did-finish-load', () => {
+    pendingLogs.forEach((m) => devConsoleWindow.webContents.send('log-message', m))
+    pendingLogs.length = 0
+  })
+  log('Dev console window created')
+}
+
 function createPrompterWindow() {
+  log('Creating prompter windows')
+
   const baseOptions = {
     width: 1200,
     height: 800,
@@ -153,7 +204,7 @@ app.whenReady().then(() => {
   startViteServer();
   ensureDirectories();
   createMainWindow();
-  createPrompterWindow();
+  createDevConsoleWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -196,6 +247,7 @@ app.whenReady().then(() => {
       active.webContents.send('set-transparent', desiredTransparent);
       active.show();
       active.focus();
+      log(`Prompter window shown (transparent: ${desiredTransparent})`);
     }
   });
 
@@ -213,6 +265,7 @@ app.whenReady().then(() => {
     targets.forEach((win) => {
       win.webContents.send('update-script', html);
     });
+    log('Updated script content');
   });
 
   ipcMain.on('set-prompter-always-on-top', (_, flag) => {
@@ -220,18 +273,21 @@ app.whenReady().then(() => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
     }
+    log(`Prompter always on top: ${isAlwaysOnTop}`);
   });
 
   ipcMain.on('close-prompter', () => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.close();
     }
+    log('Prompter window closed');
   });
 
   ipcMain.on('minimize-prompter', () => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.minimize();
     }
+    log('Prompter window minimized');
   });
 
   ipcMain.handle('get-current-script', () => currentScriptHtml);
@@ -247,6 +303,7 @@ app.whenReady().then(() => {
     if (prompterWindow && !prompterWindow.isDestroyed() && bounds) {
       prompterWindow.setBounds(bounds);
     }
+    log(`Prompter bounds set: ${JSON.stringify(bounds)}`);
   });
 
   ipcMain.handle('get-all-projects-with-scripts', async () => {
@@ -464,15 +521,21 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
 
 // --- App Exit Handler ---
 app.on('window-all-closed', () => {
+  log('All windows closed');
   if (process.platform !== 'darwin') app.quit();
 });
 
 app.on('quit', () => {
+  log('App quitting');
   stopViteServer();
 });
 
-process.on('exit', stopViteServer);
+process.on('exit', () => {
+  log('Process exiting');
+  stopViteServer();
+});
 process.on('SIGINT', () => {
+  log('Received SIGINT');
   stopViteServer();
   process.exit(0);
 });

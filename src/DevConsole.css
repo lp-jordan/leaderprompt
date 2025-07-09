@@ -1,0 +1,12 @@
+.dev-console {
+  background: #000;
+  color: #0f0;
+  font-family: monospace;
+  padding: 8px;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.log-line {
+  white-space: pre-wrap;
+}
