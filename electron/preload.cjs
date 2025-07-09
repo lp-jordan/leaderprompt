@@ -4,7 +4,8 @@ console.log('[PRELOAD] Preload script loaded ✅');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // Prompter controls
-  openPrompter: (html) => ipcRenderer.send('open-prompter', html),
+  openPrompter: (html, transparent = false) =>
+    ipcRenderer.send('open-prompter', html, transparent),
   onScriptLoaded: (callback) =>
     ipcRenderer.on('load-script', (_, data) => callback(data)),
   onScriptUpdated: (callback) =>
