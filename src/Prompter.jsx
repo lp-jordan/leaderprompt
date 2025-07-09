@@ -90,9 +90,7 @@ function Prompter() {
     const color = transparent ? 'transparent' : '#1e1e1e'
     document.documentElement.style.backgroundColor = color
     document.body.style.backgroundColor = color
-    if (transparent) {
-      window.electronAPI.openPrompter(content, true)
-    }
+    window.electronAPI.openPrompter(content, transparent)
     // intentionally omit "content" from deps
   }, [transparent]) // eslint-disable-line react-hooks/exhaustive-deps
 

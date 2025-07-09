@@ -84,8 +84,10 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
+let prompterIsTransparent = false;
+
 function createPrompterWindow(initialHtml, transparentMode = false) {
-  const win = new BrowserWindow({
+  const baseOptions = {
     width: 1200,
     height: 800,
     webPreferences: {
@@ -94,11 +96,23 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
       sandbox: true,
     },
     icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
-    backgroundColor: '#00000000',
-    frame: false,
-    transparent: true,
     titleBarStyle: 'default',
-  });
+  };
+
+  const transparentOptions = transparentMode
+    ? {
+        backgroundColor: '#00000000',
+        frame: false,
+        transparent: true,
+      }
+    : {
+        backgroundColor: '#000000',
+        frame: true,
+        transparent: false,
+      };
+
+  const win = new BrowserWindow({ ...baseOptions, ...transparentOptions });
+  prompterIsTransparent = transparentMode;
 
   const url = app.isPackaged
     ? pathToFile('index.html', '#/prompter')
@@ -113,7 +127,10 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
   prompterWindows.add(win);
   win.on('closed', () => {
     prompterWindows.delete(win);
-    if (prompterWindow === win) prompterWindow = null;
+    if (prompterWindow === win) {
+      prompterWindow = null;
+      prompterIsTransparent = false;
+    }
   });
 
   log('Prompter window opened');
@@ -136,24 +153,22 @@ app.whenReady().then(() => {
   ipcMain.on('open-prompter', (_, html, transparentFlag) => {
     log('Received request to open prompter');
 
-    if (transparentFlag) {
+    const desiredTransparent = !!transparentFlag;
 
-      const reopen = () => createPrompterWindow(html, true);
-      if (prompterWindow && !prompterWindow.isDestroyed()) {
-        prompterWindow.once('closed', reopen);
-        prompterWindow.close();
-      } else {
-        reopen();
-      }
+    if (!prompterWindow || prompterWindow.isDestroyed()) {
+      createPrompterWindow(html, desiredTransparent);
       return;
     }
 
-    if (!prompterWindow || prompterWindow.isDestroyed()) {
-      createPrompterWindow(html, false);
-    } else {
-      prompterWindow.focus();
-      prompterWindow.webContents.send('load-script', html);
+    if (prompterIsTransparent !== desiredTransparent) {
+      const reopen = () => createPrompterWindow(html, desiredTransparent);
+      prompterWindow.once('closed', reopen);
+      prompterWindow.close();
+      return;
     }
+
+    prompterWindow.focus();
+    prompterWindow.webContents.send('load-script', html);
   });
 
   ipcMain.on('update-script', (_, html) => {
