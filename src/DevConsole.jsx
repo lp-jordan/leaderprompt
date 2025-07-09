@@ -5,7 +5,7 @@ function DevConsole() {
   const [logs, setLogs] = useState([])
 
   useEffect(() => {
-    const handler = (_, msg) => {
+    const handler = (msg) => {
       setLogs((prev) => [...prev, msg])
     }
     window.electronAPI.onLogMessage(handler)
