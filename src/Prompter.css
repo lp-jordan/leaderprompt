@@ -8,7 +8,6 @@
   overflow-y: scroll;
   background: #000000;
   color: #e0e0e0;
-  line-height: 1.6;
   font-family: sans-serif;
   transform-origin: center;
 }
@@ -35,6 +34,21 @@
 .prompter-controls input[type="range"],
 .prompter-controls input[type="checkbox"] {
   accent-color: var(--accent-color);
+}
+
+.prompter-controls label {
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.prompter-controls details {
+  margin-bottom: var(--space-2);
+}
+
+.prompter-controls summary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: var(--space-1);
 }
 
 .drag-header {
