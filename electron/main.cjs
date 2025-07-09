@@ -92,7 +92,8 @@ function createPrompterWindow(initialHtml) {
       contextIsolation: true,
       sandbox: true,
     },
-    backgroundColor: '#000000',
+    backgroundColor: '#00000000',
+    transparent: true,
   });
 
   const url = app.isPackaged
@@ -151,6 +152,12 @@ app.whenReady().then(() => {
     targets.forEach((win) => {
       win.webContents.send('update-script', html);
     });
+  });
+
+  ipcMain.on('set-prompter-always-on-top', (_, flag) => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.setAlwaysOnTop(!!flag);
+    }
   });
 
   ipcMain.handle('get-all-projects-with-scripts', async () => {

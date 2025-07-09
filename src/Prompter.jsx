@@ -14,6 +14,9 @@ function Prompter() {
   const [fontSize, setFontSize] = useState(2)
   const [mirrorX, setMirrorX] = useState(false)
   const [mirrorY, setMirrorY] = useState(false)
+  const [transparent, setTransparent] = useState(false)
+  const [showShadow, setShowShadow] = useState(true)
+  const [showStroke, setShowStroke] = useState(false)
   const containerRef = useRef(null)
 
   useEffect(() => {
@@ -45,6 +48,10 @@ function Prompter() {
     requestId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(requestId)
   }, [autoscroll, speed])
+
+  useEffect(() => {
+    window.electronAPI.setPrompterAlwaysOnTop(transparent)
+  }, [transparent])
 
   return (
     <div className="prompter-controls">
@@ -104,6 +111,30 @@ function Prompter() {
         />
         Auto-scroll
       </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={transparent}
+          onChange={() => setTransparent(!transparent)}
+        />
+        Transparent Mode
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={showShadow}
+          onChange={() => setShowShadow(!showShadow)}
+        />
+        Text Shadow
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={showStroke}
+          onChange={() => setShowStroke(!showStroke)}
+        />
+        Text Stroke
+      </label>
 
       <div
         ref={containerRef}
@@ -112,6 +143,12 @@ function Prompter() {
           padding: `2rem ${margin}px`,
           fontSize: `${fontSize}rem`,
           transform: `scale(${mirrorX ? -1 : 1}, ${mirrorY ? -1 : 1})`,
+          background: transparent ? 'transparent' : '#000',
+          color: '#e0e0e0',
+          textShadow: showShadow
+            ? '0 0 8px rgba(0,0,0,0.8)'
+            : 'none',
+          WebkitTextStroke: showStroke ? '1px black' : '0',
         }}
         dangerouslySetInnerHTML={{ __html: content }}
       />
