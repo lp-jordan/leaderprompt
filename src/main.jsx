@@ -5,6 +5,7 @@ import './index.css'
 
 import App from './App.jsx'
 import Prompter from './Prompter.jsx'
+import DevConsole from './DevConsole.jsx'
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -12,6 +13,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/prompter" element={<Prompter />} />
+        <Route path="/dev-console" element={<DevConsole />} />
       </Routes>
     </HashRouter>
   </React.StrictMode>
