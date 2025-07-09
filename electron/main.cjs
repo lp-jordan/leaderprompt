@@ -85,10 +85,8 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
-let prompterIsTransparent = false;
-
 function createPrompterWindow(initialHtml, transparentMode = false) {
-  const baseOptions = {
+  const win = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -132,7 +130,6 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
     prompterWindows.delete(win);
     if (prompterWindow === win) {
       prompterWindow = null;
-      prompterIsTransparent = false;
     }
   });
 
@@ -163,15 +160,9 @@ app.whenReady().then(() => {
       return;
     }
 
-    if (prompterIsTransparent !== desiredTransparent) {
-      const reopen = () => createPrompterWindow(html, desiredTransparent);
-      prompterWindow.once('closed', reopen);
-      prompterWindow.close();
-      return;
-    }
-
     prompterWindow.focus();
     prompterWindow.webContents.send('load-script', html);
+    prompterWindow.webContents.send('set-transparent', desiredTransparent);
   });
 
   ipcMain.on('update-script', (_, html) => {
@@ -193,6 +184,18 @@ app.whenReady().then(() => {
     isAlwaysOnTop = !!flag;
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
+    }
+  });
+
+  ipcMain.on('close-prompter', () => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.close();
+    }
+  });
+
+  ipcMain.on('minimize-prompter', () => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.minimize();
     }
   });
 
