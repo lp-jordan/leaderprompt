@@ -19,6 +19,40 @@ function Prompter() {
   const [strokeWidth, setStrokeWidth] = useState(0)
   const containerRef = useRef(null)
 
+  const startResize = async (e, edge) => {
+    e.preventDefault()
+    const startX = e.screenX
+    const startY = e.screenY
+    const bounds = await window.electronAPI.getPrompterBounds()
+
+    const onMove = (ev) => {
+      const dx = ev.screenX - startX
+      const dy = ev.screenY - startY
+      const newBounds = { ...bounds }
+
+      if (edge.includes('right')) newBounds.width = Math.max(100, bounds.width + dx)
+      if (edge.includes('bottom')) newBounds.height = Math.max(100, bounds.height + dy)
+      if (edge.includes('left')) {
+        newBounds.width = Math.max(100, bounds.width - dx)
+        newBounds.x = bounds.x + dx
+      }
+      if (edge.includes('top')) {
+        newBounds.height = Math.max(100, bounds.height - dy)
+        newBounds.y = bounds.y + dy
+      }
+
+      window.electronAPI.setPrompterBounds(newBounds)
+    }
+
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
   useEffect(() => {
     const handleLoaded = (html) => {
       setContent(html)
@@ -63,6 +97,14 @@ function Prompter() {
   return (
     <div className="prompter-wrapper">
       <div className="drag-header" />
+      <div className="resize-handle top" onMouseDown={(e) => startResize(e, 'top')} />
+      <div className="resize-handle bottom" onMouseDown={(e) => startResize(e, 'bottom')} />
+      <div className="resize-handle left" onMouseDown={(e) => startResize(e, 'left')} />
+      <div className="resize-handle right" onMouseDown={(e) => startResize(e, 'right')} />
+      <div className="resize-handle top-left" onMouseDown={(e) => startResize(e, 'top-left')} />
+      <div className="resize-handle top-right" onMouseDown={(e) => startResize(e, 'top-right')} />
+      <div className="resize-handle bottom-left" onMouseDown={(e) => startResize(e, 'bottom-left')} />
+      <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
       <div className="prompter-controls">
       <label>
         Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
