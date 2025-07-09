@@ -11,6 +11,7 @@ let mainWindow;
 let prompterWindow;
 const prompterWindows = new Set();
 let viteProcess;
+let isAlwaysOnTop = false;
 
 const log = (...args) => console.log(...args);
 const error = (...args) => console.error(...args);
@@ -112,6 +113,7 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
       };
 
   const win = new BrowserWindow({ ...baseOptions, ...transparentOptions });
+  win.setAlwaysOnTop(isAlwaysOnTop);
   prompterIsTransparent = transparentMode;
 
   const url = app.isPackaged
@@ -188,8 +190,9 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('set-prompter-always-on-top', (_, flag) => {
+    isAlwaysOnTop = !!flag;
     if (prompterWindow && !prompterWindow.isDestroyed()) {
-      prompterWindow.setAlwaysOnTop(!!flag);
+      prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
     }
   });
 
