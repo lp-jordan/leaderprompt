@@ -20,6 +20,7 @@ function Prompter() {
   const [lineHeight, setLineHeight] = useState(1.6)
   const [textAlign, setTextAlign] = useState('left')
   const containerRef = useRef(null)
+  const initialized = useRef(false)
 
   const startResize = async (e, edge) => {
     e.preventDefault()
@@ -73,6 +74,16 @@ function Prompter() {
   }, [])
 
   useEffect(() => {
+    const handleTransparent = (flag) => {
+      setTransparent(flag)
+    }
+    window.electronAPI.onTransparentChange(handleTransparent)
+    return () => {
+      window.ipcRenderer?.removeListener('set-transparent', handleTransparent)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!autoscroll) return undefined
     let requestId
     const step = () => {
@@ -86,6 +97,10 @@ function Prompter() {
   }, [autoscroll, speed])
 
   useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true
+      return
+    }
     window.electronAPI.setPrompterAlwaysOnTop(transparent)
     const color = transparent ? 'transparent' : '#1e1e1e'
     document.documentElement.style.backgroundColor = color
