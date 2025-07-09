@@ -148,7 +148,7 @@ function createDevConsoleWindow() {
   log('Dev console window created')
 }
 
-function createPrompterWindow() {
+async function createPrompterWindow(needTransparent = false) {
   log('Creating prompter windows')
 
   const baseOptions = {
@@ -168,46 +168,65 @@ function createPrompterWindow() {
     ? pathToFile('index.html', '#/prompter')
     : 'http://localhost:5173/#/prompter';
 
-  prompterWindowOpaque = new BrowserWindow({
-    ...baseOptions,
-    backgroundColor: '#000000',
-    frame: true,
-    transparent: false,
-  });
-  prompterWindowOpaque.setAlwaysOnTop(isAlwaysOnTop);
-  prompterWindowOpaque.loadURL(url);
-  prompterWindowOpaque.webContents.on('did-finish-load', () => {
+  if (!prompterWindowOpaque || prompterWindowOpaque.isDestroyed()) {
+    prompterWindowOpaque = new BrowserWindow({
+      ...baseOptions,
+      backgroundColor: '#000000',
+      frame: true,
+      transparent: false,
+    });
+    prompterWindowOpaque.setAlwaysOnTop(isAlwaysOnTop);
+    prompterWindowOpaque.on('move', () =>
+      mirrorInactiveBoundsFrom(prompterWindowOpaque)
+    );
+    prompterWindowOpaque.on('resize', () =>
+      mirrorInactiveBoundsFrom(prompterWindowOpaque)
+    );
+    prompterWindows.add(prompterWindowOpaque);
+    prompterWindowOpaque.on('closed', () => {
+      prompterWindows.delete(prompterWindowOpaque);
+      if (prompterWindow === prompterWindowOpaque) prompterWindow = null;
+      prompterWindowOpaque = null;
+    });
+    prompterWindowOpaque.loadURL(url);
+    await new Promise((resolve) =>
+      prompterWindowOpaque.webContents.once('did-finish-load', resolve)
+    );
     prompterWindowOpaque.webContents.send('set-transparent', false);
-  });
-  prompterWindowOpaque.on('move', () => mirrorInactiveBoundsFrom(prompterWindowOpaque));
-  prompterWindowOpaque.on('resize', () => mirrorInactiveBoundsFrom(prompterWindowOpaque));
-  prompterWindows.add(prompterWindowOpaque);
-  prompterWindowOpaque.on('closed', () => {
-    prompterWindows.delete(prompterWindowOpaque);
-    if (prompterWindow === prompterWindowOpaque) prompterWindow = null;
-    prompterWindowOpaque = null;
-  });
+    prompterWindowOpaque.show();
+  }
 
-  prompterWindowTransparent = new BrowserWindow({
-    ...baseOptions,
-    backgroundColor: '#00000000',
-    frame: false,
-    transparent: true,
-    skipTaskbar: true,
-  });
-  prompterWindowTransparent.setAlwaysOnTop(isAlwaysOnTop);
-  prompterWindowTransparent.loadURL(url);
-  prompterWindowTransparent.webContents.on('did-finish-load', () => {
+  if (needTransparent && (!prompterWindowTransparent || prompterWindowTransparent.isDestroyed())) {
+    prompterWindowTransparent = new BrowserWindow({
+      ...baseOptions,
+      backgroundColor: '#00000000',
+      frame: false,
+      transparent: true,
+      skipTaskbar: true,
+    });
+    prompterWindowTransparent.setAlwaysOnTop(isAlwaysOnTop);
+    if (prompterWindowOpaque && !prompterWindowOpaque.isDestroyed()) {
+      prompterWindowTransparent.setBounds(prompterWindowOpaque.getBounds());
+    }
+    prompterWindowTransparent.on('move', () =>
+      mirrorInactiveBoundsFrom(prompterWindowTransparent)
+    );
+    prompterWindowTransparent.on('resize', () =>
+      mirrorInactiveBoundsFrom(prompterWindowTransparent)
+    );
+    prompterWindows.add(prompterWindowTransparent);
+    prompterWindowTransparent.on('closed', () => {
+      prompterWindows.delete(prompterWindowTransparent);
+      if (prompterWindow === prompterWindowTransparent) prompterWindow = null;
+      prompterWindowTransparent = null;
+    });
+    prompterWindowTransparent.loadURL(url);
+    await new Promise((resolve) =>
+      prompterWindowTransparent.webContents.once('did-finish-load', resolve)
+    );
     prompterWindowTransparent.webContents.send('set-transparent', true);
-  });
-  prompterWindowTransparent.on('move', () => mirrorInactiveBoundsFrom(prompterWindowTransparent));
-  prompterWindowTransparent.on('resize', () => mirrorInactiveBoundsFrom(prompterWindowTransparent));
-  prompterWindows.add(prompterWindowTransparent);
-  prompterWindowTransparent.on('closed', () => {
-    prompterWindows.delete(prompterWindowTransparent);
-    if (prompterWindow === prompterWindowTransparent) prompterWindow = null;
-    prompterWindowTransparent = null;
-  });
+    prompterWindowTransparent.hide();
+  }
 
   log('Prompter windows initialized');
 }
@@ -227,20 +246,13 @@ app.whenReady().then(() => {
   });
 
   // --- IPC Handlers ---
-  ipcMain.on('open-prompter', (_, html, transparentFlag) => {
+  ipcMain.on('open-prompter', async (_, html, transparentFlag) => {
     log('Received request to open prompter');
 
     const desiredTransparent = !!transparentFlag;
     currentScriptHtml = html;
 
-    if (
-      !prompterWindowOpaque ||
-      prompterWindowOpaque.isDestroyed() ||
-      !prompterWindowTransparent ||
-      prompterWindowTransparent.isDestroyed()
-    ) {
-      createPrompterWindow();
-    }
+    await createPrompterWindow(desiredTransparent);
 
     const active = desiredTransparent
       ? prompterWindowTransparent
