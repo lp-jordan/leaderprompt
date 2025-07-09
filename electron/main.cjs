@@ -19,6 +19,16 @@ let isAlwaysOnTop = false;
 let currentScriptHtml = '';
 let currentTransparent = false;
 
+function mirrorInactiveBoundsFrom(source) {
+  if (!source || source.isDestroyed() || prompterWindow !== source) return;
+  const target =
+    source === prompterWindowOpaque ? prompterWindowTransparent : prompterWindowOpaque;
+  if (target && !target.isDestroyed()) {
+    const bounds = source.getBounds();
+    target.setBounds(bounds);
+  }
+}
+
 function sendLog(msg) {
   if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
     devConsoleWindow.webContents.send('log-message', msg)
@@ -169,6 +179,8 @@ function createPrompterWindow() {
   prompterWindowOpaque.webContents.on('did-finish-load', () => {
     prompterWindowOpaque.webContents.send('set-transparent', false);
   });
+  prompterWindowOpaque.on('move', () => mirrorInactiveBoundsFrom(prompterWindowOpaque));
+  prompterWindowOpaque.on('resize', () => mirrorInactiveBoundsFrom(prompterWindowOpaque));
   prompterWindows.add(prompterWindowOpaque);
   prompterWindowOpaque.on('closed', () => {
     prompterWindows.delete(prompterWindowOpaque);
@@ -188,6 +200,8 @@ function createPrompterWindow() {
   prompterWindowTransparent.webContents.on('did-finish-load', () => {
     prompterWindowTransparent.webContents.send('set-transparent', true);
   });
+  prompterWindowTransparent.on('move', () => mirrorInactiveBoundsFrom(prompterWindowTransparent));
+  prompterWindowTransparent.on('resize', () => mirrorInactiveBoundsFrom(prompterWindowTransparent));
   prompterWindows.add(prompterWindowTransparent);
   prompterWindowTransparent.on('closed', () => {
     prompterWindows.delete(prompterWindowTransparent);
@@ -236,6 +250,9 @@ app.whenReady().then(() => {
       : prompterWindowTransparent;
 
     if (inactive && !inactive.isDestroyed()) {
+      if (active && !active.isDestroyed()) {
+        inactive.setBounds(active.getBounds());
+      }
       inactive.hide();
     }
 
@@ -302,6 +319,13 @@ app.whenReady().then(() => {
   ipcMain.on('set-prompter-bounds', (_, bounds) => {
     if (prompterWindow && !prompterWindow.isDestroyed() && bounds) {
       prompterWindow.setBounds(bounds);
+      const other =
+        prompterWindow === prompterWindowOpaque
+          ? prompterWindowTransparent
+          : prompterWindowOpaque;
+      if (other && !other.isDestroyed()) {
+        other.setBounds(bounds);
+      }
     }
     log(`Prompter bounds set: ${JSON.stringify(bounds)}`);
   });
