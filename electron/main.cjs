@@ -94,8 +94,8 @@ function createPrompterWindow(initialHtml) {
       sandbox: true,
     },
     icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
-    backgroundColor: '#000000',
-
+    backgroundColor: '#00000000',
+    frame: true,
     transparent: true,
   });
 
