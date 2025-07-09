@@ -39,11 +39,20 @@
 
 .drag-header {
   width: 100%;
-  height: 30px;
+  height: 6px;
   position: fixed;
   top: 0;
   left: 0;
+  background: rgba(0, 0, 0, 0.6);
   -webkit-app-region: drag;
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.prompter-wrapper:hover .drag-header,
+.drag-header:hover {
+  opacity: 1;
 }
 
 .resize-handle {

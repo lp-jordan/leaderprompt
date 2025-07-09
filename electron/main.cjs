@@ -135,8 +135,17 @@ app.whenReady().then(() => {
   // --- IPC Handlers ---
   ipcMain.on('open-prompter', (_, html, transparentFlag) => {
     log('Received request to open prompter');
-    if (!prompterWindow || prompterWindow.isDestroyed() || transparentFlag) {
-      createPrompterWindow(html, !!transparentFlag);
+
+    if (transparentFlag) {
+      if (prompterWindow && !prompterWindow.isDestroyed()) {
+        prompterWindow.close();
+      }
+      createPrompterWindow(html, true);
+      return;
+    }
+
+    if (!prompterWindow || prompterWindow.isDestroyed()) {
+      createPrompterWindow(html, false);
     } else {
       prompterWindow.focus();
       prompterWindow.webContents.send('load-script', html);
