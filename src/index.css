@@ -14,6 +14,10 @@
   color: #e0e0e0;
   background-color: #1e1e1e;
   --accent-color: #ffd166;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

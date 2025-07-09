@@ -15,11 +15,11 @@
 
 .prompter-controls {
   position: fixed;
-  top: 50px;
-  left: 10px;
+  top: var(--space-4);
+  left: var(--space-2);
   z-index: 999;
-  background: rgba(0,0,0,0.6);
-  padding: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  padding: var(--space-4);
   border-radius: 8px;
   color: #e0e0e0;
   font-size: 14px;
