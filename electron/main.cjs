@@ -294,10 +294,16 @@ app.whenReady().then(() => {
   });
 
   ipcMain.on('close-prompter', () => {
-    if (prompterWindow && !prompterWindow.isDestroyed()) {
-      prompterWindow.close();
-    }
-    log('Prompter window closed');
+    [prompterWindowOpaque, prompterWindowTransparent].forEach((win) => {
+      if (win && !win.isDestroyed()) {
+        win.close();
+      }
+      prompterWindows.delete(win);
+    });
+    prompterWindow = null;
+    prompterWindowOpaque = null;
+    prompterWindowTransparent = null;
+    log('Prompter windows closed');
   });
 
   ipcMain.on('minimize-prompter', () => {
