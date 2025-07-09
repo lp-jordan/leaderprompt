@@ -9,6 +9,8 @@ const pathToFile = (file, hash = '') =>
 
 let mainWindow;
 let prompterWindow;
+let prompterWindowOpaque;
+let prompterWindowTransparent;
 const prompterWindows = new Set();
 let viteProcess;
 let isAlwaysOnTop = false;
@@ -87,10 +89,11 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
-function createPrompterWindow(initialHtml, transparentMode = false) {
+function createPrompterWindow() {
   const baseOptions = {
     width: 1200,
     height: 800,
+    show: false,
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -100,42 +103,48 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
     titleBarStyle: 'default',
   };
 
-  const transparentOptions = transparentMode
-    ? {
-        backgroundColor: '#00000000',
-        frame: false,
-        transparent: true,
-      }
-    : {
-        backgroundColor: '#000000',
-        frame: true,
-        transparent: false,
-      };
-
-  const win = new BrowserWindow({ ...baseOptions, ...transparentOptions });
-  win.setAlwaysOnTop(isAlwaysOnTop);
-  currentTransparent = transparentMode;
-
   const url = app.isPackaged
     ? pathToFile('index.html', '#/prompter')
     : 'http://localhost:5173/#/prompter';
 
-  win.loadURL(url);
-  win.webContents.on('did-finish-load', () => {
-    if (initialHtml) win.webContents.send('load-script', initialHtml);
-    win.webContents.send('set-transparent', transparentMode);
+  prompterWindowOpaque = new BrowserWindow({
+    ...baseOptions,
+    backgroundColor: '#000000',
+    frame: true,
+    transparent: false,
+  });
+  prompterWindowOpaque.setAlwaysOnTop(isAlwaysOnTop);
+  prompterWindowOpaque.loadURL(url);
+  prompterWindowOpaque.webContents.on('did-finish-load', () => {
+    prompterWindowOpaque.webContents.send('set-transparent', false);
+  });
+  prompterWindows.add(prompterWindowOpaque);
+  prompterWindowOpaque.on('closed', () => {
+    prompterWindows.delete(prompterWindowOpaque);
+    if (prompterWindow === prompterWindowOpaque) prompterWindow = null;
+    prompterWindowOpaque = null;
   });
 
-  prompterWindow = win;
-  prompterWindows.add(win);
-  win.on('closed', () => {
-    prompterWindows.delete(win);
-    if (prompterWindow === win) {
-      prompterWindow = null;
-    }
+  prompterWindowTransparent = new BrowserWindow({
+    ...baseOptions,
+    backgroundColor: '#00000000',
+    frame: false,
+    transparent: true,
+    skipTaskbar: true,
+  });
+  prompterWindowTransparent.setAlwaysOnTop(isAlwaysOnTop);
+  prompterWindowTransparent.loadURL(url);
+  prompterWindowTransparent.webContents.on('did-finish-load', () => {
+    prompterWindowTransparent.webContents.send('set-transparent', true);
+  });
+  prompterWindows.add(prompterWindowTransparent);
+  prompterWindowTransparent.on('closed', () => {
+    prompterWindows.delete(prompterWindowTransparent);
+    if (prompterWindow === prompterWindowTransparent) prompterWindow = null;
+    prompterWindowTransparent = null;
   });
 
-  log('Prompter window opened');
+  log('Prompter windows initialized');
 }
 
 // --- Electron App Lifecycle ---
@@ -144,6 +153,7 @@ app.whenReady().then(() => {
   startViteServer();
   ensureDirectories();
   createMainWindow();
+  createPrompterWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -158,20 +168,35 @@ app.whenReady().then(() => {
     const desiredTransparent = !!transparentFlag;
     currentScriptHtml = html;
 
-    if (prompterWindow && !prompterWindow.isDestroyed()) {
-      if (currentTransparent !== desiredTransparent) {
-        prompterWindow.close();
-        createPrompterWindow(currentScriptHtml, desiredTransparent);
-      } else {
-        prompterWindow.focus();
-        prompterWindow.webContents.send('load-script', currentScriptHtml);
-        prompterWindow.webContents.send('set-transparent', desiredTransparent);
-      }
-      currentTransparent = desiredTransparent;
-      return;
+    if (
+      !prompterWindowOpaque ||
+      prompterWindowOpaque.isDestroyed() ||
+      !prompterWindowTransparent ||
+      prompterWindowTransparent.isDestroyed()
+    ) {
+      createPrompterWindow();
     }
-    createPrompterWindow(currentScriptHtml, desiredTransparent);
-    currentTransparent = desiredTransparent;
+
+    const active = desiredTransparent
+      ? prompterWindowTransparent
+      : prompterWindowOpaque;
+    const inactive = desiredTransparent
+      ? prompterWindowOpaque
+      : prompterWindowTransparent;
+
+    if (inactive && !inactive.isDestroyed()) {
+      inactive.hide();
+    }
+
+    if (active && !active.isDestroyed()) {
+      prompterWindow = active;
+      currentTransparent = desiredTransparent;
+      active.setAlwaysOnTop(isAlwaysOnTop);
+      active.webContents.send('load-script', currentScriptHtml);
+      active.webContents.send('set-transparent', desiredTransparent);
+      active.show();
+      active.focus();
+    }
   });
 
   ipcMain.on('update-script', (_, html) => {
