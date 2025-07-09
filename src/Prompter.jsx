@@ -138,7 +138,7 @@ function Prompter() {
         />
         Text Stroke
       </label>
-
+      </div>
       <div
         ref={containerRef}
         className="prompter-container"
@@ -155,7 +155,6 @@ function Prompter() {
         }}
         dangerouslySetInnerHTML={{ __html: content }}
       />
-      </div>
     </div>
   )
 }
