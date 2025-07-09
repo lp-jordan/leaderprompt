@@ -52,7 +52,8 @@ function Prompter() {
   useEffect(() => {
     window.electronAPI.setPrompterAlwaysOnTop(transparent)
     const root = document.documentElement
-    root.style.background = transparent ? 'transparent' : ''
+    root.style.background = transparent ? 'transparent' : '#1e1e1e'
+    root.style.backgroundColor = transparent ? 'transparent' : '#1e1e1e'
   }, [transparent])
 
   return (
