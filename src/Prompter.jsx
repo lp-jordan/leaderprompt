@@ -70,10 +70,7 @@ function Prompter() {
       if (html) setContent(html)
     })
 
-    return () => {
-      window.ipcRenderer?.removeListener('load-script', handleLoaded)
-      window.ipcRenderer?.removeListener('update-script', handleUpdated)
-    }
+    return () => {}
   }, [])
 
   useEffect(() => {
@@ -81,9 +78,7 @@ function Prompter() {
       setTransparent(flag)
     }
     window.electronAPI.onTransparentChange(handleTransparent)
-    return () => {
-      window.ipcRenderer?.removeListener('set-transparent', handleTransparent)
-    }
+    return () => {}
   }, [])
 
   useEffect(() => {
