@@ -17,6 +17,8 @@ function Prompter() {
   const [transparent, setTransparent] = useState(false)
   const [shadowStrength, setShadowStrength] = useState(8)
   const [strokeWidth, setStrokeWidth] = useState(0)
+  const [lineHeight, setLineHeight] = useState(1.6)
+  const [textAlign, setTextAlign] = useState('left')
   const containerRef = useRef(null)
 
   const startResize = async (e, edge) => {
@@ -106,91 +108,120 @@ function Prompter() {
       <div className="resize-handle bottom-left" onMouseDown={(e) => startResize(e, 'bottom-left')} />
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
       <div className="prompter-controls">
-      <label>
-        Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
-        <input
-          type="range"
-          min={MARGIN_MIN}
-          max={MARGIN_MAX}
-          value={margin}
-          onChange={(e) => setMargin(parseInt(e.target.value, 10))}
-        />
-      </label>
-      <label>
-        Speed ({Math.round(((speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100)}%):
-        <input
-          type="range"
-          min={SPEED_MIN}
-          max={SPEED_MAX}
-          value={speed}
-          step="0.05"
-          onChange={(e) => setSpeed(parseFloat(e.target.value))}
-        />
-      </label>
-      <label>
-        Font Size ({fontSize}rem):
-        <input
-          type="range"
-          min="1"
-          max="6"
-          step="0.1"
-          value={fontSize}
-          onChange={(e) => setFontSize(parseFloat(e.target.value))}
-        />
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={mirrorX}
-          onChange={() => setMirrorX(!mirrorX)}
-        />
-        Mirror Horizontal
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={mirrorY}
-          onChange={() => setMirrorY(!mirrorY)}
-        />
-        Mirror Vertical
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={autoscroll}
-          onChange={() => setAutoscroll(!autoscroll)}
-        />
-        Auto-scroll
-      </label>
-      <label>
-        <input
-          type="checkbox"
-          checked={transparent}
-          onChange={() => setTransparent(!transparent)}
-        />
-        Transparent Mode
-      </label>
-      <label>
-        Shadow ({shadowStrength}px)
-        <input
-          type="range"
-          min="0"
-          max="20"
-          value={shadowStrength}
-          onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
-        />
-      </label>
-      <label>
-        Stroke ({strokeWidth}px)
-        <input
-          type="range"
-          min="0"
-          max="4"
-          step="0.5"
-          value={strokeWidth}
-          onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
-        />
-      </label>
+        <details open>
+          <summary>Text Styling</summary>
+          <label>
+            Font Size ({fontSize}rem):
+            <input
+              type="range"
+              min="1"
+              max="6"
+              step="0.1"
+              value={fontSize}
+              onChange={(e) => setFontSize(parseFloat(e.target.value))}
+            />
+          </label>
+          <label>
+            Text Alignment:
+            <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+              <option value="justify">Justify</option>
+            </select>
+          </label>
+          <label>
+            Shadow ({shadowStrength}px)
+            <input
+              type="range"
+              min="0"
+              max="20"
+              value={shadowStrength}
+              onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
+            />
+          </label>
+          <label>
+            Stroke ({strokeWidth}px)
+            <input
+              type="range"
+              min="0"
+              max="4"
+              step="0.5"
+              value={strokeWidth}
+              onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+            />
+          </label>
+          <label>
+            Line Height ({lineHeight})
+            <input
+              type="range"
+              min="1"
+              max="3"
+              step="0.1"
+              value={lineHeight}
+              onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+            />
+          </label>
+        </details>
+        <details>
+          <summary>Layout &amp; Display</summary>
+          <label>
+            Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
+            <input
+              type="range"
+              min={MARGIN_MIN}
+              max={MARGIN_MAX}
+              value={margin}
+              onChange={(e) => setMargin(parseInt(e.target.value, 10))}
+            />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={mirrorX}
+              onChange={() => setMirrorX(!mirrorX)}
+            />
+            Mirror Horizontal
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={mirrorY}
+              onChange={() => setMirrorY(!mirrorY)}
+            />
+            Mirror Vertical
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={transparent}
+              onChange={() => setTransparent(!transparent)}
+            />
+            Transparent Mode
+          </label>
+        </details>
+        <details>
+          <summary>Behavior</summary>
+          <label>
+            Speed ({Math.round(((speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100)}%):
+            <input
+              type="range"
+              min={SPEED_MIN}
+              max={SPEED_MAX}
+              value={speed}
+              step="0.05"
+              onChange={(e) => setSpeed(parseFloat(e.target.value))}
+            />
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={autoscroll}
+              onChange={() => setAutoscroll(!autoscroll)}
+            />
+            Auto-scroll
+          </label>
+        </details>
       </div>
       <div
         ref={containerRef}
@@ -198,6 +229,8 @@ function Prompter() {
         style={{
           padding: `2rem ${margin}px`,
           fontSize: `${fontSize}rem`,
+          lineHeight,
+          textAlign,
           transform: `scale(${mirrorX ? -1 : 1}, ${mirrorY ? -1 : 1})`,
           background: transparent ? 'transparent' : '#000',
           color: '#e0e0e0',
