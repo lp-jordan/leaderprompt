@@ -140,6 +140,7 @@ function createDevConsoleWindow() {
 
 function createPrompterWindow() {
   log('Creating prompter windows')
+
   const baseOptions = {
     width: 1200,
     height: 800,
