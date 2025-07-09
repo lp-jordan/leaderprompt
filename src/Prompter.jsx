@@ -74,6 +74,16 @@ function Prompter() {
   }, [])
 
   useEffect(() => {
+    const handleTransparent = (flag) => {
+      setTransparent(flag)
+    }
+    window.electronAPI.onTransparentChange(handleTransparent)
+    return () => {
+      window.ipcRenderer?.removeListener('set-transparent', handleTransparent)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!autoscroll) return undefined
     let requestId
     const step = () => {

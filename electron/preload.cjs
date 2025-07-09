@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onScriptUpdated: (callback) =>
     ipcRenderer.on('update-script', (_, data) => callback(data)),
   sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
+  onTransparentChange: (callback) =>
+    ipcRenderer.on('set-transparent', (_, flag) => callback(flag)),
 
   // Project management
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),

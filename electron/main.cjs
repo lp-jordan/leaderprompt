@@ -121,6 +121,7 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
   win.loadURL(url);
   win.webContents.on('did-finish-load', () => {
     if (initialHtml) win.webContents.send('load-script', initialHtml);
+    win.webContents.send('set-transparent', transparentMode);
   });
 
   prompterWindow = win;
