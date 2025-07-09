@@ -84,7 +84,7 @@ function createMainWindow() {
   log('Main window created and loaded');
 }
 
-function createPrompterWindow(initialHtml) {
+function createPrompterWindow(initialHtml, transparentMode = false) {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -95,7 +95,7 @@ function createPrompterWindow(initialHtml) {
     },
     icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
     backgroundColor: '#00000000',
-    frame: true,
+    frame: !transparentMode,
     transparent: true,
     titleBarStyle: 'default',
   });
@@ -133,10 +133,10 @@ app.whenReady().then(() => {
   });
 
   // --- IPC Handlers ---
-  ipcMain.on('open-prompter', (_, html) => {
+  ipcMain.on('open-prompter', (_, html, transparentFlag) => {
     log('Received request to open prompter');
-    if (!prompterWindow || prompterWindow.isDestroyed()) {
-      createPrompterWindow(html);
+    if (!prompterWindow || prompterWindow.isDestroyed() || transparentFlag) {
+      createPrompterWindow(html, !!transparentFlag);
     } else {
       prompterWindow.focus();
       prompterWindow.webContents.send('load-script', html);

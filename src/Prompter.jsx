@@ -54,10 +54,15 @@ function Prompter() {
     const color = transparent ? 'transparent' : '#1e1e1e'
     document.documentElement.style.backgroundColor = color
     document.body.style.backgroundColor = color
-  }, [transparent])
+    if (transparent) {
+      window.electronAPI.openPrompter(content, true)
+    }
+    // intentionally omit "content" from deps
+  }, [transparent]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="prompter-wrapper">
+      <div className="drag-header" />
       <div className="prompter-controls">
       <label>
         Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
