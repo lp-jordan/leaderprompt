@@ -15,8 +15,8 @@ function Prompter() {
   const [mirrorX, setMirrorX] = useState(false)
   const [mirrorY, setMirrorY] = useState(false)
   const [transparent, setTransparent] = useState(false)
-  const [showShadow, setShowShadow] = useState(true)
-  const [showStroke, setShowStroke] = useState(false)
+  const [shadowStrength, setShadowStrength] = useState(8)
+  const [strokeWidth, setStrokeWidth] = useState(0)
   const containerRef = useRef(null)
 
   useEffect(() => {
@@ -124,20 +124,25 @@ function Prompter() {
         Transparent Mode
       </label>
       <label>
+        Shadow ({shadowStrength}px)
         <input
-          type="checkbox"
-          checked={showShadow}
-          onChange={() => setShowShadow(!showShadow)}
+          type="range"
+          min="0"
+          max="20"
+          value={shadowStrength}
+          onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
         />
-        Text Shadow
       </label>
       <label>
+        Stroke ({strokeWidth}px)
         <input
-          type="checkbox"
-          checked={showStroke}
-          onChange={() => setShowStroke(!showStroke)}
+          type="range"
+          min="0"
+          max="4"
+          step="0.5"
+          value={strokeWidth}
+          onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
         />
-        Text Stroke
       </label>
       </div>
       <div
@@ -149,10 +154,12 @@ function Prompter() {
           transform: `scale(${mirrorX ? -1 : 1}, ${mirrorY ? -1 : 1})`,
           background: transparent ? 'transparent' : '#000',
           color: '#e0e0e0',
-          textShadow: showShadow
-            ? '0 0 8px rgba(0,0,0,0.8)'
-            : 'none',
-          WebkitTextStroke: showStroke ? '1px black' : '0',
+          textShadow:
+            shadowStrength > 0
+              ? `0 0 ${shadowStrength}px rgba(0,0,0,0.8)`
+              : 'none',
+          WebkitTextStroke:
+            strokeWidth > 0 ? `${strokeWidth}px black` : '0',
         }}
         dangerouslySetInnerHTML={{ __html: content }}
       />

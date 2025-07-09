@@ -15,7 +15,7 @@
 
 .prompter-controls {
   position: fixed;
-  top: 10px;
+  top: 50px;
   left: 10px;
   z-index: 999;
   background: rgba(0,0,0,0.6);
@@ -28,8 +28,7 @@
 }
 
 .prompter-wrapper:hover .prompter-controls,
-
-.prompter-controls:focus-within {
+.prompter-controls:hover {
   opacity: 1;
 }
 
