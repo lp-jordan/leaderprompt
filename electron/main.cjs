@@ -86,7 +86,7 @@ function createMainWindow() {
 }
 
 function createPrompterWindow(initialHtml, transparentMode = false) {
-  const win = new BrowserWindow({
+  const baseOptions = {
     width: 1200,
     height: 800,
     webPreferences: {
@@ -112,7 +112,6 @@ function createPrompterWindow(initialHtml, transparentMode = false) {
 
   const win = new BrowserWindow({ ...baseOptions, ...transparentOptions });
   win.setAlwaysOnTop(isAlwaysOnTop);
-  prompterIsTransparent = transparentMode;
 
   const url = app.isPackaged
     ? pathToFile('index.html', '#/prompter')
