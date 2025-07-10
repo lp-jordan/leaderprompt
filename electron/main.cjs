@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const mammoth = require('mammoth');
@@ -56,6 +57,22 @@ function startViteServer() {
     shell: true,
   });
   log('Vite dev server started');
+}
+
+function waitForVite() {
+  const url = 'http://localhost:5173';
+  return new Promise((resolve) => {
+    const attempt = () => {
+      const req = http.get(url, () => {
+        req.destroy();
+        resolve();
+      });
+      req.on('error', () => {
+        setTimeout(attempt, 200);
+      });
+    };
+    attempt();
+  });
 }
 
 function stopViteServer() {
@@ -135,21 +152,6 @@ function createMainWindow() {
     : 'http://localhost:5173';
 
   mainWindow.loadURL(startUrl);
-
-  if (!app.isPackaged) {
-    const retryLoad = () => {
-      setTimeout(() => {
-        if (!mainWindow.isDestroyed()) {
-          mainWindow.loadURL(startUrl);
-        }
-      }, 1000);
-    };
-
-    mainWindow.webContents.on('did-fail-load', retryLoad);
-    mainWindow.webContents.once('did-finish-load', () => {
-      mainWindow.webContents.removeListener('did-fail-load', retryLoad);
-    });
-  }
 
   log('Main window created and loaded');
 }
@@ -266,9 +268,10 @@ async function createPrompterWindow(needTransparent = false) {
 }
 
 // --- Electron App Lifecycle ---
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   log('App ready');
   startViteServer();
+  await waitForVite();
   ensureDirectories();
   createMainWindow();
   createDevConsoleWindow();
