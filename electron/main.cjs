@@ -3,6 +3,7 @@ const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const mammoth = require('mammoth');
+const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
 
 const pathToFile = (file, hash = '') =>
@@ -625,6 +626,19 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     } catch (err) {
       error('Failed to load script:', err);
       return null;
+    }
+  });
+
+  ipcMain.handle('save-script', async (_, { projectName, scriptName, html }) => {
+    const dest = path.join(getProjectsPath(), projectName, scriptName);
+    log(`Saving script: ${dest}`);
+    try {
+      const buffer = await htmlToDocx(html);
+      fs.writeFileSync(dest, buffer);
+      return true;
+    } catch (err) {
+      error('Failed to save script:', err);
+      return false;
     }
   });
 
