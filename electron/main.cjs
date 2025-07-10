@@ -90,8 +90,22 @@ function ensureDirectories() {
 }
 
 function getProjectMetadata() {
-  const raw = fs.readFileSync(getProjectMetadataPath(), 'utf-8');
-  return JSON.parse(raw);
+  try {
+    const raw = fs.readFileSync(getProjectMetadataPath(), 'utf-8');
+    return JSON.parse(raw);
+  } catch (err) {
+    error('Failed to read or parse project metadata:', err);
+    const fallback = { projects: [] };
+    try {
+      fs.writeFileSync(
+        getProjectMetadataPath(),
+        JSON.stringify(fallback, null, 2),
+      );
+    } catch (writeErr) {
+      error('Failed to recreate projects.json:', writeErr);
+    }
+    return fallback;
+  }
 }
 
 function updateProjectMetadata(projectName) {
