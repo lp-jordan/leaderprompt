@@ -39,8 +39,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteScript: (projectName, scriptName) =>
     ipcRenderer.invoke('delete-script', projectName, scriptName),
 
-  onLogMessage: (callback) =>
-    ipcRenderer.on('log-message', (_, msg) => callback(msg)),
+  onLogMessage: (callback) => {
+    const handler = (_, msg) => callback(msg)
+    ipcRenderer.on('log-message', handler)
+    return () => ipcRenderer.removeListener('log-message', handler)
+  },
 
   setPrompterAlwaysOnTop: (flag) =>
     ipcRenderer.send('set-prompter-always-on-top', flag),

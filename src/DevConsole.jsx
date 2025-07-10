@@ -8,9 +8,9 @@ function DevConsole() {
     const handler = (msg) => {
       setLogs((prev) => [...prev, msg])
     }
-    window.electronAPI.onLogMessage(handler)
+    const cleanup = window.electronAPI.onLogMessage(handler)
     return () => {
-      window.ipcRenderer?.removeListener('log-message', handler)
+      cleanup?.()
     }
   }, [])
 
