@@ -61,6 +61,9 @@ function App() {
 
   const handleScriptEdit = (html) => {
     setScriptHtml(html);
+    if (selectedProject && selectedScript) {
+      window.electronAPI.saveScript(selectedProject, selectedScript, html);
+    }
     if (
       selectedProject === loadedProject &&
       selectedScript === loadedScript
@@ -70,6 +73,13 @@ function App() {
   };
 
   const handleCloseScript = () => {
+    if (selectedProject && selectedScript && scriptHtml) {
+      window.electronAPI.saveScript(
+        selectedProject,
+        selectedScript,
+        scriptHtml,
+      );
+    }
     setScriptHtml(null);
     setSelectedProject(null);
     setSelectedScript(null);

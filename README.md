@@ -26,3 +26,11 @@ This pairs with `sendUpdatedScript(html)` to keep the prompter view in sync.
 When running the Electron app in development, the main process now waits for the
 Vite dev server at `http://localhost:5173` to respond before creating any
 windows. This avoids reload loops while Vite is starting.
+
+## Script Persistence
+
+Edits made in the script editor are automatically written back to the underlying
+`.docx` file. The main process converts the edited HTML using
+`html-to-docx` and saves it to the selected project/script location via the new
+`save-script` IPC handler exposed as
+`window.electronAPI.saveScript(projectName, scriptName, html)`.
