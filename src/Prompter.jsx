@@ -96,6 +96,13 @@ function Prompter() {
 
   useEffect(() => {
     // keep window visuals in sync on every render
+    if (!initialized.current) {
+      initialized.current = true
+      return () => {
+        initialized.current = false
+      }
+    }
+
     window.electronAPI.setPrompterAlwaysOnTop(transparent)
     const color = transparent ? 'transparent' : '#1e1e1e'
     document.documentElement.style.backgroundColor = color
