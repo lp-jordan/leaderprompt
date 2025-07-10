@@ -309,11 +309,17 @@ app.whenReady().then(async () => {
       prompterWindow = active;
       currentTransparent = desiredTransparent;
       active.setAlwaysOnTop(isAlwaysOnTop);
+
+      ipcMain.once('prompter-ready', () => {
+        if (active && !active.isDestroyed()) {
+          active.show();
+          active.focus();
+          log(`Prompter window shown (transparent: ${desiredTransparent})`);
+        }
+      });
+
       active.webContents.send('load-script', currentScriptHtml);
       active.webContents.send('set-transparent', desiredTransparent);
-      active.show();
-      active.focus();
-      log(`Prompter window shown (transparent: ${desiredTransparent})`);
     }
   });
 

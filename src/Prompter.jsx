@@ -107,6 +107,7 @@ function Prompter() {
     const color = transparent ? 'transparent' : '#1e1e1e'
     document.documentElement.style.backgroundColor = color
     document.body.style.backgroundColor = color
+    window.electronAPI.prompterReady()
 
     // avoid re-opening the prompter with empty content during the
     // StrictMode double-mount
