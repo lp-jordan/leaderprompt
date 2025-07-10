@@ -89,6 +89,20 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     await loadProjects();
   };
 
+  const handleNewScript = async () => {
+    const projectName = await window.electronAPI.selectProjectFolder();
+    if (!projectName) return;
+    const scriptName = prompt('New script name:');
+    if (!scriptName) return;
+    const result = await window.electronAPI.createNewScript(projectName, scriptName);
+    if (result && result.success) {
+      await loadProjects();
+      onScriptSelect(projectName, result.scriptName);
+    } else {
+      alert('Failed to create script');
+    }
+  };
+
   const startRenameProject = (name) => {
     setRenamingScript(null);
     setRenamingProject(name);
@@ -150,7 +164,12 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     <div className="file-manager">
       <div className="file-manager-header">
         <h3>Projects</h3>
-        <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>+ New Project</button>
+        <div className="header-buttons">
+          <button onClick={handleNewScript}>+ New Script</button>
+          <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
+            + New Project
+          </button>
+        </div>
       </div>
 
       {showNewProjectInput && (

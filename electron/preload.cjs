@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteProject: (name) => ipcRenderer.invoke('delete-project', name),
   renameScript: (projectName, oldName, newName) =>
     ipcRenderer.invoke('rename-script', projectName, oldName, newName),
+  createNewScript: (projectName, scriptName) =>
+    ipcRenderer.invoke('create-new-script', projectName, scriptName),
 
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>

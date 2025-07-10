@@ -80,6 +80,11 @@ body {
   font-size: 18px;
 }
 
+.header-buttons {
+  display: flex;
+  gap: var(--space-2);
+}
+
 .file-manager-header button {
   padding: var(--space-2) var(--space-4);
   background-color: #333;

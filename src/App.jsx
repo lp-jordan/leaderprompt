@@ -91,7 +91,7 @@ function App() {
       <div className="right-panel">
         <ScriptViewer
           scriptHtml={scriptHtml}
-          showLogo={!scriptHtml}
+          showLogo={scriptHtml === null}
           onSend={handleSendToPrompter}
           onEdit={handleScriptEdit}
           onClose={handleCloseScript}
