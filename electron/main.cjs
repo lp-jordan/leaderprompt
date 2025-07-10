@@ -121,6 +121,22 @@ function createMainWindow() {
     : 'http://localhost:5173';
 
   mainWindow.loadURL(startUrl);
+
+  if (!app.isPackaged) {
+    const retryLoad = () => {
+      setTimeout(() => {
+        if (!mainWindow.isDestroyed()) {
+          mainWindow.loadURL(startUrl);
+        }
+      }, 1000);
+    };
+
+    mainWindow.webContents.on('did-fail-load', retryLoad);
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.removeListener('did-fail-load', retryLoad);
+    });
+  }
+
   log('Main window created and loaded');
 }
 
