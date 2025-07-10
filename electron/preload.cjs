@@ -54,4 +54,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPrompterBounds: () => ipcRenderer.invoke('get-prompter-bounds'),
   setPrompterBounds: (bounds) =>
     ipcRenderer.send('set-prompter-bounds', bounds),
+
+  prompterReady: () => ipcRenderer.send('prompter-ready'),
 });
