@@ -216,7 +216,11 @@ body {
   color: #e0e0e0;
 }
 
-.loaded-indicator {
+.script-item.prompting .script-button {
+  color: var(--accent-color);
+}
+
+.status-indicator {
   margin-left: 0.5rem;
   font-size: 0.8rem;
   color: var(--accent-color);

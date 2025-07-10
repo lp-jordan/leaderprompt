@@ -1,14 +1,20 @@
 import './ScriptViewer.css';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
 import { useEffect, useRef } from 'react';
-
-function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit, onClose }) {
+function ScriptViewer({
+  scriptHtml,
+  scriptName,
+  showLogo,
+  onSend,
+  onEdit,
+  onClose,
+}) {
   const contentRef = useRef(null);
 
   useEffect(() => {
     if (
       contentRef.current &&
-      scriptHtml &&
+      scriptHtml !== null &&
       contentRef.current.innerHTML !== scriptHtml
     ) {
       contentRef.current.innerHTML = scriptHtml;
@@ -28,38 +34,38 @@ function ScriptViewer({ scriptHtml, showLogo, onSend, onEdit, onClose }) {
   };
   
   return (
-      <div className="script-viewer">
-        <div className="viewer-header">
-
-          <div className="header-left">
-            {!showLogo && <h2 className="header-title">Script Editor</h2>}
-            {!showLogo && (
-              <button className="close-button" onClick={onClose}>
-                Close
-              </button>
-            )}
-          </div>
-          <img src={leaderLogo} alt="LeaderPrompt Logo" className="header-logo" />
+    <div className="script-viewer">
+      <div className="viewer-header">
+        <div className="header-left">
+          <h2 className="header-title">Script Viewer</h2>
+          {!showLogo && (
+            <button className="close-button" onClick={onClose}>Close</button>
+          )}
         </div>
-        {showLogo ? (
-          <div className="load-placeholder">Please load a script</div>
-        ) : (
-          <>
-            <div
-              ref={contentRef}
-              className="script-content"
-              contentEditable
-              onBlur={handleBlur}
-              onInput={handleInput}
-            />
-            <div className="send-button-wrapper">
-              <button className="send-button" onClick={onSend}>
-                Let&apos;s Go!
-              </button>
-            </div>
-          </>
-        )}
+        <img src={leaderLogo} alt="LeaderPrompt Logo" className="header-logo" />
       </div>
+      {scriptName && (
+        <div className="script-name">{scriptName.replace(/\.[^/.]+$/, '')}</div>
+      )}
+      {showLogo ? (
+        <div className="load-placeholder">Please load a script</div>
+      ) : (
+        <>
+          <div
+            ref={contentRef}
+            className="script-content"
+            contentEditable
+            onBlur={handleBlur}
+            onInput={handleInput}
+          />
+          <div className="send-button-wrapper">
+            <button className="send-button" onClick={onSend}>
+              Let&apos;s Go!
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
