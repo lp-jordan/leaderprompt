@@ -12,6 +12,7 @@ function App() {
   const [leftWidth, setLeftWidth] = useState(300);
   const leftRef = useRef(null);
   const isDragging = useRef(false);
+  const saveTimeout = useRef(null);
 
   const onDrag = (e) => {
     if (!isDragging.current) return;
@@ -62,7 +63,13 @@ function App() {
   const handleScriptEdit = (html) => {
     setScriptHtml(html);
     if (selectedProject && selectedScript) {
-      window.electronAPI.saveScript(selectedProject, selectedScript, html);
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current);
+      }
+      saveTimeout.current = setTimeout(() => {
+        window.electronAPI.saveScript(selectedProject, selectedScript, html);
+        saveTimeout.current = null;
+      }, 300);
     }
     if (
       selectedProject === loadedProject &&
@@ -73,6 +80,10 @@ function App() {
   };
 
   const handleCloseScript = () => {
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = null;
+    }
     if (selectedProject && selectedScript && scriptHtml) {
       window.electronAPI.saveScript(
         selectedProject,
