@@ -116,7 +116,11 @@ function createMainWindow() {
     backgroundColor: '#000000',
   });
 
-  mainWindow.loadURL('http://localhost:5173');
+  const startUrl = app.isPackaged
+    ? pathToFile('dist/index.html')
+    : 'http://localhost:5173';
+
+  mainWindow.loadURL(startUrl);
   log('Main window created and loaded');
 }
 
