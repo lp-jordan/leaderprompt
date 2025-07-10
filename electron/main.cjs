@@ -20,6 +20,7 @@ let viteProcess;
 let isAlwaysOnTop = false;
 let currentScriptHtml = '';
 let currentTransparent = false;
+const NEW_PROJECT_SENTINEL = '__NEW_PROJECT__';
 
 function mirrorInactiveBoundsFrom(source) {
   if (!source || source.isDestroyed() || prompterWindow !== source) return;
@@ -436,13 +437,8 @@ app.whenReady().then(async () => {
       });
       return choice.response === choices.length ? null : choices[choice.response];
     } else {
-      // Placeholder prompt - improve later
-      log('Creating new project via fallback name');
-      const projectName = 'Untitled Project';
-      const newFolder = path.join(getProjectsPath(), projectName);
-      fs.mkdirSync(newFolder, { recursive: true });
-      updateProjectMetadata(projectName);
-      return projectName;
+      log('Create new project requested');
+      return NEW_PROJECT_SENTINEL;
     }
   });
 
