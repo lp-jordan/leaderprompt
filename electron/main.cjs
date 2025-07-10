@@ -489,6 +489,46 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle('create-new-script', async (_, projectName, scriptName) => {
+    log(`Creating new script ${scriptName} in project ${projectName}`);
+    if (!projectName || !scriptName) return { success: false };
+    try {
+      const base = path.join(getProjectsPath(), projectName);
+      if (!fs.existsSync(base)) {
+        fs.mkdirSync(base, { recursive: true });
+        updateProjectMetadata(projectName);
+      }
+
+      let finalName = scriptName;
+      if (!finalName.toLowerCase().endsWith('.docx')) {
+        finalName += '.docx';
+      }
+      const rootName = finalName.replace(/\.docx$/i, '');
+      let candidate = rootName;
+      let counter = 1;
+      while (fs.existsSync(path.join(base, `${candidate}.docx`))) {
+        candidate = `${rootName} ${counter}`;
+        counter += 1;
+      }
+      finalName = `${candidate}.docx`;
+      const dest = path.join(base, finalName);
+      const template = path.join(
+        __dirname,
+        '..',
+        'node_modules',
+        'mammoth',
+        'test',
+        'test-data',
+        'empty.docx'
+      );
+      fs.copyFileSync(template, dest);
+      return { success: true, scriptName: finalName };
+    } catch (err) {
+      error('Failed to create new script:', err);
+      return { success: false };
+    }
+  });
+
 ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) => {
   log(`Importing scripts to project: ${projectName}`);
   if (!Array.isArray(filePaths) || !filePaths.length || !projectName) {
