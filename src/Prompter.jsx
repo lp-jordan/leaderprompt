@@ -95,16 +95,28 @@ function Prompter() {
   }, [autoscroll, speed])
 
   useEffect(() => {
+    // keep window visuals in sync on every render
     if (!initialized.current) {
       initialized.current = true
       return () => {
         initialized.current = false
       }
     }
+
     window.electronAPI.setPrompterAlwaysOnTop(transparent)
     const color = transparent ? 'transparent' : '#1e1e1e'
     document.documentElement.style.backgroundColor = color
     document.body.style.backgroundColor = color
+
+    // avoid re-opening the prompter with empty content during the
+    // StrictMode double-mount
+    if (!initialized.current) {
+      initialized.current = true
+      return () => {
+        initialized.current = false
+      }
+    }
+
     window.electronAPI.openPrompter(content, transparent)
     // intentionally omit "content" from deps
   }, [transparent]) // eslint-disable-line react-hooks/exhaustive-deps
