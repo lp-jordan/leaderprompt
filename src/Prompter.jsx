@@ -97,7 +97,9 @@ function Prompter() {
   useEffect(() => {
     if (!initialized.current) {
       initialized.current = true
-      return
+      return () => {
+        initialized.current = false
+      }
     }
     window.electronAPI.setPrompterAlwaysOnTop(transparent)
     const color = transparent ? 'transparent' : '#1e1e1e'
