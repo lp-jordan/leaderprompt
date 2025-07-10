@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import ActionMenu from './ActionMenu';
+import NameModal from './NameModal';
 
 function PencilIcon() {
   return (
@@ -47,6 +48,7 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
   const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
+  const [newScriptProject, setNewScriptProject] = useState(null);
 
   useEffect(() => {
     loadProjects();
@@ -91,15 +93,8 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
 
   const handleNewScript = async () => {
     const projectName = await window.electronAPI.selectProjectFolder();
-    if (!projectName) return;
-    const scriptName = prompt('New script name:');
-    if (!scriptName) return;
-    const result = await window.electronAPI.createNewScript(projectName, scriptName);
-    if (result && result.success) {
-      await loadProjects();
-      onScriptSelect(projectName, result.scriptName);
-    } else {
-      alert('Failed to create script');
+    if (projectName) {
+      setNewScriptProject(projectName);
     }
   };
 
@@ -140,6 +135,21 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
     cancelRename();
     await loadProjects();
   };
+
+  const confirmNewScript = async (name) => {
+    const projectName = newScriptProject;
+    setNewScriptProject(null);
+    if (!name || !projectName) return;
+    const result = await window.electronAPI.createNewScript(projectName, name);
+    if (result && result.success) {
+      await loadProjects();
+      onScriptSelect(projectName, result.scriptName);
+    } else {
+      alert('Failed to create script');
+    }
+  };
+
+  const cancelNewScript = () => setNewScriptProject(null);
 
   const handleDeleteProject = async (projectName) => {
     const deleted = await window.electronAPI.deleteProject(projectName);
@@ -281,6 +291,14 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
           </div>
         ))}
       </div>
+      {newScriptProject && (
+        <NameModal
+          title="New Script Name"
+          placeholder="Script name"
+          onConfirm={confirmNewScript}
+          onCancel={cancelNewScript}
+        />
+      )}
     </div>
   );
 }

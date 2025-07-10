@@ -22,3 +22,7 @@ window.electronAPI.onScriptUpdated((html) => {
 ```
 
 This pairs with `sendUpdatedScript(html)` to keep the prompter view in sync.
+
+When running the Electron app in development, the main process now waits for the
+Vite dev server at `http://localhost:5173` to respond before creating any
+windows. This avoids reload loops while Vite is starting.
