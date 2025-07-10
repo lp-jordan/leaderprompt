@@ -106,12 +106,15 @@ function App() {
           onScriptSelect={handleScriptSelect}
           loadedProject={loadedProject}
           loadedScript={loadedScript}
+          currentProject={selectedProject}
+          currentScript={selectedScript}
         />
       </div>
       <div className="divider" onMouseDown={startDrag} />
       <div className="right-panel">
         <ScriptViewer
           scriptHtml={scriptHtml}
+          scriptName={selectedScript}
           showLogo={scriptHtml === null}
           onSend={handleSendToPrompter}
           onEdit={handleScriptEdit}

@@ -66,8 +66,19 @@
   text-decoration: none;
 }
 
-.lets-go-button {
-  margin: 1rem auto 2rem auto;
+.script-name {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
+
+.send-button-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0 2rem;
+}
+
+.send-button {
   padding: var(--space-3) calc(var(--space-2) * 3);
   font-size: 16px;
   background-color: var(--accent-color);
@@ -75,10 +86,9 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  align-self: center;
 }
 
-.lets-go-button:hover {
+.send-button:hover {
   background-color: var(--accent-color);
 }
 

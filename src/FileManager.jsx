@@ -40,7 +40,13 @@ function TrashIcon() {
   );
 }
 
-function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
+function FileManager({
+  onScriptSelect,
+  loadedProject,
+  loadedScript,
+  currentProject,
+  currentScript,
+}) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
@@ -234,8 +240,10 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
             </div>
             <ul>
               {project.scripts.map((script) => {
-                const isLoaded =
+                const isPrompting =
                   loadedProject === project.name && loadedScript === script;
+                const isLoaded =
+                  currentProject === project.name && currentScript === script;
                 const isRenaming =
                   renamingScript &&
                   renamingScript.projectName === project.name &&
@@ -243,7 +251,9 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
                 return (
                   <li
                     key={script}
-                    className={`script-item${isLoaded ? ' loaded' : ''}`}
+                    className={`script-item${
+                      isPrompting ? ' prompting' : ''
+                    }${isLoaded ? ' loaded' : ''}`}
                   >
                     {isRenaming ? (
                       <>
@@ -264,7 +274,10 @@ function FileManager({ onScriptSelect, loadedProject, loadedScript }) {
                           {script.replace(/\.[^/.]+$/, '')}
                         </button>
                         {isLoaded && (
-                          <span className="loaded-indicator">(loaded)</span>
+                          <span className="status-indicator">(loaded)</span>
+                        )}
+                        {isPrompting && (
+                          <span className="status-indicator">(prompting)</span>
                         )}
                         <div className="script-actions">
                           <button
