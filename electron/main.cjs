@@ -243,6 +243,7 @@ async function createPrompterWindow(needTransparent = false) {
       skipTaskbar: true,
     });
     prompterWindowTransparent.setAlwaysOnTop(isAlwaysOnTop);
+    prompterWindowTransparent.setIgnoreMouseEvents(true, { forward: true });
     if (prompterWindowOpaque && !prompterWindowOpaque.isDestroyed()) {
       prompterWindowTransparent.setBounds(prompterWindowOpaque.getBounds());
     }
@@ -311,6 +312,7 @@ app.whenReady().then(async () => {
       prompterWindow = active;
       currentTransparent = desiredTransparent;
       active.setAlwaysOnTop(isAlwaysOnTop);
+      active.setIgnoreMouseEvents(desiredTransparent, { forward: true });
 
       ipcMain.once('prompter-ready', () => {
         if (active && !active.isDestroyed()) {

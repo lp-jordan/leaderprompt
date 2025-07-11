@@ -177,8 +177,6 @@ function Prompter() {
 
     // force a repaint to avoid flicker when switching modes
     requestAnimationFrame(() => {})
-
-    window.electronAPI.prompterReady()
   }, [transparent])
 
   // (re)open the prompter window when transparency changes
@@ -189,6 +187,7 @@ function Prompter() {
       window.electronAPI.openPrompter(content, transparent)
     } else {
       mountedRef.current = true
+      window.electronAPI.prompterReady()
     }
     // intentionally omit "content" from deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
