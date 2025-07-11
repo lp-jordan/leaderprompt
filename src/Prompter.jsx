@@ -76,8 +76,9 @@ function Prompter() {
 
   // Initial script loading on mount only
   useEffect(() => {
+    let ready = false
     const handleLoaded = (html) => {
-      setContent(html)
+      if (ready) setContent(html)
     }
     const handleUpdated = (html) => {
       setContent(html)
@@ -87,6 +88,7 @@ function Prompter() {
     window.electronAPI.onScriptUpdated(handleUpdated)
     window.electronAPI.getCurrentScript().then((html) => {
       if (html) setContent(html)
+      ready = true
     })
 
     return () => {}
