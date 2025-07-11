@@ -196,26 +196,8 @@ function Prompter() {
     // intentionally omit "content" from deps
   }, [transparent]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const headerStyle = {
-    height: transparent ? '6px' : '28px',
-    background: transparent ? 'rgba(0,0,0,0.1)' : '#333',
-    boxShadow: transparent ? 'none' : '0 2px 4px rgba(0,0,0,0.5)',
-  }
-
   return (
     <div className="prompter-wrapper">
-      <div className="drag-header" style={headerStyle}>
-        {!transparent && (
-          <div className="window-buttons">
-            <button onClick={() => window.electronAPI.minimizePrompter()}>
-              &minus;
-            </button>
-            <button onClick={() => window.electronAPI.closePrompter()}>
-              &times;
-            </button>
-          </div>
-        )}
-      </div>
       <div className="resize-handle top" onMouseDown={(e) => startResize(e, 'top')} />
       <div className="resize-handle bottom" onMouseDown={(e) => startResize(e, 'bottom')} />
       <div className="resize-handle left" onMouseDown={(e) => startResize(e, 'left')} />
