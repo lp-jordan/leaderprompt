@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import ActionMenu from './ActionMenu';
 import NameModal from './NameModal';
 import MessageModal from './MessageModal';
-
-const NEW_PROJECT_SENTINEL = '__NEW_PROJECT__';
+import ProjectSelectModal from './ProjectSelectModal';
 
 function PencilIcon() {
   return (
@@ -59,6 +58,7 @@ function FileManager({
   const [collapsed, setCollapsed] = useState({});
   const [newScriptProject, setNewScriptProject] = useState(null);
   const [showProjectNameModal, setShowProjectNameModal] = useState(false);
+  const [showProjectSelectModal, setShowProjectSelectModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
@@ -102,13 +102,8 @@ function FileManager({
     await loadProjects();
   };
 
-  const handleNewScript = async () => {
-    const projectName = await window.electronAPI.selectProjectFolder();
-    if (projectName === NEW_PROJECT_SENTINEL) {
-      setShowProjectNameModal(true);
-    } else if (projectName) {
-      setNewScriptProject(projectName);
-    }
+  const handleNewScript = () => {
+    setShowProjectSelectModal(true);
   };
 
   const confirmNewProjectForScript = async (name) => {
@@ -124,6 +119,18 @@ function FileManager({
   };
 
   const cancelNewProjectForScript = () => setShowProjectNameModal(false);
+
+  const cancelProjectSelect = () => setShowProjectSelectModal(false);
+
+  const openNewProjectForScript = () => {
+    setShowProjectSelectModal(false);
+    setShowProjectNameModal(true);
+  };
+
+  const chooseExistingProject = (name) => {
+    setShowProjectSelectModal(false);
+    if (name) setNewScriptProject(name);
+  };
 
   const startRenameProject = (name) => {
     setRenamingScript(null);
@@ -332,6 +339,14 @@ function FileManager({
           </div>
         ))}
       </div>
+      {showProjectSelectModal && (
+        <ProjectSelectModal
+          projects={projects.map((p) => p.name)}
+          onCreateNew={openNewProjectForScript}
+          onSelect={chooseExistingProject}
+          onCancel={cancelProjectSelect}
+        />
+      )}
       {showProjectNameModal && (
         <NameModal
           title="New Project Name"
