@@ -10,7 +10,7 @@ function Prompter() {
   const [content, setContent] = useState('')
   const [autoscroll, setAutoscroll] = useState(false)
   const [speed, setSpeed] = useState(1)
-  const [margin, setMargin] = useState(100)
+  const [margin, setMargin] = useState(MARGIN_MAX)
   const [fontSize, setFontSize] = useState(2)
   const [mirrorX, setMirrorX] = useState(false)
   const [mirrorY, setMirrorY] = useState(false)
@@ -22,12 +22,13 @@ function Prompter() {
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const containerRef = useRef(null)
 
   const resetDefaults = () => {
     setAutoscroll(false)
     setSpeed(1)
-    setMargin(100)
+    setMargin(MARGIN_MAX)
     setFontSize(2)
     setMirrorX(false)
     setMirrorY(false)
@@ -180,7 +181,14 @@ function Prompter() {
       <div className="resize-handle top-right" onMouseDown={(e) => startResize(e, 'top-right')} />
       <div className="resize-handle bottom-left" onMouseDown={(e) => startResize(e, 'bottom-left')} />
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
-      <div className="top-controls">
+      <button
+        className="sidebar-toggle"
+        style={{ left: sidebarOpen ? '220px' : '0' }}
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+      >
+        {sidebarOpen ? '←' : '→'}
+      </button>
+      <div className={`side-controls ${sidebarOpen ? 'open' : ''}`}>
         <label>
           <input
             type="checkbox"
