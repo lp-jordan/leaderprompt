@@ -24,7 +24,6 @@ function Prompter() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const containerRef = useRef(null)
-  const initialized = useRef(false)
 
   const resetDefaults = () => {
     setAutoscroll(false)
@@ -168,33 +167,30 @@ function Prompter() {
     }
   }, [notecardMode])
 
+  // keep window visuals in sync with transparency mode
   useEffect(() => {
-    // keep window visuals in sync on every render
-    if (!initialized.current) {
-      initialized.current = true
-      return () => {
-        initialized.current = false
-      }
-    }
-
     window.electronAPI.setPrompterAlwaysOnTop(transparent)
     const color = transparent ? 'transparent' : '#1e1e1e'
     document.documentElement.style.backgroundColor = color
     document.body.style.backgroundColor = color
+
+    // force a repaint to avoid flicker when switching modes
+    requestAnimationFrame(() => {})
+
     window.electronAPI.prompterReady()
+  }, [transparent])
 
-    // avoid re-opening the prompter with empty content during the
-    // StrictMode double-mount
-    if (!initialized.current) {
-      initialized.current = true
-      return () => {
-        initialized.current = false
-      }
+  // (re)open the prompter window when transparency changes
+  const openedRef = useRef(false)
+  useEffect(() => {
+    if (openedRef.current) {
+      window.electronAPI.openPrompter(content, transparent)
+    } else {
+      openedRef.current = true
     }
-
-    window.electronAPI.openPrompter(content, transparent)
     // intentionally omit "content" from deps
-  }, [transparent]) // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transparent])
 
   return (
     <div className="prompter-wrapper">
