@@ -247,8 +247,13 @@ function Prompter() {
         <button
           className="settings-button"
           onClick={() => {
-            setSettingsOpen(!settingsOpen)
-            if (settingsOpen) setAdvancedOpen(false)
+            const next = !settingsOpen
+            setSettingsOpen(next)
+            if (next) {
+              setAdvancedOpen(true)
+            } else {
+              setAdvancedOpen(false)
+            }
           }}
         >
           ⚙
@@ -281,9 +286,7 @@ function Prompter() {
                 onChange={(e) => setMargin(parseInt(e.target.value, 10))}
               />
             </label>
-            <button onClick={() => setAdvancedOpen(!advancedOpen)}>
-              {advancedOpen ? 'Close Advanced' : 'Advanced'}
-            </button>
+            {/* Advanced panel now opens automatically when the settings button is pressed */}
             <button onClick={resetDefaults}>Reset to defaults</button>
           </div>
           )}
