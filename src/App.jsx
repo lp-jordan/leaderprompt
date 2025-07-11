@@ -1,5 +1,5 @@
 import './App.css';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 
@@ -59,6 +59,16 @@ function App() {
       setLoadedScript(selectedScript);
     }
   };
+
+  useEffect(() => {
+    const cleanup = window.electronAPI.onPrompterClosed(() => {
+      setLoadedProject(null);
+      setLoadedScript(null);
+    });
+    return () => {
+      cleanup?.();
+    };
+  }, []);
 
   const handleScriptEdit = (html) => {
     setScriptHtml(html);
