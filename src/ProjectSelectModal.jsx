@@ -19,23 +19,26 @@ function ProjectSelectModal({ projects = [], onCreateNew, onSelect, onCancel }) 
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-window">
-        <h3>Select Project</h3>
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-window" onClick={(e) => e.stopPropagation()}>
+        <h3>Select Script Location</h3>
         <button onClick={onCreateNew}>Create New Project</button>
         {projects.length > 0 ? (
-          <select
-            ref={selectRef}
-            value={selected}
-            onChange={(e) => setSelected(e.target.value)}
-            onKeyDown={handleKeyDown}
-          >
-            {projects.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+          <>
+            <h4>Existing Projects</h4>
+            <select
+              ref={selectRef}
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+              onKeyDown={handleKeyDown}
+            >
+              {projects.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </>
         ) : (
           <p>No projects available. Create a new one.</p>
         )}

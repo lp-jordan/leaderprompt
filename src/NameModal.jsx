@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-function NameModal({ title, placeholder, onConfirm, onCancel }) {
+function NameModal({ title, placeholder, onConfirm, onCancel, onBack }) {
   const [value, setValue] = useState('');
   const inputRef = useRef(null);
 
@@ -19,8 +19,8 @@ function NameModal({ title, placeholder, onConfirm, onCancel }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-window">
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-window" onClick={(e) => e.stopPropagation()}>
         <h3>{title}</h3>
         <input
           ref={inputRef}
@@ -31,6 +31,7 @@ function NameModal({ title, placeholder, onConfirm, onCancel }) {
           onKeyDown={handleKeyDown}
         />
         <div className="modal-actions">
+          {onBack && <button onClick={onBack}>Back</button>}
           <button onClick={onCancel}>Cancel</button>
           <button onClick={() => onConfirm(value.trim())}>OK</button>
         </div>

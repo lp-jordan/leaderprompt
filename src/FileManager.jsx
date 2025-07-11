@@ -132,6 +132,11 @@ function FileManager({
     if (name) setNewScriptProject(name);
   };
 
+  const backToProjectSelect = () => {
+    setNewScriptProject(null);
+    setShowProjectSelectModal(true);
+  };
+
   const startRenameProject = (name) => {
     setRenamingScript(null);
     setRenamingProject(name);
@@ -361,6 +366,7 @@ function FileManager({
           placeholder="Script name"
           onConfirm={confirmNewScript}
           onCancel={cancelNewScript}
+          onBack={backToProjectSelect}
         />
       )}
       {errorMessage && (
