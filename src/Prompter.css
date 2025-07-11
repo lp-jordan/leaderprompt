@@ -176,11 +176,10 @@
 }
 
 .settings-panel {
-  position: absolute;
+  position: relative;
   top: 0;
   left: 0;
-  width: 260px;
-  height: 100vh;
+  width: 100%;
   background: rgba(0, 0, 0, 0.8);
   padding: var(--space-4);
   overflow-y: auto;
@@ -199,7 +198,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  width: 260px;
+  width: 100%;
   background: rgba(0, 0, 0, 0.8);
   padding: var(--space-4);
   overflow-y: auto;

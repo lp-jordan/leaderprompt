@@ -288,10 +288,8 @@ function Prompter() {
             <button className="advanced-toggle" onClick={() => setAdvancedOpen(!advancedOpen)}>
               ⚙
             </button>
-          </div>
-          )}
-          {advancedOpen && (
-            <div className={`advanced-panel ${advancedOpen ? 'open' : ''}`}>
+            {advancedOpen && (
+              <div className={`advanced-panel ${advancedOpen ? 'open' : ''}`}>
               <h4>Advanced Settings</h4>
               <label>
                 Line Height ({lineHeight})
@@ -336,7 +334,9 @@ function Prompter() {
                   <option value="justify">Justify</option>
                 </select>
               </label>
-            </div>
+              </div>
+            )}
+          </div>
           )}
         </div>
       )}
