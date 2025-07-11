@@ -13,8 +13,8 @@ function MessageModal({ title = 'Message', message, onClose }) {
   }, [onClose]);
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-window">
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-window" onClick={(e) => e.stopPropagation()}>
         {title && <h3>{title}</h3>}
         <p>{message}</p>
         <div className="modal-actions">
