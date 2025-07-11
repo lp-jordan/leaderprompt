@@ -159,27 +159,40 @@
   cursor: pointer;
 }
 
-.settings-panel {
+.advanced-toggle {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.settings-wrapper {
   position: fixed;
   top: 0;
-  right: 0;
+  left: 0;
+  width: 260px;
+  z-index: 998;
+}
+
+.settings-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 260px;
   height: 100vh;
   background: rgba(0, 0, 0, 0.8);
   padding: var(--space-4);
   overflow-y: auto;
-  z-index: 998;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
 }
 
-.settings-wrapper {
-  position: relative;
-  top: 0;
-  right: 0;
-  width: 260px;
-  z-index: 998;
+.settings-panel.open {
+  transform: translateX(0);
 }
 
 .advanced-panel {
