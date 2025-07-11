@@ -197,6 +197,7 @@ async function createPrompterWindow(needTransparent = false) {
       preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
       sandbox: true,
+      backgroundThrottling: false,
     },
     icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
     titleBarStyle: 'default',
@@ -228,10 +229,9 @@ async function createPrompterWindow(needTransparent = false) {
     });
     prompterWindowOpaque.loadURL(url);
     await new Promise((resolve) =>
-      prompterWindowOpaque.webContents.once('did-finish-load', resolve)
+      prompterWindowOpaque.once('ready-to-show', resolve)
     );
     prompterWindowOpaque.webContents.send('set-transparent', false);
-    prompterWindowOpaque.show();
   }
 
   if (needTransparent && (!prompterWindowTransparent || prompterWindowTransparent.isDestroyed())) {
@@ -261,7 +261,7 @@ async function createPrompterWindow(needTransparent = false) {
     });
     prompterWindowTransparent.loadURL(url);
     await new Promise((resolve) =>
-      prompterWindowTransparent.webContents.once('did-finish-load', resolve)
+      prompterWindowTransparent.once('ready-to-show', resolve)
     );
     prompterWindowTransparent.webContents.send('set-transparent', true);
     prompterWindowTransparent.hide();
@@ -298,6 +298,22 @@ app.whenReady().then(async () => {
     const desiredTransparent = !!transparentFlag;
     currentScriptHtml = html;
 
+    if (
+      prompterWindow &&
+      !prompterWindow.isDestroyed() &&
+      currentTransparent !== desiredTransparent
+    ) {
+      [prompterWindowOpaque, prompterWindowTransparent].forEach((win) => {
+        if (win && !win.isDestroyed()) {
+          win.close();
+          prompterWindows.delete(win);
+        }
+      });
+      prompterWindow = null;
+      prompterWindowOpaque = null;
+      prompterWindowTransparent = null;
+    }
+
     await createPrompterWindow(desiredTransparent);
 
     const active = desiredTransparent
@@ -320,12 +336,17 @@ app.whenReady().then(async () => {
       active.setAlwaysOnTop(isAlwaysOnTop);
       active.setIgnoreMouseEvents(desiredTransparent, { forward: true });
 
-      ipcMain.once('prompter-ready', () => {
+      const showWindow = () => {
         if (active && !active.isDestroyed()) {
           active.show();
           active.focus();
           log(`Prompter window shown (transparent: ${desiredTransparent})`);
         }
+      };
+
+      ipcMain.once('prompter-ready', () => {
+        if (active.isReadyToShow()) showWindow();
+        else active.once('ready-to-show', showWindow);
       });
 
       active.webContents.send('load-script', currentScriptHtml);

@@ -7,7 +7,7 @@ import App from './App.jsx'
 import Prompter from './Prompter.jsx'
 import DevConsole from './DevConsole.jsx'
 
-function DevIcon() {
+export function DevIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
