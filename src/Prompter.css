@@ -13,41 +13,6 @@
 }
 
 
-.drag-header {
-  width: 100%;
-  position: fixed;
-  top: 0;
-  left: 0;
-  -webkit-app-region: drag;
-  z-index: 999;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.prompter-wrapper:hover .drag-header,
-.drag-header:hover {
-  opacity: 1;
-}
-
-.window-buttons {
-  position: absolute;
-  top: 0;
-  right: 4px;
-  display: flex;
-  gap: 4px;
-  -webkit-app-region: no-drag;
-}
-
-.window-buttons button {
-  width: 18px;
-  height: 18px;
-  font-size: 12px;
-  border: none;
-  background: transparent;
-  color: #fff;
-  cursor: pointer;
-  padding: 0;
-}
 
 .resize-handle {
   position: fixed;
