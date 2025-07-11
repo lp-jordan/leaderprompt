@@ -252,8 +252,7 @@ app.whenReady().then(async () => {
       };
 
       ipcMain.once('prompter-ready', () => {
-        if (prompterWindow.isReadyToShow()) showWindow();
-        else prompterWindow.once('ready-to-show', showWindow);
+        prompterWindow.once('ready-to-show', showWindow);
       });
 
       prompterWindow.webContents.send('load-script', currentScriptHtml);
