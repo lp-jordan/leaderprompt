@@ -276,7 +276,6 @@ app.whenReady().then(async () => {
   await waitForVite();
   ensureDirectories();
   createMainWindow();
-  createDevConsoleWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -285,6 +284,13 @@ app.whenReady().then(async () => {
   });
 
   // --- IPC Handlers ---
+  ipcMain.on('open-dev-console', () => {
+    createDevConsoleWindow();
+    if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
+      devConsoleWindow.show();
+      devConsoleWindow.focus();
+    }
+  });
   ipcMain.on('open-prompter', async (_, html, transparentFlag) => {
     log('Received request to open prompter');
 
