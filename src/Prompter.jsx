@@ -20,6 +20,7 @@ function Prompter() {
   const [lineHeight, setLineHeight] = useState(1.6)
   const [textAlign, setTextAlign] = useState('left')
   const [notecardMode, setNotecardMode] = useState(false)
+  const [transparentMode, setTransparentMode] = useState(false)
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -40,6 +41,7 @@ function Prompter() {
     setLineHeight(1.6)
     setTextAlign('left')
     setNotecardMode(false)
+    setTransparentMode(false)
   }
 
   const startResize = async (e, edge) => {
@@ -237,6 +239,12 @@ function Prompter() {
           Notecard
         </button>
         <button
+          className={`toggle-btn ${transparentMode ? 'active' : ''}`}
+          onClick={() => setTransparentMode(!transparentMode)}
+        >
+          Transparent
+        </button>
+        <button
           className="settings-button"
           onClick={() => {
             setSettingsOpen(!settingsOpen)
@@ -302,6 +310,7 @@ function Prompter() {
                   step="0.5"
                   value={strokeWidth}
                   onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+                  disabled={!transparentMode}
                 />
               </label>
               <label>
@@ -312,6 +321,7 @@ function Prompter() {
                   max="20"
                   value={shadowStrength}
                   onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
+                  disabled={!transparentMode}
                 />
               </label>
               <label>
@@ -339,11 +349,11 @@ function Prompter() {
           background: '#000',
           color: '#e0e0e0',
           textShadow:
-            shadowStrength > 0
+            transparentMode && shadowStrength > 0
               ? `0 0 ${shadowStrength}px rgba(0,0,0,0.8)`
               : 'none',
           WebkitTextStroke:
-            strokeWidth > 0 ? `${strokeWidth}px black` : '0',
+            transparentMode && strokeWidth > 0 ? `${strokeWidth}px black` : '0',
           overflowY: notecardMode ? 'hidden' : 'scroll',
         }}
         dangerouslySetInnerHTML={{
