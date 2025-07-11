@@ -3,6 +3,8 @@ import ActionMenu from './ActionMenu';
 import NameModal from './NameModal';
 import MessageModal from './MessageModal';
 
+const NEW_PROJECT_SENTINEL = '__NEW_PROJECT__';
+
 function PencilIcon() {
   return (
     <svg
@@ -56,6 +58,7 @@ function FileManager({
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
   const [newScriptProject, setNewScriptProject] = useState(null);
+  const [showProjectNameModal, setShowProjectNameModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
@@ -101,10 +104,26 @@ function FileManager({
 
   const handleNewScript = async () => {
     const projectName = await window.electronAPI.selectProjectFolder();
-    if (projectName) {
+    if (projectName === NEW_PROJECT_SENTINEL) {
+      setShowProjectNameModal(true);
+    } else if (projectName) {
       setNewScriptProject(projectName);
     }
   };
+
+  const confirmNewProjectForScript = async (name) => {
+    setShowProjectNameModal(false);
+    if (!name) return;
+    const created = await window.electronAPI.createNewProject(name);
+    if (created) {
+      await loadProjects();
+      setNewScriptProject(name);
+    } else {
+      alert('Failed to create project');
+    }
+  };
+
+  const cancelNewProjectForScript = () => setShowProjectNameModal(false);
 
   const startRenameProject = (name) => {
     setRenamingScript(null);
@@ -313,6 +332,14 @@ function FileManager({
           </div>
         ))}
       </div>
+      {showProjectNameModal && (
+        <NameModal
+          title="New Project Name"
+          placeholder="Project name"
+          onConfirm={confirmNewProjectForScript}
+          onCancel={cancelNewProjectForScript}
+        />
+      )}
       {newScriptProject && (
         <NameModal
           title="New Script Name"

@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTransparentChange: (callback) =>
     ipcRenderer.on('set-transparent', (_, flag) => callback(flag)),
   getCurrentScript: () => ipcRenderer.invoke('get-current-script'),
+  NEW_PROJECT_SENTINEL: '__NEW_PROJECT__',
 
   // Project management
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
