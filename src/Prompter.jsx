@@ -74,6 +74,7 @@ function Prompter() {
     window.addEventListener('mouseup', onUp)
   }
 
+  // Initial script loading on mount only
   useEffect(() => {
     const handleLoaded = (html) => {
       setContent(html)
@@ -181,12 +182,13 @@ function Prompter() {
   }, [transparent])
 
   // (re)open the prompter window when transparency changes
-  const openedRef = useRef(false)
+  // only after the component has mounted once
+  const mountedRef = useRef(false)
   useEffect(() => {
-    if (openedRef.current) {
+    if (mountedRef.current) {
       window.electronAPI.openPrompter(content, transparent)
     } else {
-      openedRef.current = true
+      mountedRef.current = true
     }
     // intentionally omit "content" from deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
