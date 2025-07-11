@@ -48,6 +48,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('log-message', handler)
   },
 
+  openDevConsole: () => ipcRenderer.send('open-dev-console'),
+
   setPrompterAlwaysOnTop: (flag) =>
     ipcRenderer.send('set-prompter-always-on-top', flag),
 
