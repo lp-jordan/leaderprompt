@@ -25,10 +25,6 @@
   margin-left: auto;
 }
 
-.header-title {
-  margin: 0;
-  font-size: 1.5rem;
-}
 
 .script-viewer-content {
   flex-grow: 1;
