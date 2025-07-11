@@ -175,7 +175,7 @@
 }
 
 .settings-wrapper {
-  position: fixed;
+  position: relative;
   top: 0;
   right: 0;
   width: 260px;
@@ -184,8 +184,8 @@
 
 .advanced-panel {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  top: 100%;
+  left: 0;
   width: 260px;
   background: rgba(0, 0, 0, 0.8);
   padding: var(--space-4);
