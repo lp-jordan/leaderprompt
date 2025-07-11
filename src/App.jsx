@@ -54,7 +54,7 @@ function App() {
 
   const handleSendToPrompter = () => {
     if (scriptHtml) {
-      window.electronAPI.openPrompter(scriptHtml, false);
+      window.electronAPI.openPrompter(scriptHtml);
       setLoadedProject(selectedProject);
       setLoadedScript(selectedScript);
     }
