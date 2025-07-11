@@ -219,7 +219,7 @@ function FileManager({
   return (
     <div className="file-manager">
       <div className="file-manager-header">
-        <h3>Projects</h3>
+        <h2 className="header-title">Projects</h2>
         <div className="header-buttons">
           <button onClick={handleNewScript}>+ New Script</button>
           <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
