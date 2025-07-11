@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import ActionMenu from './ActionMenu';
 import NameModal from './NameModal';
+import MessageModal from './MessageModal';
 
 const NEW_PROJECT_SENTINEL = '__NEW_PROJECT__';
 
@@ -58,6 +59,7 @@ function FileManager({
   const [collapsed, setCollapsed] = useState({});
   const [newScriptProject, setNewScriptProject] = useState(null);
   const [showProjectNameModal, setShowProjectNameModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     loadProjects();
@@ -88,7 +90,7 @@ function FileManager({
       setShowNewProjectInput(false);
       loadProjects();
     } else {
-      alert('Failed to create project');
+      setErrorMessage('Failed to create project');
     }
   };
 
@@ -143,8 +145,11 @@ function FileManager({
 
   const confirmRenameProject = async (oldName) => {
     if (!renameValue.trim()) return;
-    const success = await window.electronAPI.renameProject(oldName, renameValue.trim());
-    if (!success) alert('Failed to rename project');
+    const success = await window.electronAPI.renameProject(
+      oldName,
+      renameValue.trim(),
+    );
+    if (!success) setErrorMessage('Failed to rename project');
     cancelRename();
     await loadProjects();
   };
@@ -155,8 +160,12 @@ function FileManager({
     if (!newName.toLowerCase().endsWith('.docx')) {
       newName += '.docx';
     }
-    const success = await window.electronAPI.renameScript(projectName, oldName, newName);
-    if (!success) alert('Failed to rename script');
+    const success = await window.electronAPI.renameScript(
+      projectName,
+      oldName,
+      newName,
+    );
+    if (!success) setErrorMessage('Failed to rename script');
     cancelRename();
     await loadProjects();
   };
@@ -170,7 +179,7 @@ function FileManager({
       await loadProjects();
       onScriptSelect(projectName, result.scriptName);
     } else {
-      alert('Failed to create script');
+      setErrorMessage('Failed to create script');
     }
   };
 
@@ -178,13 +187,13 @@ function FileManager({
 
   const handleDeleteProject = async (projectName) => {
     const deleted = await window.electronAPI.deleteProject(projectName);
-    if (!deleted) alert('Failed to delete project');
+    if (!deleted) setErrorMessage('Failed to delete project');
     await loadProjects();
   };
 
   const handleDeleteScript = async (projectName, scriptName) => {
     const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
-    if (!deleted) alert('Failed to delete script');
+    if (!deleted) setErrorMessage('Failed to delete script');
     await loadProjects();
   };
 
@@ -337,6 +346,13 @@ function FileManager({
           placeholder="Script name"
           onConfirm={confirmNewScript}
           onCancel={cancelNewScript}
+        />
+      )}
+      {errorMessage && (
+        <MessageModal
+          title="Error"
+          message={errorMessage}
+          onClose={() => setErrorMessage(null)}
         />
       )}
     </div>
