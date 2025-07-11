@@ -3,6 +3,7 @@ import './Prompter.css'
 
 const MARGIN_MIN = 0
 const MARGIN_MAX = 600
+const DEFAULT_MARGIN = (MARGIN_MAX - MARGIN_MIN) * 0.4
 const SPEED_MIN = 0.25
 const SPEED_MAX = 10
 
@@ -10,7 +11,7 @@ function Prompter() {
   const [content, setContent] = useState('')
   const [autoscroll, setAutoscroll] = useState(false)
   const [speed, setSpeed] = useState(1)
-  const [margin, setMargin] = useState(MARGIN_MAX)
+  const [margin, setMargin] = useState(DEFAULT_MARGIN)
   const [fontSize, setFontSize] = useState(2)
   const [mirrorX, setMirrorX] = useState(false)
   const [mirrorY, setMirrorY] = useState(false)
@@ -22,13 +23,15 @@ function Prompter() {
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const containerRef = useRef(null)
+  const settingsRef = useRef(null)
 
   const resetDefaults = () => {
     setAutoscroll(false)
     setSpeed(1)
-    setMargin(MARGIN_MAX)
+    setMargin(DEFAULT_MARGIN)
     setFontSize(2)
     setMirrorX(false)
     setMirrorY(false)
@@ -162,6 +165,20 @@ function Prompter() {
     }
   }, [notecardMode])
 
+  // Close settings when clicking outside
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
+        setSettingsOpen(false)
+        setAdvancedOpen(false)
+      }
+    }
+    if (settingsOpen || advancedOpen) {
+      document.addEventListener('mousedown', handleClick)
+    }
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [settingsOpen, advancedOpen])
+
   // notify main process when the prompter component is ready
   const mountedRef = useRef(false)
   useEffect(() => {
@@ -189,15 +206,13 @@ function Prompter() {
         {sidebarOpen ? '←' : '→'}
       </button>
       <div className={`side-controls ${sidebarOpen ? 'open' : ''}`}>
-        <label>
-          <input
-            type="checkbox"
-            checked={autoscroll}
-            onChange={() => setAutoscroll(!autoscroll)}
-            disabled={notecardMode}
-          />
+        <button
+          className={`toggle-btn ${autoscroll ? 'active' : ''}`}
+          onClick={() => setAutoscroll(!autoscroll)}
+          disabled={notecardMode}
+        >
           Auto-scroll
-        </label>
+        </button>
         <label>
           Speed
           <input
@@ -210,26 +225,32 @@ function Prompter() {
             disabled={notecardMode}
           />
         </label>
-        <button onClick={() => setMirrorX(!mirrorX)}>MX</button>
-        <button onClick={() => setMirrorY(!mirrorY)}>MY</button>
-        <label>
-          <input
-            type="checkbox"
-            checked={notecardMode}
-            onChange={() => {
-              setNotecardMode(!notecardMode)
-              if (!notecardMode) setAutoscroll(false)
-            }}
-          />
+        <button onClick={() => setMirrorX(!mirrorX)}>Flip Horizontally</button>
+        <button onClick={() => setMirrorY(!mirrorY)}>Flip Vertically</button>
+        <button
+          className={`toggle-btn ${notecardMode ? 'active' : ''}`}
+          onClick={() => {
+            setNotecardMode(!notecardMode)
+            if (!notecardMode) setAutoscroll(false)
+          }}
+        >
           Notecard
-        </label>
-        <button className="settings-button" onClick={() => setSettingsOpen(!settingsOpen)}>
+        </button>
+        <button
+          className="settings-button"
+          onClick={() => {
+            setSettingsOpen(!settingsOpen)
+            if (settingsOpen) setAdvancedOpen(false)
+          }}
+        >
           ⚙
         </button>
       </div>
 
-      {settingsOpen && (
-        <div className="settings-panel">
+      {(settingsOpen || advancedOpen) && (
+        <div className="settings-wrapper" ref={settingsRef}>
+          {settingsOpen && (
+            <div className="settings-panel">
           <h4>Text Styling</h4>
           <label>
             Font Size ({fontSize}rem):
@@ -242,59 +263,68 @@ function Prompter() {
               onChange={(e) => setFontSize(parseFloat(e.target.value))}
             />
           </label>
-          <label>
-            Line Height ({lineHeight})
-            <input
-              type="range"
-              min="1"
-              max="3"
-              step="0.1"
-              value={lineHeight}
-              onChange={(e) => setLineHeight(parseFloat(e.target.value))}
-            />
-          </label>
-          <label>
-            Stroke ({strokeWidth}px)
-            <input
-              type="range"
-              min="0"
-              max="4"
-              step="0.5"
-              value={strokeWidth}
-              onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
-            />
-          </label>
-          <label>
-            Shadow ({shadowStrength}px)
-            <input
-              type="range"
-              min="0"
-              max="20"
-              value={shadowStrength}
-              onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
-            />
-          </label>
-          <label>
-            Text Alignment:
-            <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-              <option value="justify">Justify</option>
-            </select>
-          </label>
-          <h4>Layout &amp; Display</h4>
-          <label>
-            Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
-            <input
-              type="range"
-              min={MARGIN_MIN}
-              max={MARGIN_MAX}
-              value={margin}
-              onChange={(e) => setMargin(parseInt(e.target.value, 10))}
-            />
-          </label>
-          <button onClick={resetDefaults}>Reset to defaults</button>
+            <label>
+              Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
+              <input
+                type="range"
+                min={MARGIN_MIN}
+                max={MARGIN_MAX}
+                value={margin}
+                onChange={(e) => setMargin(parseInt(e.target.value, 10))}
+              />
+            </label>
+            <button onClick={() => setAdvancedOpen(!advancedOpen)}>
+              {advancedOpen ? 'Close Advanced' : 'Advanced'}
+            </button>
+            <button onClick={resetDefaults}>Reset to defaults</button>
+          </div>
+          )}
+          {advancedOpen && (
+            <div className={`advanced-panel ${advancedOpen ? 'open' : ''}`}>
+              <h4>Advanced Settings</h4>
+              <label>
+                Line Height ({lineHeight})
+                <input
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="0.1"
+                  value={lineHeight}
+                  onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+                />
+              </label>
+              <label>
+                Stroke ({strokeWidth}px)
+                <input
+                  type="range"
+                  min="0"
+                  max="4"
+                  step="0.5"
+                  value={strokeWidth}
+                  onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+                />
+              </label>
+              <label>
+                Shadow ({shadowStrength}px)
+                <input
+                  type="range"
+                  min="0"
+                  max="20"
+                  value={shadowStrength}
+                  onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
+                />
+              </label>
+              <label>
+                Text Alignment:
+                <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
+                  <option value="left">Left</option>
+                  <option value="center">Center</option>
+                  <option value="right">Right</option>
+                  <option value="justify">Justify</option>
+                </select>
+              </label>
+            </div>
+          )}
         </div>
       )}
       <div
