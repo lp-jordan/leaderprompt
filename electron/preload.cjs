@@ -53,6 +53,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closePrompter: () => ipcRenderer.send('close-prompter'),
   minimizePrompter: () => ipcRenderer.send('minimize-prompter'),
 
+  onPrompterClosed: (callback) => {
+    const handler = () => callback()
+    ipcRenderer.on('prompter-closed', handler)
+    return () => ipcRenderer.removeListener('prompter-closed', handler)
+  },
+
   getPrompterBounds: () => ipcRenderer.invoke('get-prompter-bounds'),
   setPrompterBounds: (bounds) =>
     ipcRenderer.send('set-prompter-bounds', bounds),

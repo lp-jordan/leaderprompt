@@ -203,6 +203,9 @@ async function createPrompterWindow() {
     prompterWindow.setAlwaysOnTop(isAlwaysOnTop)
     prompterWindow.on('closed', () => {
       prompterWindow = null
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('prompter-closed')
+      }
     })
     prompterWindow.loadURL(url)
     await new Promise((resolve) => prompterWindow.once('ready-to-show', resolve))
@@ -280,6 +283,9 @@ app.whenReady().then(async () => {
       prompterWindow.close();
     }
     prompterWindow = null;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('prompter-closed');
+    }
     log('Prompter window closed');
   });
 
