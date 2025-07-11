@@ -14,7 +14,6 @@ function Prompter() {
   const [fontSize, setFontSize] = useState(2)
   const [mirrorX, setMirrorX] = useState(false)
   const [mirrorY, setMirrorY] = useState(false)
-  const [transparent, setTransparent] = useState(false)
   const [shadowStrength, setShadowStrength] = useState(8)
   const [strokeWidth, setStrokeWidth] = useState(0)
   const [lineHeight, setLineHeight] = useState(1.6)
@@ -32,7 +31,6 @@ function Prompter() {
     setFontSize(2)
     setMirrorX(false)
     setMirrorY(false)
-    setTransparent(false)
     setShadowStrength(8)
     setStrokeWidth(0)
     setLineHeight(1.6)
@@ -94,13 +92,6 @@ function Prompter() {
     return () => {}
   }, [])
 
-  useEffect(() => {
-    const handleTransparent = (flag) => {
-      setTransparent(flag)
-    }
-    window.electronAPI.onTransparentChange(handleTransparent)
-    return () => {}
-  }, [])
 
   useEffect(() => {
     if (!autoscroll || notecardMode) return undefined
@@ -170,30 +161,14 @@ function Prompter() {
     }
   }, [notecardMode])
 
-  // keep window visuals in sync with transparency mode
-  useEffect(() => {
-    window.electronAPI.setPrompterAlwaysOnTop(transparent)
-    const color = transparent ? 'transparent' : '#1e1e1e'
-    document.documentElement.style.backgroundColor = color
-    document.body.style.backgroundColor = color
-
-    // force a repaint to avoid flicker when switching modes
-    requestAnimationFrame(() => {})
-  }, [transparent])
-
-  // (re)open the prompter window when transparency changes
-  // only after the component has mounted once
+  // notify main process when the prompter component is ready
   const mountedRef = useRef(false)
   useEffect(() => {
-    if (mountedRef.current) {
-      window.electronAPI.openPrompter(content, transparent)
-    } else {
+    if (!mountedRef.current) {
       mountedRef.current = true
       window.electronAPI.prompterReady()
     }
-    // intentionally omit "content" from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transparent])
+  }, [])
 
   return (
     <div className="prompter-wrapper">
@@ -239,14 +214,6 @@ function Prompter() {
             }}
           />
           Notecard
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={transparent}
-            onChange={() => setTransparent(!transparent)}
-          />
-          Transparent
         </label>
         <button className="settings-button" onClick={() => setSettingsOpen(!settingsOpen)}>
           ⚙
@@ -331,7 +298,7 @@ function Prompter() {
           lineHeight,
           textAlign,
           transform: `scale(${mirrorX ? -1 : 1}, ${mirrorY ? -1 : 1})`,
-          background: transparent ? 'transparent' : '#000',
+          background: '#000',
           color: '#e0e0e0',
           textShadow:
             shadowStrength > 0
