@@ -22,8 +22,24 @@ function Prompter() {
   const [notecardMode, setNotecardMode] = useState(false)
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const containerRef = useRef(null)
   const initialized = useRef(false)
+
+  const resetDefaults = () => {
+    setAutoscroll(false)
+    setSpeed(1)
+    setMargin(100)
+    setFontSize(2)
+    setMirrorX(false)
+    setMirrorY(false)
+    setTransparent(false)
+    setShadowStrength(8)
+    setStrokeWidth(0)
+    setLineHeight(1.6)
+    setTextAlign('left')
+    setNotecardMode(false)
+  }
 
   const startResize = async (e, edge) => {
     e.preventDefault()
@@ -208,9 +224,57 @@ function Prompter() {
       <div className="resize-handle top-right" onMouseDown={(e) => startResize(e, 'top-right')} />
       <div className="resize-handle bottom-left" onMouseDown={(e) => startResize(e, 'bottom-left')} />
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
-      <div className="prompter-controls">
-        <details open>
-          <summary>Text Styling</summary>
+      <div className="top-controls">
+        <label>
+          <input
+            type="checkbox"
+            checked={autoscroll}
+            onChange={() => setAutoscroll(!autoscroll)}
+            disabled={notecardMode}
+          />
+          Auto-scroll
+        </label>
+        <label>
+          Speed
+          <input
+            type="range"
+            min={SPEED_MIN}
+            max={SPEED_MAX}
+            value={speed}
+            step="0.05"
+            onChange={(e) => setSpeed(parseFloat(e.target.value))}
+            disabled={notecardMode}
+          />
+        </label>
+        <button onClick={() => setMirrorX(!mirrorX)}>MX</button>
+        <button onClick={() => setMirrorY(!mirrorY)}>MY</button>
+        <label>
+          <input
+            type="checkbox"
+            checked={notecardMode}
+            onChange={() => {
+              setNotecardMode(!notecardMode)
+              if (!notecardMode) setAutoscroll(false)
+            }}
+          />
+          Notecard
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={transparent}
+            onChange={() => setTransparent(!transparent)}
+          />
+          Transparent
+        </label>
+        <button className="settings-button" onClick={() => setSettingsOpen(!settingsOpen)}>
+          ⚙
+        </button>
+      </div>
+
+      {settingsOpen && (
+        <div className="settings-panel">
+          <h4>Text Styling</h4>
           <label>
             Font Size ({fontSize}rem):
             <input
@@ -223,22 +287,14 @@ function Prompter() {
             />
           </label>
           <label>
-            Text Alignment:
-            <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
-              <option value="left">Left</option>
-              <option value="center">Center</option>
-              <option value="right">Right</option>
-              <option value="justify">Justify</option>
-            </select>
-          </label>
-          <label>
-            Shadow ({shadowStrength}px)
+            Line Height ({lineHeight})
             <input
               type="range"
-              min="0"
-              max="20"
-              value={shadowStrength}
-              onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
+              min="1"
+              max="3"
+              step="0.1"
+              value={lineHeight}
+              onChange={(e) => setLineHeight(parseFloat(e.target.value))}
             />
           </label>
           <label>
@@ -253,19 +309,25 @@ function Prompter() {
             />
           </label>
           <label>
-            Line Height ({lineHeight})
+            Shadow ({shadowStrength}px)
             <input
               type="range"
-              min="1"
-              max="3"
-              step="0.1"
-              value={lineHeight}
-              onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+              min="0"
+              max="20"
+              value={shadowStrength}
+              onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
             />
           </label>
-        </details>
-        <details>
-          <summary>Layout &amp; Display</summary>
+          <label>
+            Text Alignment:
+            <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
+              <option value="left">Left</option>
+              <option value="center">Center</option>
+              <option value="right">Right</option>
+              <option value="justify">Justify</option>
+            </select>
+          </label>
+          <h4>Layout &amp; Display</h4>
           <label>
             Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
             <input
@@ -276,67 +338,9 @@ function Prompter() {
               onChange={(e) => setMargin(parseInt(e.target.value, 10))}
             />
           </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={mirrorX}
-              onChange={() => setMirrorX(!mirrorX)}
-            />
-            Mirror Horizontal
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={mirrorY}
-              onChange={() => setMirrorY(!mirrorY)}
-            />
-            Mirror Vertical
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={transparent}
-              onChange={() => setTransparent(!transparent)}
-            />
-            Transparent Mode
-          </label>
-        </details>
-        <details>
-          <summary>Behavior</summary>
-          <label>
-            <input
-              type="checkbox"
-              checked={notecardMode}
-              onChange={() => {
-                setNotecardMode(!notecardMode)
-                if (!notecardMode) setAutoscroll(false)
-              }}
-            />
-            Notecard Mode
-          </label>
-          <label>
-            Speed ({Math.round(((speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100)}%):
-            <input
-              type="range"
-              min={SPEED_MIN}
-              max={SPEED_MAX}
-              value={speed}
-              step="0.05"
-              onChange={(e) => setSpeed(parseFloat(e.target.value))}
-              disabled={notecardMode}
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={autoscroll}
-              onChange={() => setAutoscroll(!autoscroll)}
-              disabled={notecardMode}
-            />
-            Auto-scroll
-          </label>
-        </details>
-      </div>
+          <button onClick={resetDefaults}>Reset to defaults</button>
+        </div>
+      )}
       <div
         ref={containerRef}
         className="prompter-container"
