@@ -238,23 +238,23 @@ app.whenReady().then(async () => {
 
     currentScriptHtml = html;
 
-    await createPrompterWindow();
+    const showWindow = () => {
+      if (prompterWindow && !prompterWindow.isDestroyed()) {
+        prompterWindow.show();
+        prompterWindow.focus();
+        log('Prompter window shown');
+      }
+    };
+
+    if (!prompterWindow || prompterWindow.isDestroyed()) {
+      ipcMain.once('prompter-ready', showWindow);
+      await createPrompterWindow();
+    } else {
+      showWindow();
+    }
 
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
-
-      const showWindow = () => {
-        if (prompterWindow && !prompterWindow.isDestroyed()) {
-          prompterWindow.show();
-          prompterWindow.focus();
-          log('Prompter window shown');
-        }
-      };
-
-      ipcMain.once('prompter-ready', () => {
-        prompterWindow.once('ready-to-show', showWindow);
-      });
-
       prompterWindow.webContents.send('load-script', currentScriptHtml);
     }
   });
