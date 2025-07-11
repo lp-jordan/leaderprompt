@@ -249,9 +249,7 @@ function Prompter() {
           onClick={() => {
             const next = !settingsOpen
             setSettingsOpen(next)
-            if (next) {
-              setAdvancedOpen(true)
-            } else {
+            if (!next) {
               setAdvancedOpen(false)
             }
           }}
@@ -263,7 +261,7 @@ function Prompter() {
       {(settingsOpen || advancedOpen) && (
         <div className="settings-wrapper" ref={settingsRef}>
           {settingsOpen && (
-            <div className="settings-panel">
+            <div className={`settings-panel ${settingsOpen ? 'open' : ''}`}>
           <h4>Text Styling</h4>
           <label>
             Font Size ({fontSize}rem):
@@ -286,8 +284,10 @@ function Prompter() {
                 onChange={(e) => setMargin(parseInt(e.target.value, 10))}
               />
             </label>
-            {/* Advanced panel now opens automatically when the settings button is pressed */}
             <button onClick={resetDefaults}>Reset to defaults</button>
+            <button className="advanced-toggle" onClick={() => setAdvancedOpen(!advancedOpen)}>
+              ⚙
+            </button>
           </div>
           )}
           {advancedOpen && (
