@@ -19,6 +19,9 @@ function Prompter() {
   const [strokeWidth, setStrokeWidth] = useState(0)
   const [lineHeight, setLineHeight] = useState(1.6)
   const [textAlign, setTextAlign] = useState('left')
+  const [notecardMode, setNotecardMode] = useState(false)
+  const [slides, setSlides] = useState([])
+  const [currentSlide, setCurrentSlide] = useState(0)
   const containerRef = useRef(null)
   const initialized = useRef(false)
 
@@ -82,7 +85,7 @@ function Prompter() {
   }, [])
 
   useEffect(() => {
-    if (!autoscroll) return undefined
+    if (!autoscroll || notecardMode) return undefined
     let requestId
     const step = () => {
       if (containerRef.current) {
@@ -92,7 +95,62 @@ function Prompter() {
     }
     requestId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(requestId)
-  }, [autoscroll, speed])
+  }, [autoscroll, speed, notecardMode])
+
+  // Generate notecard slides when layout-related values change
+  useEffect(() => {
+    if (!notecardMode || !containerRef.current) return
+
+    const container = containerRef.current
+    const height = container.clientHeight
+    const width = container.clientWidth - margin * 2
+
+    const measure = document.createElement('div')
+    measure.style.position = 'absolute'
+    measure.style.visibility = 'hidden'
+    measure.style.pointerEvents = 'none'
+    measure.style.width = `${width}px`
+    measure.style.fontSize = `${fontSize}rem`
+    measure.style.lineHeight = lineHeight
+    measure.style.whiteSpace = 'normal'
+    document.body.appendChild(measure)
+
+    const parser = document.createElement('div')
+    parser.innerHTML = content
+    const nodes = Array.from(parser.childNodes)
+
+    const newSlides = []
+    let current = ''
+    measure.innerHTML = ''
+    nodes.forEach((node) => {
+      const clone = node.cloneNode(true)
+      measure.appendChild(clone)
+      if (measure.scrollHeight > height && current) {
+        newSlides.push(current)
+        measure.innerHTML = ''
+        measure.appendChild(clone)
+        current = clone.outerHTML || clone.textContent
+      } else {
+        current += clone.outerHTML || clone.textContent
+      }
+    })
+    if (current) newSlides.push(current)
+    document.body.removeChild(measure)
+    setSlides(newSlides)
+    setCurrentSlide(0)
+  }, [notecardMode, content, fontSize, lineHeight, margin])
+
+  useEffect(() => {
+    if (containerRef.current) containerRef.current.scrollTop = 0
+  }, [currentSlide])
+
+  // Clear slides when disabling notecard mode
+  useEffect(() => {
+    if (!notecardMode) {
+      setSlides([])
+      setCurrentSlide(0)
+    }
+  }, [notecardMode])
 
   useEffect(() => {
     // keep window visuals in sync on every render
@@ -246,6 +304,17 @@ function Prompter() {
         <details>
           <summary>Behavior</summary>
           <label>
+            <input
+              type="checkbox"
+              checked={notecardMode}
+              onChange={() => {
+                setNotecardMode(!notecardMode)
+                if (!notecardMode) setAutoscroll(false)
+              }}
+            />
+            Notecard Mode
+          </label>
+          <label>
             Speed ({Math.round(((speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN)) * 100)}%):
             <input
               type="range"
@@ -254,6 +323,7 @@ function Prompter() {
               value={speed}
               step="0.05"
               onChange={(e) => setSpeed(parseFloat(e.target.value))}
+              disabled={notecardMode}
             />
           </label>
           <label>
@@ -261,6 +331,7 @@ function Prompter() {
               type="checkbox"
               checked={autoscroll}
               onChange={() => setAutoscroll(!autoscroll)}
+              disabled={notecardMode}
             />
             Auto-scroll
           </label>
@@ -283,9 +354,33 @@ function Prompter() {
               : 'none',
           WebkitTextStroke:
             strokeWidth > 0 ? `${strokeWidth}px black` : '0',
+          overflowY: notecardMode ? 'hidden' : 'scroll',
         }}
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{
+          __html: notecardMode ? slides[currentSlide] || '' : content,
+        }}
       />
+      {notecardMode && slides.length > 1 && (
+        <div className="notecard-controls">
+          <button
+            onClick={() =>
+              setCurrentSlide(Math.max(currentSlide - 1, 0))
+            }
+          >
+            Prev
+          </button>
+          <span className="notecard-index">
+            {currentSlide + 1} / {slides.length}
+          </span>
+          <button
+            onClick={() =>
+              setCurrentSlide(Math.min(currentSlide + 1, slides.length - 1))
+            }
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   )
 }
