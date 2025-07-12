@@ -473,12 +473,7 @@ app.whenReady().then(async () => {
       const dest = path.join(base, finalName);
       const template = path.join(
         __dirname,
-        '..',
-        'node_modules',
-        'mammoth',
-        'test',
-        'test-data',
-        'empty.docx'
+              'resources',
       );
       fs.copyFileSync(template, dest);
       return { success: true, scriptName: finalName };
