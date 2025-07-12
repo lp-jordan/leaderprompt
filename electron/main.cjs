@@ -463,9 +463,17 @@ app.whenReady().then(async () => {
         finalName += '.docx';
       }
       const rootName = finalName.replace(/\.docx$/i, '');
+
+      const existingFiles = await fs.promises.readdir(base);
+      const names = new Set(
+        existingFiles
+          .filter((f) => f.toLowerCase().endsWith('.docx'))
+          .map((f) => f.replace(/\.docx$/i, '')),
+      );
+
       let candidate = rootName;
       let counter = 1;
-      while (fs.existsSync(path.join(base, `${candidate}.docx`))) {
+      while (names.has(candidate)) {
         candidate = `${rootName} ${counter}`;
         counter += 1;
       }
