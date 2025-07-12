@@ -59,13 +59,13 @@ function ScriptViewer({
       )}
       {showLogo ? (
         <div className="load-placeholder">
-          Please{' '}
+          Please {' '}
           <button className="link-button" onClick={onLoad}>
-            Load
+            Load 
           </button>{' '}
-          or{' '}
+          or {' '}
           <button className="link-button" onClick={onCreate}>
-            Create
+            Create 
           </button>{' '}
           a Script
         </div>
