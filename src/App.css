@@ -20,6 +20,7 @@ body {
 
 .left-panel {
   width: 300px;
+  min-width: 260px;
   background-color: #111;
   border-right: 1px solid #333;
   padding: calc(var(--space-4) + var(--space-1));
@@ -198,12 +199,13 @@ body {
 .script-button {
   flex-grow: 1;
   background: none;
-  border: none;
+  border: 1px solid transparent;
+  border-radius: 9999px;
   color: #e0e0e0;
   text-align: left;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-3);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s, background-color 0.2s, border-color 0.2s;
 }
 
 .script-button:hover {
@@ -212,12 +214,18 @@ body {
 
 
 .script-item.loaded .script-button {
-  font-weight: bold;
-  color: #e0e0e0;
+  border-color: var(--accent-color);
 }
 
 .script-item.prompting .script-button {
-  color: var(--accent-color);
+  background-color: var(--accent-color);
+  color: #1e1e1e;
+}
+
+.script-item.loaded.prompting .script-button {
+  background-color: var(--accent-color);
+  color: #1e1e1e;
+  border-color: var(--accent-color);
 }
 
 .status-indicator {

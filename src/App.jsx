@@ -70,7 +70,19 @@ function App() {
     };
   }, []);
 
-  const handleScriptEdit = (html) => {
+  const handleScriptEdit = async (html) => {
+    if (!selectedProject && !selectedScript && html.trim()) {
+      const projectName = 'Quick Scripts';
+      await window.electronAPI.createNewProject(projectName);
+      const result = await window.electronAPI.createNewScript(
+        projectName,
+        'Untitled',
+      );
+      if (result && result.success) {
+        setSelectedProject(projectName);
+        setSelectedScript(result.scriptName);
+      }
+    }
     setScriptHtml(html);
     if (selectedProject && selectedScript) {
       if (saveTimeout.current) {
