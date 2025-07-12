@@ -190,10 +190,10 @@ const FileManager = forwardRef(function FileManager({
 
   const confirmNewScript = async (name) => {
     const projectName = newScriptProject;
-    setNewScriptProject(null);
     if (!name || !projectName) return;
     const result = await window.electronAPI.createNewScript(projectName, name);
     if (result && result.success) {
+      setNewScriptProject(null);
       await loadProjects();
       onScriptSelect(projectName, result.scriptName);
     } else {
