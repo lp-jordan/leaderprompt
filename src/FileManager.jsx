@@ -313,12 +313,6 @@ function FileManager({
                         >
                           {script.replace(/\.[^/.]+$/, '')}
                         </button>
-                        {isLoaded && (
-                          <span className="status-indicator">(loaded)</span>
-                        )}
-                        {isPrompting && (
-                          <span className="status-indicator">(prompting)</span>
-                        )}
                         <div className="script-actions">
                           <button
                             className="icon-button"
