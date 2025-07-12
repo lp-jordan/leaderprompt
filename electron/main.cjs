@@ -75,6 +75,13 @@ const getUserDataPath = () => path.join(app.getPath('home'), 'LeaderPrompt');
 const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
 const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json');
 
+function sanitizeFilename(name) {
+  if (!name || typeof name !== 'string') return null;
+  const sanitized = name.replace(/[\\/:*?"<>|]/g, '_').trim();
+  if (!sanitized || sanitized === '.' || sanitized === '..') return null;
+  return sanitized;
+}
+
 function ensureDirectories() {
   log('Ensuring data directories');
   if (!fs.existsSync(getUserDataPath())) {
@@ -449,8 +456,9 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('create-new-script', async (_, projectName, scriptName) => {
+    const safeName = sanitizeFilename(scriptName);
     log(`Creating new script ${scriptName} in project ${projectName}`);
-    if (!projectName || !scriptName) return { success: false };
+    if (!projectName || !safeName) return { success: false };
     try {
       const base = path.join(getProjectsPath(), projectName);
       if (!fs.existsSync(base)) {
@@ -458,7 +466,7 @@ app.whenReady().then(async () => {
         updateProjectMetadata(projectName);
       }
 
-      let finalName = scriptName;
+      let finalName = safeName;
       if (!finalName.toLowerCase().endsWith('.docx')) {
         finalName += '.docx';
       }
