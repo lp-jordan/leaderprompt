@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import ActionMenu from './ActionMenu';
 import NameModal from './NameModal';
 import MessageModal from './MessageModal';
@@ -42,13 +42,13 @@ function TrashIcon() {
   );
 }
 
-function FileManager({
+const FileManager = forwardRef(function FileManager({
   onScriptSelect,
   loadedProject,
   loadedScript,
   currentProject,
   currentScript,
-}) {
+}, ref) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProjectInput, setShowNewProjectInput] = useState(false);
@@ -60,6 +60,7 @@ function FileManager({
   const [showProjectNameModal, setShowProjectNameModal] = useState(false);
   const [showProjectSelectModal, setShowProjectSelectModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+
 
   useEffect(() => {
     loadProjects();
@@ -136,6 +137,11 @@ function FileManager({
     setNewScriptProject(null);
     setShowProjectSelectModal(true);
   };
+
+  useImperativeHandle(ref, () => ({
+    newScript: handleNewScript,
+    reload: loadProjects,
+  }));
 
   const startRenameProject = (name) => {
     setRenamingScript(null);
@@ -372,7 +378,7 @@ function FileManager({
       )}
     </div>
   );
-}
+});
 
 export default FileManager;
 

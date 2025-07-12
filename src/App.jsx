@@ -11,6 +11,7 @@ function App() {
   const [scriptHtml, setScriptHtml] = useState(null);
   const [leftWidth, setLeftWidth] = useState(300);
   const leftRef = useRef(null);
+  const fileManagerRef = useRef(null);
   const isDragging = useRef(false);
   const saveTimeout = useRef(null);
 
@@ -70,19 +71,7 @@ function App() {
     };
   }, []);
 
-  const handleScriptEdit = async (html) => {
-    if (!selectedProject && !selectedScript && html.trim()) {
-      const projectName = 'Quick Scripts';
-      await window.electronAPI.createNewProject(projectName);
-      const result = await window.electronAPI.createNewScript(
-        projectName,
-        'Untitled',
-      );
-      if (result && result.success) {
-        setSelectedProject(projectName);
-        setSelectedScript(result.scriptName);
-      }
-    }
+  const handleScriptEdit = (html) => {
     setScriptHtml(html);
     if (selectedProject && selectedScript) {
       if (saveTimeout.current) {
@@ -121,10 +110,32 @@ function App() {
     window.electronAPI.sendUpdatedScript('');
   };
 
+  const handleCreateRequest = () => {
+    fileManagerRef.current?.newScript();
+  };
+
+  const handleLoadRequest = async () => {
+    const filePaths = await window.electronAPI.selectFiles();
+    if (!filePaths) return;
+    const projectName = await window.electronAPI.selectProjectFolder();
+    if (!projectName) return;
+    let target = projectName;
+    if (projectName === window.electronAPI.NEW_PROJECT_SENTINEL) {
+      const name = prompt('Project name');
+      if (!name) return;
+      const created = await window.electronAPI.createNewProject(name);
+      if (!created) return;
+      target = name;
+    }
+    await window.electronAPI.importScriptsToProject(filePaths, target);
+    fileManagerRef.current?.reload();
+  };
+
   return (
     <div className="main-layout">
       <div className="left-panel" ref={leftRef} style={{ width: leftWidth }}>
         <FileManager
+          ref={fileManagerRef}
           onScriptSelect={handleScriptSelect}
           loadedProject={loadedProject}
           loadedScript={loadedScript}
@@ -141,6 +152,8 @@ function App() {
           onSend={handleSendToPrompter}
           onEdit={handleScriptEdit}
           onClose={handleCloseScript}
+          onCreate={handleCreateRequest}
+          onLoad={handleLoadRequest}
         />
       </div>
     </div>

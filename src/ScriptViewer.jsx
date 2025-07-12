@@ -8,6 +8,8 @@ function ScriptViewer({
   onSend,
   onEdit,
   onClose,
+  onCreate,
+  onLoad,
 }) {
   const contentRef = useRef(null);
 
@@ -56,7 +58,17 @@ function ScriptViewer({
         </div>
       )}
       {showLogo ? (
-        <div className="script-content" ref={contentRef} contentEditable onInput={handleInput} onBlur={handleBlur} />
+        <div className="load-placeholder">
+          Please{' '}
+          <button className="link-button" onClick={onLoad}>
+            Load
+          </button>{' '}
+          or{' '}
+          <button className="link-button" onClick={onCreate}>
+            Create
+          </button>{' '}
+          a Script
+        </div>
       ) : (
         <>
           <div
