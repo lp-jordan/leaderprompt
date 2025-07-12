@@ -38,17 +38,25 @@ function ScriptViewer({
       <div className="viewer-header">
         <div className="header-left">
           <h2 className="header-title">Script Viewer</h2>
-          {!showLogo && (
-            <button className="close-button" onClick={onClose}>Close</button>
-          )}
         </div>
         <img src={leaderLogo} alt="LeaderPrompt Logo" className="header-logo" />
       </div>
       {scriptName && (
-        <div className="script-name">{scriptName.replace(/\.[^/.]+$/, '')}</div>
+        <div className="script-name-row">
+          <div className="script-name">
+            {scriptName.replace(/\.[^/.]+$/, '')}
+          </div>
+          <button
+            className="close-button"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
       )}
       {showLogo ? (
-        <div className="load-placeholder">Please load a script</div>
+        <div className="script-content" ref={contentRef} contentEditable onInput={handleInput} onBlur={handleBlur} />
       ) : (
         <>
           <div
