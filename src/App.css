@@ -220,7 +220,6 @@ body {
 .script-item.prompting .script-button {
   background-color: var(--accent-color);
   color: #1e1e1e;
-}
 
 .script-item.loaded.prompting .script-button {
   background-color: var(--accent-color);
