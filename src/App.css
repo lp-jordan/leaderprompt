@@ -24,7 +24,6 @@ body {
   background-color: #111;
   border-right: 1px solid #333;
   padding: calc(var(--space-4) + var(--space-1));
-  overflow-y: auto;
 }
 
 .divider {
