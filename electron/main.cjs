@@ -71,7 +71,7 @@ function stopViteServer() {
   }
 }
 
-const getUserDataPath = () => path.join(app.getPath('home'), 'LeaderPrompt');
+const getUserDataPath = () => path.join(app.getPath('home'), 'leaderprompt');
 const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
 const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json');
 
