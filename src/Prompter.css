@@ -152,12 +152,10 @@
   border-radius: 0 4px 4px 0;
 }
 
-
 .settings-tabs {
   display: flex;
   gap: var(--space-2);
   margin-bottom: var(--space-3);
-}
 
 .settings-tabs button {
   background: none;
@@ -170,7 +168,23 @@
   color: var(--accent-color);
 }
 
-.main-settings .pages {
+.advanced-settings-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  z-index: 998;
+}
+
+.advanced-settings {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  padding: var(--space-4);
+  overflow-y: auto;
+
   display: flex;
   width: 200%;
   transition: transform 0.3s ease;
@@ -179,9 +193,8 @@
 .main-settings .page {
   width: 100%;
   flex-shrink: 0;
-}
 
-.settings-close {
+.advanced-settings-close {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);

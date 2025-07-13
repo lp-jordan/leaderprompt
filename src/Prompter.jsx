@@ -26,7 +26,7 @@ function Prompter() {
   const [currentPage, setCurrentPage] = useState(0)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const containerRef = useRef(null)
-  const settingsRef = useRef(null)
+  const advancedRef = useRef(null)
   const touchStartX = useRef(0)
 
   const handleTouchStart = (e) => {
@@ -191,27 +191,27 @@ function Prompter() {
   // Close settings when clicking outside
   useEffect(() => {
     const handleClick = (e) => {
-      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
-        setSettingsOpen(false)
+      if (advancedRef.current && !advancedRef.current.contains(e.target)) {
+        setAdvancedOpen(false)
       }
     }
-    if (settingsOpen) {
+    if (advancedOpen) {
       document.addEventListener('mousedown', handleClick)
     }
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [settingsOpen])
+  }, [advancedOpen])
 
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === 'Escape') {
-        setSettingsOpen(false)
+        setAdvancedOpen(false)
       }
     }
-    if (settingsOpen) {
+    if (advancedOpen) {
       document.addEventListener('keydown', handleKey)
     }
     return () => document.removeEventListener('keydown', handleKey)
-  }, [settingsOpen])
+  }, [advancedOpen])
 
   // notify main process when the prompter component is ready
   const mountedRef = useRef(false)
@@ -239,6 +239,7 @@ function Prompter() {
         >
           {settingsOpen ? '←' : '→'}
         </button>
+
         {settingsOpen && (
           <div className="settings-wrapper" ref={settingsRef}>
             <div
