@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -344,28 +344,8 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('select-project-folder', async () => {
-    log('Project selection invoked');
-    const { response } = await dialog.showMessageBox(mainWindow, {
-      type: 'question',
-      buttons: ['Select Existing Project', 'Create New Project', 'Cancel'],
-      message: 'Choose a project folder option:',
-    });
-
-    if (response === 2) return null; // Cancel
-
-    if (response === 0) {
-      const metadata = getProjectMetadata();
-      const choices = metadata.projects.map((p) => p.name);
-      const choice = await dialog.showMessageBox(mainWindow, {
-        type: 'question',
-        buttons: [...choices, 'Cancel'],
-        message: 'Select a project:',
-      });
-      return choice.response === choices.length ? null : choices[choice.response];
-    } else {
-      log('Create new project requested');
-      return NEW_PROJECT_SENTINEL;
-    }
+    log('Project selection invoked but disabled');
+    return null;
   });
 
   ipcMain.handle('create-new-project', async (_, projectName) => {
@@ -388,12 +368,8 @@ app.whenReady().then(async () => {
 });
 
   ipcMain.handle('select-files', async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'Word Docs', extensions: ['docx'] }],
-    });
-
-    return canceled ? null : filePaths;
+    log('File selection invoked but disabled');
+    return null;
   });
 
   ipcMain.handle('rename-project', async (_, oldName, newName) => {
