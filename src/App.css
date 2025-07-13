@@ -16,6 +16,7 @@ body {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 .left-panel {
@@ -294,5 +295,12 @@ body {
 
 .menu li button:hover {
   background: #333;
+}
+
+.main-logo {
+  width: 120px;
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
 }
 
