@@ -1,4 +1,10 @@
-import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import {
+  useEffect,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 import ActionMenu from './ActionMenu';
 
 function PencilIcon() {
@@ -53,6 +59,8 @@ const FileManager = forwardRef(function FileManager({
   const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
+  const [tooltipScript, setTooltipScript] = useState(null);
+  const tooltipTimerRef = useRef(null);
 
 
   useEffect(() => {
@@ -180,6 +188,18 @@ const FileManager = forwardRef(function FileManager({
     }));
   };
 
+  const handleScriptMouseEnter = (scriptName) => {
+    tooltipTimerRef.current = setTimeout(() => {
+      setTooltipScript(scriptName);
+    }, 2000);
+  };
+
+  const handleScriptMouseLeave = () => {
+    clearTimeout(tooltipTimerRef.current);
+    tooltipTimerRef.current = null;
+    setTooltipScript(null);
+  };
+
   return (
     <div className="file-manager">
       <div className="file-manager-header">
@@ -274,8 +294,13 @@ const FileManager = forwardRef(function FileManager({
                         <button
                           className="script-button"
                           onClick={() => onScriptSelect(project.name, script)}
+                          onMouseEnter={() => handleScriptMouseEnter(script)}
+                          onMouseLeave={handleScriptMouseLeave}
                         >
                           {script.replace(/\.[^/.]+$/, '')}
+                          {tooltipScript === script && (
+                            <span className="script-tooltip">{script}</span>
+                          )}
                         </button>
                         <div className="script-actions">
                           <button
