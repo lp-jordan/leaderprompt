@@ -113,7 +113,7 @@
   align-self: center;
 }
 
-.side-controls {
+.main-settings {
   position: fixed;
   top: 0;
   left: 0;
@@ -130,16 +130,16 @@
   color: #e0e0e0;
 }
 
-.side-controls.open {
+.main-settings.open {
   transform: translateX(0);
 }
 
-.side-controls input[type='range'],
-.side-controls input[type='checkbox'] {
+.main-settings input[type='range'],
+.main-settings input[type='checkbox'] {
   accent-color: var(--accent-color);
 }
 
-.sidebar-toggle {
+.main-settings-toggle {
   position: fixed;
   top: var(--space-3);
   left: 0;
@@ -152,7 +152,7 @@
   border-radius: 0 4px 4px 0;
 }
 
-.settings-button {
+.advanced-settings-button {
   background: none;
   border: none;
   color: #e0e0e0;
@@ -167,7 +167,7 @@
   align-self: flex-start;
 }
 
-.settings-wrapper {
+.advanced-settings-wrapper {
   position: fixed;
   top: 0;
   left: 0;
@@ -175,7 +175,7 @@
   z-index: 998;
 }
 
-.settings-panel {
+.advanced-settings {
   position: relative;
   top: 0;
   left: 0;
@@ -190,8 +190,36 @@
   transition: transform 0.3s ease;
 }
 
-.settings-panel.open {
+.advanced-settings.open {
   transform: translateX(0);
+}
+
+.advanced-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.advanced-tabs button {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+}
+
+.advanced-tabs button.active {
+  color: var(--accent-color);
+}
+
+.advanced-settings .pages {
+  display: flex;
+  width: 200%;
+  transition: transform 0.3s ease;
+}
+
+.advanced-settings .page {
+  width: 100%;
+  flex-shrink: 0;
 }
 
 .advanced-panel {
@@ -211,12 +239,12 @@
   transform: translateY(0);
 }
 
-.settings-panel label {
+.advanced-settings label {
   display: block;
 }
 
-.settings-panel input[type='range'],
-.settings-panel input[type='checkbox'] {
+.advanced-settings input[type='range'],
+.advanced-settings input[type='checkbox'] {
   accent-color: var(--accent-color);
 }
 
@@ -234,7 +262,7 @@
   color: #000;
 }
 
-.settings-close {
+.advanced-settings-close {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
