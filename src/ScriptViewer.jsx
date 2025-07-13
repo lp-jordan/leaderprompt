@@ -115,7 +115,7 @@ function ScriptViewer({
         </div>
       </div>
       {scriptName && (
-        <div className="script-name-row">
+        <div className="header-buttons">
           <div className="script-name">
             {scriptName.replace(/\.[^/.]+$/, '')}
           </div>
