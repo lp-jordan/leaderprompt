@@ -22,12 +22,6 @@
   gap: 0.5rem;
 }
 
-.header-logo {
-  width: 120px;
-  position: absolute;
-  bottom: var(--space-3);
-  right: var(--space-3);
-}
 
 
 .script-viewer-content {

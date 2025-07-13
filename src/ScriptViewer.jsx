@@ -1,5 +1,4 @@
 import './ScriptViewer.css';
-import leaderLogo from './assets/LeaderPass-Logo-white.png';
 import { useEffect, useRef } from 'react';
 function ScriptViewer({
   scriptHtml,
@@ -41,7 +40,6 @@ function ScriptViewer({
         <div className="header-left">
           <h2 className="header-title">Script Viewer</h2>
         </div>
-        <img src={leaderLogo} alt="LeaderPrompt Logo" className="header-logo" />
       </div>
       {scriptName && (
         <div className="script-name-row">

@@ -2,6 +2,7 @@ import './App.css';
 import { useState, useRef, useEffect } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
+import leaderLogo from './assets/LeaderPass-Logo-white.png';
 
 function App() {
   const [selectedScript, setSelectedScript] = useState(null);
@@ -143,6 +144,7 @@ function App() {
           onLoad={handleLoadRequest}
         />
       </div>
+      <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
     </div>
   );
 }
