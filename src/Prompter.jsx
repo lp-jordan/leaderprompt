@@ -23,11 +23,11 @@ function Prompter() {
   const [transparentMode, setTransparentMode] = useState(false)
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [settingsPage, setSettingsPage] = useState(0)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
   const containerRef = useRef(null)
-  const settingsRef = useRef(null)
+  const advancedRef = useRef(null)
   const touchStartX = useRef(0)
 
   const handleTouchStart = (e) => {
@@ -39,15 +39,15 @@ function Prompter() {
   const handleTouchEnd = (e) => {
     const diff = e.changedTouches[0].clientX - touchStartX.current
     if (Math.abs(diff) > 50) {
-      if (diff < 0 && settingsPage < 1) setSettingsPage(settingsPage + 1)
-      if (diff > 0 && settingsPage > 0) setSettingsPage(settingsPage - 1)
+      if (diff < 0 && currentPage < 1) setCurrentPage(currentPage + 1)
+      if (diff > 0 && currentPage > 0) setCurrentPage(currentPage - 1)
     }
   }
 
   const handleWheel = (e) => {
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 30) {
-      if (e.deltaX > 0 && settingsPage < 1) setSettingsPage(settingsPage + 1)
-      if (e.deltaX < 0 && settingsPage > 0) setSettingsPage(settingsPage - 1)
+      if (e.deltaX > 0 && currentPage < 1) setCurrentPage(currentPage + 1)
+      if (e.deltaX < 0 && currentPage > 0) setCurrentPage(currentPage - 1)
     }
   }
 
@@ -192,27 +192,27 @@ function Prompter() {
   // Close settings when clicking outside
   useEffect(() => {
     const handleClick = (e) => {
-      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
-        setSettingsOpen(false)
+      if (advancedRef.current && !advancedRef.current.contains(e.target)) {
+        setAdvancedOpen(false)
       }
     }
-    if (settingsOpen) {
+    if (advancedOpen) {
       document.addEventListener('mousedown', handleClick)
     }
     return () => document.removeEventListener('mousedown', handleClick)
-  }, [settingsOpen])
+  }, [advancedOpen])
 
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === 'Escape') {
-        setSettingsOpen(false)
+        setAdvancedOpen(false)
       }
     }
-    if (settingsOpen) {
+    if (advancedOpen) {
       document.addEventListener('keydown', handleKey)
     }
     return () => document.removeEventListener('keydown', handleKey)
-  }, [settingsOpen])
+  }, [advancedOpen])
 
   // notify main process when the prompter component is ready
   const mountedRef = useRef(false)
@@ -233,14 +233,14 @@ function Prompter() {
       <div className="resize-handle top-right" onMouseDown={(e) => startResize(e, 'top-right')} />
       <div className="resize-handle bottom-left" onMouseDown={(e) => startResize(e, 'bottom-left')} />
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
-      <button
-        className="sidebar-toggle"
-        style={{ left: sidebarOpen ? '220px' : '0' }}
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        {sidebarOpen ? '←' : '→'}
-      </button>
-      <div className={`side-controls ${sidebarOpen ? 'open' : ''}`}>
+        <button
+          className="main-settings-toggle"
+          style={{ left: mainSettingsOpen ? '220px' : '0' }}
+          onClick={() => setMainSettingsOpen(!mainSettingsOpen)}
+        >
+          {mainSettingsOpen ? '←' : '→'}
+        </button>
+        <div className={`main-settings ${mainSettingsOpen ? 'open' : ''}`}>
         <button
           className={`toggle-btn ${autoscroll ? 'active' : ''}`}
           onClick={() => setAutoscroll(!autoscroll)}
@@ -278,30 +278,43 @@ function Prompter() {
           Transparent
         </button>
         <button
-          className="settings-button"
+          className="advanced-settings-button"
           onClick={() => {
-            const next = !settingsOpen
-            setSettingsOpen(next)
-            if (next) setSettingsPage(0)
+            const next = !advancedOpen
+            setAdvancedOpen(next)
           }}
         >
           ⚙
         </button>
       </div>
 
-      {settingsOpen && (
-        <div className="settings-wrapper" ref={settingsRef}>
+      {advancedOpen && (
+        <div className="advanced-settings-wrapper" ref={advancedRef}>
           <div
-            className={`settings-panel ${settingsOpen ? 'open' : ''}`}
+            className={`advanced-settings ${advancedOpen ? 'open' : ''}`}
             onWheel={handleWheel}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            <button className="settings-close" onClick={() => setSettingsOpen(false)}>
+            <button className="advanced-settings-close" onClick={() => setAdvancedOpen(false)}>
               ×
             </button>
-            {settingsPage === 0 ? (
-              <>
+            <div className="advanced-tabs">
+              <button
+                className={currentPage === 0 ? 'active' : ''}
+                onClick={() => setCurrentPage(0)}
+              >
+                Main
+              </button>
+              <button
+                className={currentPage === 1 ? 'active' : ''}
+                onClick={() => setCurrentPage(1)}
+              >
+                Advanced
+              </button>
+            </div>
+            <div className="pages" style={{ transform: `translateX(-${currentPage * 100}%)` }}>
+              <div className="page">
                 <h4>Text Styling</h4>
                 <label>
                   Font Size ({fontSize}rem):
@@ -325,9 +338,8 @@ function Prompter() {
                   />
                 </label>
                 <button onClick={resetDefaults}>Reset to defaults</button>
-              </>
-            ) : (
-              <>
+              </div>
+              <div className="page">
                 <h4>Advanced Settings</h4>
                 <label>
                   Line Height ({lineHeight})
@@ -372,17 +384,7 @@ function Prompter() {
                     <option value="justify">Justify</option>
                   </select>
                 </label>
-              </>
-            )}
-            <div className="page-indicators">
-              <span
-                className={`dot ${settingsPage === 0 ? 'active' : ''}`}
-                onClick={() => setSettingsPage(0)}
-              />
-              <span
-                className={`dot ${settingsPage === 1 ? 'active' : ''}`}
-                onClick={() => setSettingsPage(1)}
-              />
+              </div>
             </div>
           </div>
         </div>
