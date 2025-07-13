@@ -222,13 +222,15 @@ const FileManager = forwardRef(function FileManager({
   return (
     <div className="file-manager">
       <div className="file-manager-header">
-        <h2 className="header-title">Projects</h2>
-        <div className="header-buttons">
-          <button onClick={handleNewScript}>+ New Script</button>
-          <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
-            + New Project
-          </button>
+        <div className="header-left">
+          <h2 className="header-title">Projects</h2>
         </div>
+      </div>
+      <div className="header-buttons">
+        <button onClick={handleNewScript}>+ New Script</button>
+        <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
+          + New Project
+        </button>
       </div>
 
       {showNewProjectInput && (
