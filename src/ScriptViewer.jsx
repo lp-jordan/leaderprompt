@@ -122,34 +122,36 @@ function ScriptViewer({
           </button>
         </div>
       )}
-      {showLogo ? (
-        <div className="load-placeholder">
-          Please{' '}
-          <button className="link-button" onClick={onLoad}>
-            Load
-          </button>{' '}
-          or{' '}
-          <button className="link-button" onClick={onCreate}>
-            Create
-          </button>{' '}
-          a Script
-        </div>
-      ) : (
-        <>
-          <div
-            ref={contentRef}
-            className="script-content"
-            contentEditable
-            onBlur={handleBlur}
-            onInput={handleInput}
-          />
-          <div className="send-button-wrapper">
-            <button className="send-button" onClick={handleSend}>
-              Let&apos;s Go!
-            </button>
+      <div className="script-viewer-content">
+        {showLogo ? (
+          <div className="load-placeholder">
+            Please{' '}
+            <button className="link-button" onClick={onLoad}>
+              Load
+            </button>{' '}
+            or{' '}
+            <button className="link-button" onClick={onCreate}>
+              Create
+            </button>{' '}
+            a Script
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            <div
+              ref={contentRef}
+              className="script-content"
+              contentEditable
+              onBlur={handleBlur}
+              onInput={handleInput}
+            />
+            <div className="send-button-wrapper">
+              <button className="send-button" onClick={handleSend}>
+                Let&apos;s Go!
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
