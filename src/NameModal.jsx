@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 function NameModal({ title, placeholder, onConfirm, onCancel, onBack }) {
   const [value, setValue] = useState('');
@@ -18,7 +19,7 @@ function NameModal({ title, placeholder, onConfirm, onCancel, onBack }) {
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-window" onClick={(e) => e.stopPropagation()}>
         <h3>{title}</h3>
@@ -36,7 +37,8 @@ function NameModal({ title, placeholder, onConfirm, onCancel, onBack }) {
           <button onClick={() => onConfirm(value.trim())}>OK</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 function ProjectSelectModal({ projects = [], onCreateNew, onSelect, onCancel }) {
   const [selected, setSelected] = useState(projects[0] || '');
@@ -18,7 +19,7 @@ function ProjectSelectModal({ projects = [], onCreateNew, onSelect, onCancel }) 
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onCancel}>
       <div className="modal-window" onClick={(e) => e.stopPropagation()}>
         <h3>Select Script Location</h3>
@@ -49,7 +50,8 @@ function ProjectSelectModal({ projects = [], onCreateNew, onSelect, onCancel }) 
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
