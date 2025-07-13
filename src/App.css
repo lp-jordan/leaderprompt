@@ -20,11 +20,12 @@ body {
 }
 
 .left-panel {
-  flex: 0 0 clamp(240px, 25%, 300px);
+  flex: 0 0 clamp(280px, 25%, 320px);
   background-color: #111;
   border-right: 1px solid #333;
   padding: calc(var(--space-4) + var(--space-1));
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: visible;
 }
 
 .right-panel {
