@@ -483,9 +483,11 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
   }
 
   const destDir = path.join(getProjectsPath(), projectName);
-  if (!fs.existsSync(destDir)) {
-    fs.mkdirSync(destDir, { recursive: true });
-    log(`Created missing destination directory for project: ${destDir}`);
+  try {
+    await fs.promises.mkdir(destDir, { recursive: true });
+  } catch (err) {
+    error('Failed to ensure destination directory:', err);
+    return;
   }
 
   for (const file of filePaths) {
@@ -495,12 +497,24 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     }
 
     try {
-      const fileName = path.basename(file);
-      const dest = path.join(destDir, fileName);
-      fs.copyFileSync(file, dest);
-      log(`Copied script: ${fileName} → ${dest}`);
+      const result = await mammoth.convertToHtml({ path: file });
+      const html = result.value || '';
+
+      let safeName = sanitizeFilename(path.basename(file));
+      if (!safeName) {
+        error('Invalid sanitized file name for', file);
+        continue;
+      }
+      if (!safeName.toLowerCase().endsWith('.docx')) {
+        safeName += '.docx';
+      }
+
+      const dest = path.join(destDir, safeName);
+      const buffer = await htmlToDocx(html);
+      await fs.promises.writeFile(dest, buffer);
+      log(`Imported script: ${safeName} → ${dest}`);
     } catch (err) {
-      error(`Failed to copy file ${file}:`, err);
+      error(`Failed to import file ${file}:`, err);
     }
   }
 
