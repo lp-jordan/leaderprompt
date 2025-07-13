@@ -17,11 +17,14 @@ function ScriptViewer({
   const saveTimeout = useRef(null);
 
   useEffect(() => {
+    let cancelled = false;
     if (projectName && scriptName) {
       window.electronAPI
         .loadScript(projectName, scriptName)
         .then((html) => {
-          setScriptHtml(html);
+          if (!cancelled) {
+            setScriptHtml(html);
+          }
         })
         .catch((err) => {
           console.error('Failed to load script:', err);
@@ -29,15 +32,18 @@ function ScriptViewer({
     } else {
       setScriptHtml(null);
     }
+    return () => {
+      cancelled = true;
+    };
   }, [projectName, scriptName]);
 
   useEffect(() => {
-    if (
-      contentRef.current &&
-      scriptHtml !== null &&
-      contentRef.current.innerHTML !== scriptHtml
-    ) {
-      contentRef.current.innerHTML = scriptHtml;
+    if (contentRef.current) {
+      if (scriptHtml !== null && contentRef.current.innerHTML !== scriptHtml) {
+        contentRef.current.innerHTML = scriptHtml;
+      } else if (scriptHtml === null) {
+        contentRef.current.innerHTML = '';
+      }
     }
   }, [scriptHtml]);
 
