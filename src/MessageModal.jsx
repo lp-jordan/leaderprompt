@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 function MessageModal({ title = 'Message', message, onClose }) {
   useEffect(() => {
@@ -12,7 +13,7 @@ function MessageModal({ title = 'Message', message, onClose }) {
     return () => window.removeEventListener('keydown', handle);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-window" onClick={(e) => e.stopPropagation()}>
         {title && <h3>{title}</h3>}
@@ -21,7 +22,8 @@ function MessageModal({ title = 'Message', message, onClose }) {
           <button onClick={onClose}>OK</button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
