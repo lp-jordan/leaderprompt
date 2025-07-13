@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -368,8 +368,22 @@ app.whenReady().then(async () => {
 });
 
   ipcMain.handle('select-files', async () => {
-    log('File selection invoked but disabled');
-    return null;
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+        title: 'Select script files',
+        properties: ['openFile', 'multiSelections'],
+        filters: [{ name: 'Scripts', extensions: ['docx'] }],
+      });
+      if (canceled) {
+        log('File selection cancelled');
+        return null;
+      }
+      log(`Files selected: ${filePaths.join(', ')}`);
+      return filePaths;
+    } catch (err) {
+      error('File selection failed:', err);
+      return null;
+    }
   });
 
   ipcMain.handle('rename-project', async (_, oldName, newName) => {
