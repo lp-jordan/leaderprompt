@@ -115,20 +115,7 @@ function App() {
   };
 
   const handleLoadRequest = async () => {
-    const filePaths = await window.electronAPI.selectFiles();
-    if (!filePaths) return;
-    const projectName = await window.electronAPI.selectProjectFolder();
-    if (!projectName) return;
-    let target = projectName;
-    if (projectName === window.electronAPI.NEW_PROJECT_SENTINEL) {
-      const name = prompt('Project name');
-      if (!name) return;
-      const created = await window.electronAPI.createNewProject(name);
-      if (!created) return;
-      target = name;
-    }
-    await window.electronAPI.importScriptsToProject(filePaths, target);
-    fileManagerRef.current?.reload();
+    console.log('Load request ignored: popups removed');
   };
 
   return (

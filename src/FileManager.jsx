@@ -1,8 +1,5 @@
 import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import ActionMenu from './ActionMenu';
-import NameModal from './NameModal';
-import MessageModal from './MessageModal';
-import ProjectSelectModal from './ProjectSelectModal';
 
 function PencilIcon() {
   return (
@@ -56,10 +53,6 @@ const FileManager = forwardRef(function FileManager({
   const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
-  const [newScriptProject, setNewScriptProject] = useState(null);
-  const [showProjectNameModal, setShowProjectNameModal] = useState(false);
-  const [showProjectSelectModal, setShowProjectSelectModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
 
 
   useEffect(() => {
@@ -91,7 +84,7 @@ const FileManager = forwardRef(function FileManager({
       setShowNewProjectInput(false);
       loadProjects();
     } else {
-      setErrorMessage('Failed to create project');
+      console.error('Failed to create project');
     }
   };
 
@@ -103,40 +96,19 @@ const FileManager = forwardRef(function FileManager({
     await loadProjects();
   };
 
-  const handleNewScript = () => {
-    setShowProjectSelectModal(true);
-  };
-
-  const confirmNewProjectForScript = async (name) => {
-    setShowProjectNameModal(false);
-    if (!name) return;
-    const created = await window.electronAPI.createNewProject(name);
-    if (created) {
+  const handleNewScript = async () => {
+    let projectName = projects[0]?.name || 'Default';
+    if (!projects.length) {
+      await window.electronAPI.createNewProject(projectName);
       await loadProjects();
-      setNewScriptProject(name);
-    } else {
-      alert('Failed to create project');
+    }
+    const result = await window.electronAPI.createNewScript(projectName, 'New Script');
+    if (result && result.success) {
+      await loadProjects();
+      onScriptSelect(projectName, result.scriptName);
     }
   };
 
-  const cancelNewProjectForScript = () => setShowProjectNameModal(false);
-
-  const cancelProjectSelect = () => setShowProjectSelectModal(false);
-
-  const openNewProjectForScript = () => {
-    setShowProjectSelectModal(false);
-    setShowProjectNameModal(true);
-  };
-
-  const chooseExistingProject = (name) => {
-    setShowProjectSelectModal(false);
-    if (name) setNewScriptProject(name);
-  };
-
-  const backToProjectSelect = () => {
-    setNewScriptProject(null);
-    setShowProjectSelectModal(true);
-  };
 
   useImperativeHandle(ref, () => ({
     newScript: handleNewScript,
@@ -167,7 +139,7 @@ const FileManager = forwardRef(function FileManager({
       oldName,
       renameValue.trim(),
     );
-    if (!success) setErrorMessage('Failed to rename project');
+    if (!success) console.error('Failed to rename project');
     cancelRename();
     await loadProjects();
   };
@@ -183,35 +155,21 @@ const FileManager = forwardRef(function FileManager({
       oldName,
       newName,
     );
-    if (!success) setErrorMessage('Failed to rename script');
+    if (!success) console.error('Failed to rename script');
     cancelRename();
     await loadProjects();
   };
 
-  const confirmNewScript = async (name) => {
-    const projectName = newScriptProject;
-    if (!name || !projectName) return;
-    const result = await window.electronAPI.createNewScript(projectName, name);
-    if (result && result.success) {
-      setNewScriptProject(null);
-      await loadProjects();
-      onScriptSelect(projectName, result.scriptName);
-    } else {
-      setErrorMessage('Failed to create script');
-    }
-  };
-
-  const cancelNewScript = () => setNewScriptProject(null);
 
   const handleDeleteProject = async (projectName) => {
     const deleted = await window.electronAPI.deleteProject(projectName);
-    if (!deleted) setErrorMessage('Failed to delete project');
+    if (!deleted) console.error('Failed to delete project');
     await loadProjects();
   };
 
   const handleDeleteScript = async (projectName, scriptName) => {
     const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
-    if (!deleted) setErrorMessage('Failed to delete script');
+    if (!deleted) console.error('Failed to delete script');
     await loadProjects();
   };
 
@@ -344,38 +302,7 @@ const FileManager = forwardRef(function FileManager({
           </div>
         ))}
       </div>
-      {showProjectSelectModal && (
-        <ProjectSelectModal
-          projects={projects.map((p) => p.name)}
-          onCreateNew={openNewProjectForScript}
-          onSelect={chooseExistingProject}
-          onCancel={cancelProjectSelect}
-        />
-      )}
-      {showProjectNameModal && (
-        <NameModal
-          title="New Project Name"
-          placeholder="Project name"
-          onConfirm={confirmNewProjectForScript}
-          onCancel={cancelNewProjectForScript}
-        />
-      )}
-      {newScriptProject && (
-        <NameModal
-          title="New Script Name"
-          placeholder="Script name"
-          onConfirm={confirmNewScript}
-          onCancel={cancelNewScript}
-          onBack={backToProjectSelect}
-        />
-      )}
-      {errorMessage && (
-        <MessageModal
-          title="Error"
-          message={errorMessage}
-          onClose={() => setErrorMessage(null)}
-        />
-      )}
+
     </div>
   );
 });
