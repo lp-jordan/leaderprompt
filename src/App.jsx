@@ -1,5 +1,5 @@
 import './App.css';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
@@ -9,12 +9,10 @@ function App() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [loadedScript, setLoadedScript] = useState(null);
   const [loadedProject, setLoadedProject] = useState(null);
-  const [scriptHtml, setScriptHtml] = useState(null);
   const [leftWidth, setLeftWidth] = useState(300);
   const leftRef = useRef(null);
   const fileManagerRef = useRef(null);
   const isDragging = useRef(false);
-  const saveTimeout = useRef(null);
 
   const onDrag = (e) => {
     if (!isDragging.current) return;
@@ -43,72 +41,24 @@ function App() {
     window.addEventListener('mouseup', stopDrag);
   };
 
-  const handleScriptSelect = async (projectName, scriptName) => {
+  const handleScriptSelect = (projectName, scriptName) => {
     setSelectedProject(projectName);
     setSelectedScript(scriptName);
-    try {
-      const html = await window.electronAPI.loadScript(projectName, scriptName);
-      setScriptHtml(html);
-    } catch (err) {
-      console.error('Failed to load script:', err);
-    }
   };
 
-  const handleSendToPrompter = () => {
-    if (scriptHtml) {
-      window.electronAPI.openPrompter(scriptHtml);
-      setLoadedProject(selectedProject);
-      setLoadedScript(selectedScript);
-    }
+  const handlePrompterOpen = (projectName, scriptName) => {
+    setLoadedProject(projectName);
+    setLoadedScript(scriptName);
   };
 
-  useEffect(() => {
-    const cleanup = window.electronAPI.onPrompterClosed(() => {
-      setLoadedProject(null);
-      setLoadedScript(null);
-    });
-    return () => {
-      cleanup?.();
-    };
-  }, []);
-
-  const handleScriptEdit = (html) => {
-    setScriptHtml(html);
-    if (selectedProject && selectedScript) {
-      if (saveTimeout.current) {
-        clearTimeout(saveTimeout.current);
-      }
-      saveTimeout.current = setTimeout(() => {
-        window.electronAPI.saveScript(selectedProject, selectedScript, html);
-        saveTimeout.current = null;
-      }, 300);
-    }
-    if (
-      selectedProject === loadedProject &&
-      selectedScript === loadedScript
-    ) {
-      window.electronAPI.sendUpdatedScript(html);
-    }
-  };
-
-  const handleCloseScript = () => {
-    if (saveTimeout.current) {
-      clearTimeout(saveTimeout.current);
-      saveTimeout.current = null;
-    }
-    if (selectedProject && selectedScript && scriptHtml) {
-      window.electronAPI.saveScript(
-        selectedProject,
-        selectedScript,
-        scriptHtml,
-      );
-    }
-    setScriptHtml(null);
-    setSelectedProject(null);
-    setSelectedScript(null);
+  const handlePrompterClose = () => {
     setLoadedProject(null);
     setLoadedScript(null);
-    window.electronAPI.sendUpdatedScript('');
+  };
+
+  const handleViewerClose = () => {
+    setSelectedProject(null);
+    setSelectedScript(null);
   };
 
   const handleCreateRequest = () => {
@@ -134,12 +84,13 @@ function App() {
       <div className="divider" onMouseDown={startDrag} />
       <div className="right-panel">
         <ScriptViewer
-          scriptHtml={scriptHtml}
+          projectName={selectedProject}
           scriptName={selectedScript}
-          showLogo={scriptHtml === null}
-          onSend={handleSendToPrompter}
-          onEdit={handleScriptEdit}
-          onClose={handleCloseScript}
+          loadedProject={loadedProject}
+          loadedScript={loadedScript}
+          onPrompterOpen={handlePrompterOpen}
+          onPrompterClose={handlePrompterClose}
+          onCloseViewer={handleViewerClose}
           onCreate={handleCreateRequest}
           onLoad={handleLoadRequest}
         />

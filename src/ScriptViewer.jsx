@@ -1,16 +1,35 @@
 import './ScriptViewer.css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
 function ScriptViewer({
-  scriptHtml,
+  projectName,
   scriptName,
-  showLogo,
-  onSend,
-  onEdit,
-  onClose,
+  loadedProject,
+  loadedScript,
+  onPrompterOpen,
+  onPrompterClose,
+  onCloseViewer,
   onCreate,
   onLoad,
 }) {
+  const [scriptHtml, setScriptHtml] = useState(null);
   const contentRef = useRef(null);
+  const saveTimeout = useRef(null);
+
+  useEffect(() => {
+    if (projectName && scriptName) {
+      window.electronAPI
+        .loadScript(projectName, scriptName)
+        .then((html) => {
+          setScriptHtml(html);
+        })
+        .catch((err) => {
+          console.error('Failed to load script:', err);
+        });
+    } else {
+      setScriptHtml(null);
+    }
+  }, [projectName, scriptName]);
 
   useEffect(() => {
     if (
@@ -22,18 +41,66 @@ function ScriptViewer({
     }
   }, [scriptHtml]);
 
+  const handleEdit = (html) => {
+    setScriptHtml(html);
+    if (projectName && scriptName) {
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current);
+      }
+      saveTimeout.current = setTimeout(() => {
+        window.electronAPI.saveScript(projectName, scriptName, html);
+        saveTimeout.current = null;
+      }, 300);
+    }
+    if (projectName === loadedProject && scriptName === loadedScript) {
+      window.electronAPI.sendUpdatedScript(html);
+    }
+  };
+
   const handleBlur = () => {
     if (contentRef.current) {
-      onEdit(contentRef.current.innerHTML);
+      handleEdit(contentRef.current.innerHTML);
     }
   };
 
   const handleInput = () => {
     if (contentRef.current) {
-      onEdit(contentRef.current.innerHTML);
+      handleEdit(contentRef.current.innerHTML);
     }
   };
-  
+
+  const handleSend = () => {
+    if (scriptHtml) {
+      window.electronAPI.openPrompter(scriptHtml);
+      onPrompterOpen?.(projectName, scriptName);
+    }
+  };
+
+  useEffect(() => {
+    const cleanup = window.electronAPI.onPrompterClosed(() => {
+      onPrompterClose?.();
+    });
+    return () => {
+      cleanup?.();
+    };
+  }, [onPrompterClose]);
+
+  const handleClose = () => {
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current);
+      saveTimeout.current = null;
+    }
+    if (projectName && scriptName && scriptHtml) {
+      window.electronAPI.saveScript(projectName, scriptName, scriptHtml);
+    }
+    setScriptHtml(null);
+    onPrompterClose?.();
+    window.electronAPI.sendUpdatedScript('');
+    onCloseViewer?.();
+  };
+
+  const showLogo = scriptHtml === null;
+
   return (
     <div className="script-viewer">
       <div className="viewer-header">
@@ -48,7 +115,7 @@ function ScriptViewer({
           </div>
           <button
             className="close-button"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close"
           >
             ×
@@ -57,13 +124,13 @@ function ScriptViewer({
       )}
       {showLogo ? (
         <div className="load-placeholder">
-          Please {' '}
+          Please{' '}
           <button className="link-button" onClick={onLoad}>
-            Load 
+            Load
           </button>{' '}
-          or {' '}
+          or{' '}
           <button className="link-button" onClick={onCreate}>
-            Create 
+            Create
           </button>{' '}
           a Script
         </div>
@@ -77,7 +144,7 @@ function ScriptViewer({
             onInput={handleInput}
           />
           <div className="send-button-wrapper">
-            <button className="send-button" onClick={onSend}>
+            <button className="send-button" onClick={handleSend}>
               Let&apos;s Go!
             </button>
           </div>
