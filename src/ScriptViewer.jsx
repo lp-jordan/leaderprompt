@@ -108,7 +108,7 @@ function ScriptViewer({
           <h2 className="header-title">Script Viewer</h2>
         </div>
       </div>
-      {scriptName && (
+      {isLoaded && (
         <div className="script-name-row">
           <div className="script-name">
             {scriptName.replace(/\.[^/.]+$/, '')}
