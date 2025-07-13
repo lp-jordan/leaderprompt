@@ -99,7 +99,7 @@ function ScriptViewer({
     onCloseViewer?.();
   };
 
-  const showLogo = scriptHtml === null;
+  const isLoaded = scriptHtml !== null;
 
   return (
     <div className="script-viewer">
@@ -123,7 +123,7 @@ function ScriptViewer({
         </div>
       )}
       <div className="script-viewer-content">
-        {showLogo ? (
+        {!isLoaded ? (
           <div className="load-placeholder">
             Please{' '}
             <button className="link-button" onClick={onLoad}>
