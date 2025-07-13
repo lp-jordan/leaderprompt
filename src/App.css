@@ -24,7 +24,8 @@ body {
   background-color: #111;
   border-right: 1px solid #333;
   padding: calc(var(--space-4) + var(--space-1));
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: visible;
 }
 
 .right-panel {
@@ -73,6 +74,7 @@ body {
 .header-buttons {
   display: flex;
   gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .file-manager-header button {
