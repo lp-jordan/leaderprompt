@@ -203,10 +203,25 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
 }
 
 .script-button:hover {
   color: var(--accent-color);
+}
+
+.script-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #333;
+  color: #e0e0e0;
+  padding: 2px 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 4px;
+  margin-top: 2px;
+  z-index: 5;
 }
 
 
