@@ -152,20 +152,19 @@
   border-radius: 0 4px 4px 0;
 }
 
-.settings-tabs {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-
-.settings-tabs button {
+.advanced-settings-button {
   background: none;
   border: none;
   color: #e0e0e0;
   cursor: pointer;
 }
 
-.settings-tabs button.active {
-  color: var(--accent-color);
+.advanced-toggle {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  align-self: flex-start;
 }
 
 .advanced-settings-wrapper {
@@ -184,15 +183,84 @@
   background: rgba(0, 0, 0, 0.8);
   padding: var(--space-4);
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
 
+.advanced-settings.open {
+  transform: translateX(0);
+}
+
+.advanced-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.advanced-tabs button {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+}
+
+.advanced-tabs button.active {
+  color: var(--accent-color);
+}
+
+.advanced-settings .pages {
   display: flex;
   width: 200%;
   transition: transform 0.3s ease;
 }
 
-.main-settings .page {
+.advanced-settings .page {
   width: 100%;
   flex-shrink: 0;
+}
+
+.advanced-panel {
+  position: relative;
+  left: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  padding: var(--space-4);
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.advanced-panel.open {
+  transform: translateY(0);
+}
+
+.advanced-settings label {
+  display: block;
+}
+
+.advanced-settings input[type='range'],
+.advanced-settings input[type='checkbox'] {
+  accent-color: var(--accent-color);
+}
+
+.toggle-btn {
+  background: #333;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 4px;
+}
+
+.toggle-btn.active {
+  background: var(--accent-color);
+  color: #000;
+}
 
 .advanced-settings-close {
   position: absolute;
@@ -202,4 +270,23 @@
   border: none;
   color: #e0e0e0;
   cursor: pointer;
+}
+
+.page-indicators {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.page-indicators .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+  cursor: pointer;
+}
+
+.page-indicators .dot.active {
+  background: var(--accent-color);
 }
