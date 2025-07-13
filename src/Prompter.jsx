@@ -23,9 +23,8 @@ function Prompter() {
   const [transparentMode, setTransparentMode] = useState(false)
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(0)
-  const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const containerRef = useRef(null)
   const advancedRef = useRef(null)
   const touchStartX = useRef(0)
@@ -235,160 +234,148 @@ function Prompter() {
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
         <button
           className="main-settings-toggle"
-          style={{ left: mainSettingsOpen ? '220px' : '0' }}
-          onClick={() => setMainSettingsOpen(!mainSettingsOpen)}
+          style={{ left: settingsOpen ? '220px' : '0' }}
+          onClick={() => setSettingsOpen(!settingsOpen)}
         >
-          {mainSettingsOpen ? '←' : '→'}
+          {settingsOpen ? '←' : '→'}
         </button>
-        <div className={`main-settings ${mainSettingsOpen ? 'open' : ''}`}>
-        <button
-          className={`toggle-btn ${autoscroll ? 'active' : ''}`}
-          onClick={() => setAutoscroll(!autoscroll)}
-          disabled={notecardMode}
-        >
-          Auto-scroll
-        </button>
-        <label>
-          Speed
-          <input
-            type="range"
-            min={SPEED_MIN}
-            max={SPEED_MAX}
-            value={speed}
-            step="0.05"
-            onChange={(e) => setSpeed(parseFloat(e.target.value))}
-            disabled={notecardMode}
-          />
-        </label>
-        <button onClick={() => setMirrorX(!mirrorX)}>Flip Horizontally</button>
-        <button onClick={() => setMirrorY(!mirrorY)}>Flip Vertically</button>
-        <button
-          className={`toggle-btn ${notecardMode ? 'active' : ''}`}
-          onClick={() => {
-            setNotecardMode(!notecardMode)
-            if (!notecardMode) setAutoscroll(false)
-          }}
-        >
-          Notecard
-        </button>
-        <button
-          className={`toggle-btn ${transparentMode ? 'active' : ''}`}
-          onClick={() => setTransparentMode(!transparentMode)}
-        >
-          Transparent
-        </button>
-        <button
-          className="advanced-settings-button"
-          onClick={() => {
-            const next = !advancedOpen
-            setAdvancedOpen(next)
-          }}
-        >
-          ⚙
-        </button>
-      </div>
 
-      {advancedOpen && (
-        <div className="advanced-settings-wrapper" ref={advancedRef}>
-          <div
-            className={`advanced-settings ${advancedOpen ? 'open' : ''}`}
-            onWheel={handleWheel}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <button className="advanced-settings-close" onClick={() => setAdvancedOpen(false)}>
-              ×
-            </button>
-            <div className="advanced-tabs">
-              <button
-                className={currentPage === 0 ? 'active' : ''}
-                onClick={() => setCurrentPage(0)}
-              >
-                Main
+        {settingsOpen && (
+          <div className="settings-wrapper" ref={settingsRef}>
+            <div
+              className={`main-settings ${settingsOpen ? 'open' : ''}`}
+              onWheel={handleWheel}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <button className="settings-close" onClick={() => setSettingsOpen(false)}>
+                ×
               </button>
-              <button
-                className={currentPage === 1 ? 'active' : ''}
-                onClick={() => setCurrentPage(1)}
-              >
-                Advanced
-              </button>
-            </div>
-            <div className="pages" style={{ transform: `translateX(-${currentPage * 100}%)` }}>
-              <div className="page">
-                <h4>Text Styling</h4>
-                <label>
-                  Font Size ({fontSize}rem):
-                  <input
-                    type="range"
-                    min="1"
-                    max="6"
-                    step="0.1"
-                    value={fontSize}
-                    onChange={(e) => setFontSize(parseFloat(e.target.value))}
-                  />
-                </label>
-                <label>
-                  Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
-                  <input
-                    type="range"
-                    min={MARGIN_MIN}
-                    max={MARGIN_MAX}
-                    value={margin}
-                    onChange={(e) => setMargin(parseInt(e.target.value, 10))}
-                  />
-                </label>
-                <button onClick={resetDefaults}>Reset to defaults</button>
+              <div className="settings-tabs">
+                <button
+                  className={currentPage === 0 ? 'active' : ''}
+                  onClick={() => setCurrentPage(0)}
+                >
+                  Main
+                </button>
+                <button
+                  className={currentPage === 1 ? 'active' : ''}
+                  onClick={() => setCurrentPage(1)}
+                >
+                  Advanced
+                </button>
               </div>
-              <div className="page">
-                <h4>Advanced Settings</h4>
-                <label>
-                  Line Height ({lineHeight})
-                  <input
-                    type="range"
-                    min="1"
-                    max="3"
-                    step="0.1"
-                    value={lineHeight}
-                    onChange={(e) => setLineHeight(parseFloat(e.target.value))}
-                  />
-                </label>
-                <label>
-                  Stroke ({strokeWidth}px)
-                  <input
-                    type="range"
-                    min="0"
-                    max="4"
-                    step="0.5"
-                    value={strokeWidth}
-                    onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
-                    disabled={!transparentMode}
-                  />
-                </label>
-                <label>
-                  Shadow ({shadowStrength}px)
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={shadowStrength}
-                    onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
-                    disabled={!transparentMode}
-                  />
-                </label>
-                <label>
-                  Text Alignment:
-                  <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                    <option value="justify">Justify</option>
-                  </select>
-                </label>
+              <div className="pages" style={{ transform: `translateX(-${currentPage * 100}%)` }}>
+                <div className="page">
+                  <button
+                    className={`toggle-btn ${autoscroll ? 'active' : ''}`}
+                    onClick={() => setAutoscroll(!autoscroll)}
+                    disabled={notecardMode}
+                  >
+                    Auto-scroll
+                  </button>
+                  <label>
+                    Speed
+                    <input
+                      type="range"
+                      min={SPEED_MIN}
+                      max={SPEED_MAX}
+                      value={speed}
+                      step="0.05"
+                      onChange={(e) => setSpeed(parseFloat(e.target.value))}
+                      disabled={notecardMode}
+                    />
+                  </label>
+                  <button onClick={() => setMirrorX(!mirrorX)}>Flip Horizontally</button>
+                  <button onClick={() => setMirrorY(!mirrorY)}>Flip Vertically</button>
+                  <button
+                    className={`toggle-btn ${notecardMode ? 'active' : ''}`}
+                    onClick={() => {
+                      setNotecardMode(!notecardMode)
+                      if (!notecardMode) setAutoscroll(false)
+                    }}
+                  >
+                    Notecard
+                  </button>
+                  <button
+                    className={`toggle-btn ${transparentMode ? 'active' : ''}`}
+                    onClick={() => setTransparentMode(!transparentMode)}
+                  >
+                    Transparent
+                  </button>
+                </div>
+                <div className="page">
+                  <h4>Advanced Settings</h4>
+                  <label>
+                    Font Size ({fontSize}rem):
+                    <input
+                      type="range"
+                      min="1"
+                      max="6"
+                      step="0.1"
+                      value={fontSize}
+                      onChange={(e) => setFontSize(parseFloat(e.target.value))}
+                    />
+                  </label>
+                  <label>
+                    Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
+                    <input
+                      type="range"
+                      min={MARGIN_MIN}
+                      max={MARGIN_MAX}
+                      value={margin}
+                      onChange={(e) => setMargin(parseInt(e.target.value, 10))}
+                    />
+                  </label>
+                  <label>
+                    Line Height ({lineHeight})
+                    <input
+                      type="range"
+                      min="1"
+                      max="3"
+                      step="0.1"
+                      value={lineHeight}
+                      onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+                    />
+                  </label>
+                  <label>
+                    Stroke ({strokeWidth}px)
+                    <input
+                      type="range"
+                      min="0"
+                      max="4"
+                      step="0.5"
+                      value={strokeWidth}
+                      onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+                      disabled={!transparentMode}
+                    />
+                  </label>
+                  <label>
+                    Shadow ({shadowStrength}px)
+                    <input
+                      type="range"
+                      min="0"
+                      max="20"
+                      value={shadowStrength}
+                      onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
+                      disabled={!transparentMode}
+                    />
+                  </label>
+                  <label>
+                    Text Alignment:
+                    <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
+                      <option value="left">Left</option>
+                      <option value="center">Center</option>
+                      <option value="right">Right</option>
+                      <option value="justify">Justify</option>
+                    </select>
+                  </label>
+                  <button onClick={resetDefaults}>Reset to defaults</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       <div
         ref={containerRef}
         className="prompter-container"
