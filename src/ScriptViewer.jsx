@@ -114,9 +114,6 @@ function ScriptViewer({
     onCloseViewer?.();
   }, [projectName, scriptName, scriptHtml, onPrompterClose, onCloseViewer]);
 
-  // Clean up when the component unmounts
-  // intentionally omit handleClose from deps so this runs only once
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => handleClose(), []);
 
   // Ensure the viewer properly cleans up when no script is selected
@@ -159,15 +156,7 @@ function ScriptViewer({
       <div className="script-viewer-content">
         {showLogo ? (
           <div className="load-placeholder">
-            Please{' '}
-            <button className="link-button" onClick={onLoad}>
-              Load
-            </button>{' '}
-            or{' '}
-            <button className="link-button" onClick={onCreate}>
-              Create
-            </button>{' '}
-            a Script
+            Welcome to LeaderPrompt. Please load or create a script.{' '}
           </div>
         ) : (
           <>
