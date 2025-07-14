@@ -84,10 +84,8 @@ function ScriptViewer({
   }, [scriptHtml, projectName, scriptName, onPrompterOpen]);
 
   useEffect(() => {
-    if (onSend) {
-      onSend(() => handleSend());
-    }
-  }, [onSend, handleSend]);
+    onSend?.(scriptHtml ? () => handleSend() : null);
+  }, [onSend, handleSend, scriptHtml]);
 
   useEffect(() => {
     const cleanup = window.electronAPI.onPrompterClosed(() => {
