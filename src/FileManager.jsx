@@ -6,6 +6,7 @@ import {
   useRef,
   useMemo,
 } from 'react';
+import ConfirmModal from './ConfirmModal.jsx';
 // The old project ActionMenu has been replaced with inline buttons
 
 function PencilIcon() {
@@ -82,6 +83,7 @@ const FileManager = forwardRef(function FileManager({
   const [tooltipScript, setTooltipScript] = useState(null);
   const tooltipTimerRef = useRef(null);
   const [sortBy, setSortBy] = useState('date');
+  const [confirmState, setConfirmState] = useState(null);
 
   const sortedProjects = useMemo(() => {
     const arr = [...projects];
@@ -201,16 +203,30 @@ const FileManager = forwardRef(function FileManager({
   };
 
 
-  const handleDeleteProject = async (projectName) => {
-    const deleted = await window.electronAPI.deleteProject(projectName);
-    if (!deleted) console.error('Failed to delete project');
-    await loadProjects();
+  const openConfirm = (message, action) => {
+    setConfirmState({ message, action });
   };
 
-  const handleDeleteScript = async (projectName, scriptName) => {
-    const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
-    if (!deleted) console.error('Failed to delete script');
-    await loadProjects();
+  const handleDeleteProject = (projectName) => {
+    openConfirm(
+      `Delete project "${projectName}"? This will remove all its scripts.`,
+      async () => {
+        const deleted = await window.electronAPI.deleteProject(projectName);
+        if (!deleted) console.error('Failed to delete project');
+        await loadProjects();
+      },
+    );
+  };
+
+  const handleDeleteScript = (projectName, scriptName) => {
+    openConfirm(
+      `Delete script "${scriptName}" from "${projectName}"?`,
+      async () => {
+        const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
+        if (!deleted) console.error('Failed to delete script');
+        await loadProjects();
+      },
+    );
   };
 
   const toggleCollapse = (projectName) => {
@@ -385,6 +401,17 @@ const FileManager = forwardRef(function FileManager({
           </div>
         ))}
       </div>
+      {confirmState && (
+        <ConfirmModal
+          message={confirmState.message}
+          onConfirm={() => {
+            const { action } = confirmState;
+            setConfirmState(null);
+            action();
+          }}
+          onCancel={() => setConfirmState(null)}
+        />
+      )}
 
     </div>
   );
