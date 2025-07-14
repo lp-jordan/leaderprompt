@@ -97,9 +97,6 @@ function ScriptViewer({
     };
   }, [onPrompterClose]);
 
-  // Clean up when the component unmounts
-  useEffect(() => () => handleClose(), [handleClose]);
-
   const handleClose = useCallback(() => {
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
@@ -113,6 +110,9 @@ function ScriptViewer({
     window.electronAPI.sendUpdatedScript('');
     onCloseViewer?.();
   }, [projectName, scriptName, scriptHtml, onPrompterClose, onCloseViewer]);
+
+  // Clean up when the component unmounts
+  useEffect(() => () => handleClose(), [handleClose]);
 
   // Ensure the viewer properly cleans up when no script is selected
   const prevSelection = useRef({ projectName: null, scriptName: null });
