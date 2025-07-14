@@ -23,33 +23,9 @@ function Prompter() {
   const [transparentMode, setTransparentMode] = useState(false)
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [currentPage, setCurrentPage] = useState(0)
+  // all settings are now accessible from a single panel
   const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
   const containerRef = useRef(null)
-  const advancedRef = useRef(null)
-  const touchStartX = useRef(0)
-
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 1) {
-      touchStartX.current = e.touches[0].clientX
-    }
-  }
-
-  const handleTouchEnd = (e) => {
-    const diff = e.changedTouches[0].clientX - touchStartX.current
-    if (Math.abs(diff) > 50) {
-      if (diff < 0 && currentPage < 1) setCurrentPage(currentPage + 1)
-      if (diff > 0 && currentPage > 0) setCurrentPage(currentPage - 1)
-    }
-  }
-
-  const handleWheel = (e) => {
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 30) {
-      if (e.deltaX > 0 && currentPage < 1) setCurrentPage(currentPage + 1)
-      if (e.deltaX < 0 && currentPage > 0) setCurrentPage(currentPage - 1)
-    }
-  }
 
   const resetDefaults = () => {
     setAutoscroll(false)
@@ -189,30 +165,6 @@ function Prompter() {
     }
   }, [notecardMode])
 
-  // Close settings when clicking outside
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (advancedRef.current && !advancedRef.current.contains(e.target)) {
-        setAdvancedOpen(false)
-      }
-    }
-    if (advancedOpen) {
-      document.addEventListener('mousedown', handleClick)
-    }
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [advancedOpen])
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape') {
-        setAdvancedOpen(false)
-      }
-    }
-    if (advancedOpen) {
-      document.addEventListener('keydown', handleKey)
-    }
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [advancedOpen])
 
   // notify main process when the prompter component is ready
   const mountedRef = useRef(false)
@@ -277,118 +229,74 @@ function Prompter() {
         >
           Transparent
         </button>
-        <button
-          className="advanced-settings-button"
-          onClick={() => {
-            const next = !advancedOpen
-            setAdvancedOpen(next)
-          }}
-        >
-          ⚙
-        </button>
+        <h4>Text Styling</h4>
+        <label>
+          Font Size ({fontSize}rem):
+          <input
+            type="range"
+            min="1"
+            max="6"
+            step="0.1"
+            value={fontSize}
+            onChange={(e) => setFontSize(parseFloat(e.target.value))}
+          />
+        </label>
+        <label>
+          Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
+          <input
+            type="range"
+            min={MARGIN_MIN}
+            max={MARGIN_MAX}
+            value={margin}
+            onChange={(e) => setMargin(parseInt(e.target.value, 10))}
+          />
+        </label>
+        <button onClick={resetDefaults}>Reset to defaults</button>
+        <h4>Advanced Settings</h4>
+        <label>
+          Line Height ({lineHeight})
+          <input
+            type="range"
+            min="1"
+            max="3"
+            step="0.1"
+            value={lineHeight}
+            onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+          />
+        </label>
+        <label>
+          Stroke ({strokeWidth}px)
+          <input
+            type="range"
+            min="0"
+            max="4"
+            step="0.5"
+            value={strokeWidth}
+            onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+            disabled={!transparentMode}
+          />
+        </label>
+        <label>
+          Shadow ({shadowStrength}px)
+          <input
+            type="range"
+            min="0"
+            max="20"
+            value={shadowStrength}
+            onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
+            disabled={!transparentMode}
+          />
+        </label>
+        <label>
+          Text Alignment:
+          <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+            <option value="justify">Justify</option>
+          </select>
+        </label>
       </div>
-
-      {advancedOpen && (
-        <div className="advanced-settings-wrapper" ref={advancedRef}>
-          <div
-            className={`advanced-settings ${advancedOpen ? 'open' : ''}`}
-            onWheel={handleWheel}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <button className="advanced-settings-close" onClick={() => setAdvancedOpen(false)}>
-              ×
-            </button>
-            <div className="advanced-tabs">
-              <button
-                className={currentPage === 0 ? 'active' : ''}
-                onClick={() => setCurrentPage(0)}
-              >
-                Main
-              </button>
-              <button
-                className={currentPage === 1 ? 'active' : ''}
-                onClick={() => setCurrentPage(1)}
-              >
-                Advanced
-              </button>
-            </div>
-            <div className="pages" style={{ transform: `translateX(-${currentPage * 100}%)` }}>
-              <div className="page">
-                <h4>Text Styling</h4>
-                <label>
-                  Font Size ({fontSize}rem):
-                  <input
-                    type="range"
-                    min="1"
-                    max="6"
-                    step="0.1"
-                    value={fontSize}
-                    onChange={(e) => setFontSize(parseFloat(e.target.value))}
-                  />
-                </label>
-                <label>
-                  Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
-                  <input
-                    type="range"
-                    min={MARGIN_MIN}
-                    max={MARGIN_MAX}
-                    value={margin}
-                    onChange={(e) => setMargin(parseInt(e.target.value, 10))}
-                  />
-                </label>
-                <button onClick={resetDefaults}>Reset to defaults</button>
-              </div>
-              <div className="page">
-                <h4>Advanced Settings</h4>
-                <label>
-                  Line Height ({lineHeight})
-                  <input
-                    type="range"
-                    min="1"
-                    max="3"
-                    step="0.1"
-                    value={lineHeight}
-                    onChange={(e) => setLineHeight(parseFloat(e.target.value))}
-                  />
-                </label>
-                <label>
-                  Stroke ({strokeWidth}px)
-                  <input
-                    type="range"
-                    min="0"
-                    max="4"
-                    step="0.5"
-                    value={strokeWidth}
-                    onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
-                    disabled={!transparentMode}
-                  />
-                </label>
-                <label>
-                  Shadow ({shadowStrength}px)
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={shadowStrength}
-                    onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
-                    disabled={!transparentMode}
-                  />
-                </label>
-                <label>
-                  Text Alignment:
-                  <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                    <option value="justify">Justify</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       <div
         ref={containerRef}
         className="prompter-container"
