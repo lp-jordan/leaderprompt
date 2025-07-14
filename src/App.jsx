@@ -10,7 +10,7 @@ function App() {
   const [loadedScript, setLoadedScript] = useState(null);
   const [loadedProject, setLoadedProject] = useState(null);
   const fileManagerRef = useRef(null);
-  const sendCallbackRef = useRef(null);
+  const [sendCallback, setSendCallback] = useState(null);
 
   const handleScriptSelect = (projectName, scriptName) => {
     setSelectedProject(projectName);
@@ -32,13 +32,6 @@ function App() {
     setSelectedScript(null);
   };
 
-  const handleCreateRequest = () => {
-    fileManagerRef.current?.newScript();
-  };
-
-  const handleLoadRequest = async () => {
-    console.log('Load request ignored: popups removed');
-  };
 
   return (
     <div className="main-layout">
@@ -61,21 +54,21 @@ function App() {
           onPrompterOpen={handlePrompterOpen}
           onPrompterClose={handlePrompterClose}
           onCloseViewer={handleViewerClose}
-          onCreate={handleCreateRequest}
-          onLoad={handleLoadRequest}
           onSend={(cb) => {
-            sendCallbackRef.current = cb;
+            setSendCallback(() => cb);
           }}
         />
-        <div className="send-button-container">
-          <button
-            className="send-button"
-            onClick={() => sendCallbackRef.current && sendCallbackRef.current()}
-            disabled={!sendCallbackRef.current}
-          >
-            Let&apos;s Go!
-          </button>
-        </div>
+        {sendCallback && (
+          <div className="send-button-container">
+            <button
+              className="send-button"
+              onClick={() => sendCallback && sendCallback()}
+              disabled={!sendCallback}
+            >
+              Let&apos;s Go!
+            </button>
+          </div>
+        )}
       </div>
       <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
     </div>
