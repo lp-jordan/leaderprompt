@@ -379,3 +379,9 @@ body {
   color: #1e1e1e;
 }
 
+.send-button:disabled {
+  background-color: #666;
+  color: #999;
+  cursor: not-allowed;
+}
+

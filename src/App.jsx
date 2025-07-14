@@ -71,6 +71,7 @@ function App() {
           <button
             className="send-button"
             onClick={() => sendCallbackRef.current && sendCallbackRef.current()}
+            disabled={!sendCallbackRef.current}
           >
             Let&apos;s Go!
           </button>
