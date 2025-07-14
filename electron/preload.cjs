@@ -5,10 +5,16 @@ console.log('[PRELOAD] Preload script loaded ✅');
 contextBridge.exposeInMainWorld('electronAPI', {
   // Prompter controls
   openPrompter: (html) => ipcRenderer.send('open-prompter', html),
-  onScriptLoaded: (callback) =>
-    ipcRenderer.on('load-script', (_, data) => callback(data)),
-  onScriptUpdated: (callback) =>
-    ipcRenderer.on('update-script', (_, data) => callback(data)),
+  onScriptLoaded: (callback) => {
+    const handler = (_, data) => callback(data)
+    ipcRenderer.on('load-script', handler)
+    return () => ipcRenderer.removeListener('load-script', handler)
+  },
+  onScriptUpdated: (callback) => {
+    const handler = (_, data) => callback(data)
+    ipcRenderer.on('update-script', handler)
+    return () => ipcRenderer.removeListener('update-script', handler)
+  },
   sendUpdatedScript: (html) => ipcRenderer.send('update-script', html),
   getCurrentScript: () => ipcRenderer.invoke('get-current-script'),
   NEW_PROJECT_SENTINEL: '__NEW_PROJECT__',
