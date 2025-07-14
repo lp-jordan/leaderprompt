@@ -33,7 +33,8 @@ body {
   display: flex;
   flex-direction: column;
   padding: calc(var(--space-4) * 2.5);
-  overflow-y: auto;
+  overflow-y: hidden;
+  overflow-x: visible;
   position: relative;
 }
 
