@@ -131,8 +131,10 @@ function updateProjectMetadata(projectName) {
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: 1200,
+    height: 800,
+    minWidth: 1200,
+    minHeight: 800,
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -185,6 +187,8 @@ async function createPrompterWindow() {
   const baseOptions = {
     width: 1200,
     height: 800,
+    minWidth: 1200,
+    minHeight: 800,
     show: false,
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.cjs'),
