@@ -77,12 +77,11 @@
   background-color: #1e1e1e;
   font-family: sans-serif;
   width: 100%;
-  min-height: 0;
+  min-height: 0;g
 }
 
 .script-content::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
-}
 
 .load-placeholder {
   flex-grow: 1;
