@@ -4,6 +4,7 @@ import {
   forwardRef,
   useImperativeHandle,
   useRef,
+  useMemo,
 } from 'react';
 // The old project ActionMenu has been replaced with inline buttons
 
@@ -80,7 +81,7 @@ const FileManager = forwardRef(function FileManager({
   const [collapsed, setCollapsed] = useState({});
   const [tooltipScript, setTooltipScript] = useState(null);
   const tooltipTimerRef = useRef(null);
-
+  const [scriptSort, setScriptSort] = useState({});
 
   useEffect(() => {
     loadProjects();
@@ -227,6 +228,14 @@ const FileManager = forwardRef(function FileManager({
         </div>
       </div>
       <div className="header-buttons">
+        <select
+          className="sort-select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="date">Date Added</option>
+          <option value="name">Name</option>
+        </select>
         <button onClick={handleNewScript}>+ New Script</button>
         <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
           + New Project
@@ -246,7 +255,7 @@ const FileManager = forwardRef(function FileManager({
       )}
 
       <div className="file-manager-list">
-        {projects.map((project) => (
+        {sortedProjects.map((project) => (
           <div
             className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}
             key={project.name}
@@ -295,71 +304,94 @@ const FileManager = forwardRef(function FileManager({
                     >
                       <TrashIcon />
                     </button>
+                    <select
+                      className="sort-select"
+                      value={scriptSort[project.name] || 'date'}
+                      onChange={(e) =>
+                        setScriptSort((prev) => ({
+                          ...prev,
+                          [project.name]: e.target.value,
+                        }))
+                      }
+                    >
+                      <option value="date">Date Added</option>
+                      <option value="name">Name</option>
+                    </select>
                   </div>
                 </>
               )}
             </div>
             <ul>
-              {project.scripts.map((script) => {
-                const isPrompting =
-                  loadedProject === project.name && loadedScript === script;
-                const isLoaded =
-                  currentProject === project.name && currentScript === script;
-                const isRenaming =
-                  renamingScript &&
-                  renamingScript.projectName === project.name &&
-                  renamingScript.scriptName === script;
-                return (
-                  <li
-                    key={script}
-                    className={`script-item${
-                      isPrompting ? ' prompting' : ''
-                    }${isLoaded ? ' loaded' : ''}`}
-                  >
-                    {isRenaming ? (
-                      <>
-                        <input
-                          type="text"
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                        />
-                        <button onClick={() => confirmRenameScript(project.name, script)}>Save</button>
-                        <button onClick={cancelRename}>Cancel</button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="script-button"
-                          onClick={() => onScriptSelect(project.name, script)}
-                          onMouseEnter={() => handleScriptMouseEnter(script)}
-                          onMouseLeave={handleScriptMouseLeave}
-                        >
-                          {script.replace(/\.[^/.]+$/, '')}
-                          {tooltipScript === script && (
-                            <span className="script-tooltip">{script}</span>
-                          )}
-                        </button>
-                        <div className="script-actions">
+              {(() => {
+                const sortKey = scriptSort[project.name] || 'date';
+                const scripts = [...project.scripts].sort((a, b) => {
+                  if (sortKey === 'name') {
+                    return a.name.localeCompare(b.name);
+                  }
+                  return (b.added || 0) - (a.added || 0);
+                });
+                return scripts.map((scriptObj) => {
+                  const script = scriptObj.name;
+                  const isPrompting =
+                    loadedProject === project.name && loadedScript === script;
+                  const isLoaded =
+                    currentProject === project.name && currentScript === script;
+                  const isRenaming =
+                    renamingScript &&
+                    renamingScript.projectName === project.name &&
+                    renamingScript.scriptName === script;
+                  return (
+                    <li
+                      key={script}
+                      className={`script-item${
+                        isPrompting ? ' prompting' : ''
+                      }${isLoaded ? ' loaded' : ''}`}
+                    >
+                      {isRenaming ? (
+                        <>
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                          />
+                          <button onClick={() => confirmRenameScript(project.name, script)}>Save</button>
+                          <button onClick={cancelRename}>Cancel</button>
+                        </>
+                      ) : (
+                        <>
                           <button
-                            className="icon-button"
-                            onClick={() => startRenameScript(project.name, script)}
-                            aria-label="Rename"
+                            className="script-button"
+                            onClick={() => onScriptSelect(project.name, script)}
+                            onMouseEnter={() => handleScriptMouseEnter(script)}
+                            onMouseLeave={handleScriptMouseLeave}
                           >
-                            <PencilIcon />
+                            {script.replace(/\.[^/.]+$/, '')}
+                            {tooltipScript === script && (
+                              <span className="script-tooltip">{script}</span>
+                            )}
                           </button>
-                          <button
-                            className="icon-button"
-                            onClick={() => handleDeleteScript(project.name, script)}
-                            aria-label="Delete"
-                          >
-                            <TrashIcon />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                );
-              })}
+                          <div className="script-actions">
+                            <button
+                              className="icon-button"
+                              onClick={() => startRenameScript(project.name, script)}
+                              aria-label="Rename"
+                            >
+                              <PencilIcon />
+                            </button>
+                            <button
+                              className="icon-button"
+                              onClick={() => handleDeleteScript(project.name, script)}
+                              aria-label="Delete"
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </li>
+                  );
+                });
+              })()}
             </ul>
           </div>
         ))}

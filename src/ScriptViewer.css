@@ -83,7 +83,9 @@
 
 .script-content::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
-}
+
+.script-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 
 .load-placeholder {
   flex-grow: 1;

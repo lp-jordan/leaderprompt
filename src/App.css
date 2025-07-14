@@ -100,6 +100,20 @@ body {
   overflow: hidden;
 }
 
+.sort-select {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  padding: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sort-select option {
+  background-color: #333;
+  color: #e0e0e0;
+}
+
 .file-manager-header button:hover {
   background-color: var(--accent-color);
 }
