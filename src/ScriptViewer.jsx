@@ -124,7 +124,7 @@ function ScriptViewer({
     prevSelection.current = { projectName, scriptName };
   }, [projectName, scriptName, handleClose]);
 
-  const showLogo = scriptHtml === null;
+  const showLogo = !scriptName || scriptHtml === null;
 
   return (
     <div className="script-viewer">
