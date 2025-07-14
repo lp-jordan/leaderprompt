@@ -334,7 +334,13 @@ app.whenReady().then(async () => {
 
       const result = projects.map((projectName) => {
         const scriptsDir = path.join(baseDir, projectName);
-        const scripts = fs.readdirSync(scriptsDir).filter((file) => file.endsWith('.docx'));
+        const scripts = fs
+          .readdirSync(scriptsDir)
+          .filter((file) => file.endsWith('.docx'))
+          .map((file) => {
+            const { birthtimeMs } = fs.statSync(path.join(scriptsDir, file));
+            return { name: file, added: birthtimeMs };
+          });
         const meta = metadata.projects.find((p) => p.name === projectName);
         const added = meta?.added || 0;
         return { name: projectName, scripts, added };
@@ -548,7 +554,13 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
   ipcMain.handle('get-scripts-for-project', (_, projectName) => {
     log(`Fetching scripts for project: ${projectName}`);
     const folderPath = path.join(getProjectsPath(), projectName);
-    return fs.readdirSync(folderPath).filter((f) => f.endsWith('.docx'));
+    return fs
+      .readdirSync(folderPath)
+      .filter((f) => f.endsWith('.docx'))
+      .map((f) => {
+        const { birthtimeMs } = fs.statSync(path.join(folderPath, f));
+        return { name: f, added: birthtimeMs };
+      });
   });
 
   ipcMain.handle('load-script', async (_, projectName, scriptName) => {
