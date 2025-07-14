@@ -91,7 +91,7 @@ useEffect(() => {
   }, [scriptHtml, projectName, scriptName, onPrompterOpen]);
 
   useEffect(() => {
-    onSend?.(loaded ? () => handleSend() : null);
+    onSend?.(loaded && scriptHtml?.trim() ? () => handleSend() : null);
   }, [onSend, handleSend, loaded]);
 
   useEffect(() => {
