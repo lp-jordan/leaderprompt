@@ -153,15 +153,7 @@ function ScriptViewer({
       <div className="script-viewer-content">
         {showLogo ? (
           <div className="load-placeholder">
-            Please{' '}
-            <button className="link-button" onClick={onLoad}>
-              Load
-            </button>{' '}
-            or{' '}
-            <button className="link-button" onClick={onCreate}>
-              Create
-            </button>{' '}
-            a Script
+            Welcome to LeaderPrompt. Please load or create a script.{' '}
           </div>
         ) : (
           <>
