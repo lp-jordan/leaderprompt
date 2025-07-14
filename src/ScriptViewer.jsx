@@ -97,6 +97,9 @@ function ScriptViewer({
     };
   }, [onPrompterClose]);
 
+  // Clean up when the component unmounts
+  useEffect(() => () => handleClose(), [handleClose]);
+
   const handleClose = useCallback(() => {
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
