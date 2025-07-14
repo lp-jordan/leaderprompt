@@ -96,7 +96,6 @@ function Prompter() {
     return () => {
       cleanupLoaded?.()
       cleanupUpdated?.()
-      setContent('')
     }
   }, [])
 
