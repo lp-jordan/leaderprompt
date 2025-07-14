@@ -26,7 +26,8 @@
 
 .script-viewer-content {
   flex-grow: 1;
-  overflow: hidden;
+  overflow-y: hidden;
+  overflow-x: visible;
   padding: 2.5rem;
   background-color: #1e1e1e;
   line-height: 1.6;
@@ -77,8 +78,11 @@
   background-color: #1e1e1e;
   font-family: sans-serif;
   width: 100%;
-  min-height: 0;g
+  min-height: 0;
 }
+
+.script-content::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 
 .script-content::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
