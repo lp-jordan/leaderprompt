@@ -338,7 +338,14 @@ app.whenReady().then(async () => {
 
       const result = projects.map((projectName) => {
         const scriptsDir = path.join(baseDir, projectName);
-        const scripts = fs.readdirSync(scriptsDir).filter((file) => file.endsWith('.docx'));
+        const scripts = fs
+          .readdirSync(scriptsDir)
+          .filter((file) => file.endsWith('.docx'))
+          .map((file) => {
+            const stats = fs.statSync(path.join(scriptsDir, file));
+            const added = stats.birthtimeMs || stats.ctimeMs || stats.mtimeMs;
+            return { name: file, added };
+          });
         const meta = metadata.projects.find((p) => p.name === projectName);
         const added = meta?.added || 0;
         return { name: projectName, scripts, added };
