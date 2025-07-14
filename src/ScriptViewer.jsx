@@ -14,17 +14,20 @@ function ScriptViewer({
   onSend,
 }) {
   const [scriptHtml, setScriptHtml] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   const contentRef = useRef(null);
   const saveTimeout = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
     if (projectName && scriptName) {
+      setLoaded(false);
       window.electronAPI
         .loadScript(projectName, scriptName)
         .then((html) => {
           if (!cancelled) {
             setScriptHtml(html);
+            setLoaded(true);
           }
         })
         .catch((err) => {
@@ -32,6 +35,7 @@ function ScriptViewer({
         });
     } else {
       setScriptHtml(null);
+      setLoaded(false);
       window.electronAPI.sendUpdatedScript('');
     }
     return () => {
@@ -78,15 +82,13 @@ function ScriptViewer({
   };
 
   const handleSend = useCallback(() => {
-    if (scriptHtml) {
-      window.electronAPI.openPrompter(scriptHtml);
-      onPrompterOpen?.(projectName, scriptName);
-    }
+    window.electronAPI.openPrompter(scriptHtml || '');
+    onPrompterOpen?.(projectName, scriptName);
   }, [scriptHtml, projectName, scriptName, onPrompterOpen]);
 
   useEffect(() => {
-    onSend?.(scriptHtml ? () => handleSend() : null);
-  }, [onSend, handleSend, scriptHtml]);
+    onSend?.(loaded ? () => handleSend() : null);
+  }, [onSend, handleSend, loaded]);
 
   useEffect(() => {
     const cleanup = window.electronAPI.onPrompterClosed(() => {
@@ -106,6 +108,7 @@ function ScriptViewer({
       window.electronAPI.saveScript(projectName, scriptName, scriptHtml);
     }
     setScriptHtml(null);
+    setLoaded(false);
     onPrompterClose?.();
     window.electronAPI.sendUpdatedScript('');
     onCloseViewer?.();
@@ -127,7 +130,7 @@ function ScriptViewer({
     prevSelection.current = { projectName, scriptName };
   }, [projectName, scriptName, handleClose]);
 
-  const showLogo = !scriptName || scriptHtml === null;
+  const showLogo = !loaded;
 
   return (
     <div className="script-viewer">
@@ -136,7 +139,7 @@ function ScriptViewer({
           <h2 className="header-title">Script Viewer</h2>
         </div>
       </div>
-      {scriptName && (
+      {loaded && scriptName && (
         <div className="header-buttons">
           <div className="script-name">
             {scriptName.replace(/\.[^/.]+$/, '')}
