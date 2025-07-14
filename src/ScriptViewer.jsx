@@ -97,6 +97,9 @@ function ScriptViewer({
     };
   }, [onPrompterClose]);
 
+  // Clean up when the component unmounts
+  useEffect(() => () => handleClose(), [handleClose]);
+
   const handleClose = useCallback(() => {
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
@@ -124,7 +127,7 @@ function ScriptViewer({
     prevSelection.current = { projectName, scriptName };
   }, [projectName, scriptName, handleClose]);
 
-  const showLogo = scriptHtml === null;
+  const showLogo = !scriptName || scriptHtml === null;
 
   return (
     <div className="script-viewer">
