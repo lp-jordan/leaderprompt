@@ -127,11 +127,7 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleNewScript = async () => {
-    let projectName = projects[0]?.name || 'Default';
-    if (!projects.length) {
-      await window.electronAPI.createNewProject(projectName);
-      await loadProjects();
-    }
+    const projectName = 'Quick Scripts';
     const result = await window.electronAPI.createNewScript(projectName, 'New Script');
     if (result && result.success) {
       await loadProjects();
