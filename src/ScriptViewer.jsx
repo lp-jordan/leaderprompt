@@ -9,8 +9,6 @@ function ScriptViewer({
   onPrompterOpen,
   onPrompterClose,
   onCloseViewer,
-  onCreate,
-  onLoad,
   onSend,
 }) {
   const [scriptHtml, setScriptHtml] = useState(null);
