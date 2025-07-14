@@ -98,7 +98,7 @@ function ScriptViewer({
     };
   }, [onPrompterClose]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
       saveTimeout.current = null;
@@ -110,7 +110,20 @@ function ScriptViewer({
     onPrompterClose?.();
     window.electronAPI.sendUpdatedScript('');
     onCloseViewer?.();
-  };
+  }, [projectName, scriptName, scriptHtml, onPrompterClose, onCloseViewer]);
+
+  // Ensure the viewer properly cleans up when no script is selected
+  const prevSelection = useRef({ projectName: null, scriptName: null });
+
+  useEffect(() => {
+    const hadSelection =
+      prevSelection.current.projectName && prevSelection.current.scriptName;
+    const hasSelection = projectName && scriptName;
+    if (hadSelection && !hasSelection && scriptHtml !== null) {
+      handleClose();
+    }
+    prevSelection.current = { projectName, scriptName };
+  }, [projectName, scriptName, scriptHtml, handleClose]);
 
   const showLogo = scriptHtml === null;
 
