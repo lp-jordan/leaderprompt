@@ -114,8 +114,7 @@ function ScriptViewer({
     onCloseViewer?.();
   }, [projectName, scriptName, scriptHtml, onPrompterClose, onCloseViewer]);
 
-  // Clean up when the component unmounts
-  useEffect(() => () => handleClose(), [handleClose]);
+  useEffect(() => () => handleClose(), []);
 
   // Ensure the viewer properly cleans up when no script is selected
   const prevSelection = useRef({ projectName: null, scriptName: null });
@@ -128,7 +127,8 @@ function ScriptViewer({
       handleClose();
     }
     prevSelection.current = { projectName, scriptName };
-  }, [projectName, scriptName, handleClose]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectName, scriptName]);
 
   const showLogo = !loaded;
 
