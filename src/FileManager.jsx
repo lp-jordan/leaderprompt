@@ -4,6 +4,7 @@ import {
   forwardRef,
   useImperativeHandle,
   useRef,
+  useMemo,
 } from 'react';
 // The old project ActionMenu has been replaced with inline buttons
 
@@ -80,6 +81,18 @@ const FileManager = forwardRef(function FileManager({
   const [collapsed, setCollapsed] = useState({});
   const [tooltipScript, setTooltipScript] = useState(null);
   const tooltipTimerRef = useRef(null);
+  const [sortBy, setSortBy] = useState('date');
+
+  const sortedProjects = useMemo(() => {
+    const arr = [...projects];
+    arr.sort((a, b) => {
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+      return (b.added || 0) - (a.added || 0);
+    });
+    return arr;
+  }, [projects, sortBy]);
 
 
   useEffect(() => {
@@ -227,6 +240,14 @@ const FileManager = forwardRef(function FileManager({
         </div>
       </div>
       <div className="header-buttons">
+        <select
+          className="sort-select"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="date">Date Added</option>
+          <option value="name">Name</option>
+        </select>
         <button onClick={handleNewScript}>+ New Script</button>
         <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
           + New Project
@@ -246,7 +267,7 @@ const FileManager = forwardRef(function FileManager({
       )}
 
       <div className="file-manager-list">
-        {projects.map((project) => (
+        {sortedProjects.map((project) => (
           <div
             className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}
             key={project.name}
