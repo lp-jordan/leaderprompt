@@ -37,7 +37,7 @@ function Prompter() {
     setShadowStrength(8)
     setStrokeWidth(0)
     setLineHeight(1.6)
-    setTextAlign('left')
+    setTextAlign('center')
     setNotecardMode(false)
     setTransparentMode(false)
   }
