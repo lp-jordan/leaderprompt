@@ -64,27 +64,6 @@
   text-overflow: ellipsis;
 }
 
-.send-button-wrapper {
-  display: flex;
-  justify-content: center;
-  margin: 1rem 0 2rem;
-}
-
-.send-button {
-  padding: var(--space-3) calc(var(--space-2) * 3);
-  font-size: 16px;
-  background-color: #444;
-  color: #e0e0e0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.send-button:hover {
-  background-color: var(--accent-color);
-  color: #1e1e1e;
-}
 
 .script-content {
   outline: none;
