@@ -4,7 +4,6 @@ import {
   forwardRef,
   useImperativeHandle,
   useRef,
-  useMemo,
 } from 'react';
 import ConfirmModal from './ConfirmModal.jsx';
 // The old project ActionMenu has been replaced with inline buttons
@@ -82,19 +81,8 @@ const FileManager = forwardRef(function FileManager({
   const [collapsed, setCollapsed] = useState({});
   const [tooltipScript, setTooltipScript] = useState(null);
   const tooltipTimerRef = useRef(null);
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('');
   const [confirmState, setConfirmState] = useState(null);
-
-  const sortedProjects = useMemo(() => {
-    const arr = [...projects];
-    arr.sort((a, b) => {
-      if (sortBy === 'name') {
-        return a.name.localeCompare(b.name);
-      }
-      return (b.added || 0) - (a.added || 0);
-    });
-    return arr;
-  }, [projects, sortBy]);
 
 
   useEffect(() => {
@@ -256,14 +244,6 @@ const FileManager = forwardRef(function FileManager({
         </div>
       </div>
       <div className="header-buttons">
-        <select
-          className="sort-select"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="date">Date Added</option>
-          <option value="name">Name</option>
-        </select>
         <button onClick={handleNewScript}>+ New Script</button>
         <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
           + New Project
@@ -283,7 +263,7 @@ const FileManager = forwardRef(function FileManager({
       )}
 
       <div className="file-manager-list">
-        {sortedProjects.map((project) => (
+        {projects.map((project) => (
           <div
             className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}
             key={project.name}
@@ -332,71 +312,94 @@ const FileManager = forwardRef(function FileManager({
                     >
                       <TrashIcon />
                     </button>
+                    <select
+                      className="sort-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="" disabled>
+                        Sort
+                      </option>
+                      <option value="name">Name</option>
+                      <option value="date">Date Added</option>
+                    </select>
                   </div>
                 </>
               )}
             </div>
             <ul>
-              {project.scripts.map((script) => {
-                const isPrompting =
-                  loadedProject === project.name && loadedScript === script;
-                const isLoaded =
-                  currentProject === project.name && currentScript === script;
-                const isRenaming =
-                  renamingScript &&
-                  renamingScript.projectName === project.name &&
-                  renamingScript.scriptName === script;
-                return (
-                  <li
-                    key={script}
-                    className={`script-item${
-                      isPrompting ? ' prompting' : ''
-                    }${isLoaded ? ' loaded' : ''}`}
-                  >
-                    {isRenaming ? (
-                      <>
-                        <input
-                          type="text"
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                        />
-                        <button onClick={() => confirmRenameScript(project.name, script)}>Save</button>
-                        <button onClick={cancelRename}>Cancel</button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="script-button"
-                          onClick={() => onScriptSelect(project.name, script)}
-                          onMouseEnter={() => handleScriptMouseEnter(script)}
-                          onMouseLeave={handleScriptMouseLeave}
-                        >
-                          {script.replace(/\.[^/.]+$/, '')}
-                          {tooltipScript === script && (
-                            <span className="script-tooltip">{script}</span>
-                          )}
-                        </button>
-                        <div className="script-actions">
+              {project.scripts
+                .slice()
+                .sort((a, b) => {
+                  if (sortBy === 'name') {
+                    return a.name.localeCompare(b.name);
+                  }
+                  if (sortBy === 'date') {
+                    return (a.added || 0) - (b.added || 0);
+                  }
+                  return 0;
+                })
+                .map((script) => {
+                  const scriptName = script.name;
+                  const isPrompting =
+                    loadedProject === project.name && loadedScript === scriptName;
+                  const isLoaded =
+                    currentProject === project.name && currentScript === scriptName;
+                  const isRenaming =
+                    renamingScript &&
+                    renamingScript.projectName === project.name &&
+                    renamingScript.scriptName === scriptName;
+                  return (
+                    <li
+                      key={scriptName}
+                      className={`script-item${
+                        isPrompting ? ' prompting' : ''
+                      }${isLoaded ? ' loaded' : ''}`}
+                    >
+                      {isRenaming ? (
+                        <>
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                          />
+                          <button onClick={() => confirmRenameScript(project.name, scriptName)}>Save</button>
+                          <button onClick={cancelRename}>Cancel</button>
+                        </>
+                      ) : (
+                        <>
                           <button
-                            className="icon-button"
-                            onClick={() => startRenameScript(project.name, script)}
-                            aria-label="Rename"
+                            className="script-button"
+                            onClick={() => onScriptSelect(project.name, scriptName)}
+                            onMouseEnter={() => handleScriptMouseEnter(scriptName)}
+                            onMouseLeave={handleScriptMouseLeave}
                           >
-                            <PencilIcon />
+                            {scriptName.replace(/\.[^/.]+$/, '')}
+                            {tooltipScript === scriptName && (
+                              <span className="script-tooltip">{scriptName}</span>
+                            )}
                           </button>
-                          <button
-                            className="icon-button"
-                            onClick={() => handleDeleteScript(project.name, script)}
-                            aria-label="Delete"
-                          >
-                            <TrashIcon />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                );
-              })}
+                          <div className="script-actions">
+                            <button
+                              className="icon-button"
+                              onClick={() => startRenameScript(project.name, scriptName)}
+                              aria-label="Rename"
+                            >
+                              <PencilIcon />
+                            </button>
+                            <button
+                              className="icon-button"
+                              onClick={() => handleDeleteScript(project.name, scriptName)}
+                              aria-label="Delete"
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
             </ul>
           </div>
         ))}
