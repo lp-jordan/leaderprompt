@@ -485,11 +485,8 @@ app.whenReady().then(async () => {
       }
       finalName = `${candidate}.docx`;
       const dest = path.join(base, finalName);
-      const template = path.join(
-        __dirname,
-              'resources',
-      );
-      fs.copyFileSync(template, dest);
+      const buffer = await htmlToDocx('');
+      fs.writeFileSync(dest, buffer);
       return { success: true, scriptName: finalName };
     } catch (err) {
       error('Failed to create new script:', err);
