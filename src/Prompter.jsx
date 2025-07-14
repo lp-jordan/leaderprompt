@@ -86,14 +86,18 @@ function Prompter() {
       setContent(html)
     }
 
-    window.electronAPI.onScriptLoaded(handleLoaded)
-    window.electronAPI.onScriptUpdated(handleUpdated)
+    const cleanupLoaded = window.electronAPI.onScriptLoaded(handleLoaded)
+    const cleanupUpdated = window.electronAPI.onScriptUpdated(handleUpdated)
     window.electronAPI.getCurrentScript().then((html) => {
       if (html) setContent(html)
       ready = true
     })
 
-    return () => {}
+    return () => {
+      cleanupLoaded?.()
+      cleanupUpdated?.()
+      setContent('')
+    }
   }, [])
 
 
