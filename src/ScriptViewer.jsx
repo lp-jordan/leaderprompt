@@ -32,6 +32,7 @@ function ScriptViewer({
         });
     } else {
       setScriptHtml(null);
+      window.electronAPI.sendUpdatedScript('');
     }
     return () => {
       cancelled = true;
@@ -119,11 +120,11 @@ function ScriptViewer({
     const hadSelection =
       prevSelection.current.projectName && prevSelection.current.scriptName;
     const hasSelection = projectName && scriptName;
-    if (hadSelection && !hasSelection && scriptHtml !== null) {
+    if (hadSelection && !hasSelection) {
       handleClose();
     }
     prevSelection.current = { projectName, scriptName };
-  }, [projectName, scriptName, scriptHtml, handleClose]);
+  }, [projectName, scriptName, handleClose]);
 
   const showLogo = scriptHtml === null;
 
