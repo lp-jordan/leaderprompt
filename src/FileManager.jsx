@@ -256,14 +256,6 @@ const FileManager = forwardRef(function FileManager({
         </div>
       </div>
       <div className="header-buttons">
-        <select
-          className="sort-select"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="date">Date Added</option>
-          <option value="name">Name</option>
-        </select>
         <button onClick={handleNewScript}>+ New Script</button>
         <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
           + New Project
@@ -332,6 +324,14 @@ const FileManager = forwardRef(function FileManager({
                     >
                       <TrashIcon />
                     </button>
+                    <select
+                      className="sort-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="date">Date Added</option>
+                      <option value="name">Name</option>
+                    </select>
                   </div>
                 </>
               )}
