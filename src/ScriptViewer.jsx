@@ -1,5 +1,5 @@
 import './ScriptViewer.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 function ScriptViewer({
   projectName,
@@ -11,6 +11,7 @@ function ScriptViewer({
   onCloseViewer,
   onCreate,
   onLoad,
+  onSend,
 }) {
   const [scriptHtml, setScriptHtml] = useState(null);
   const contentRef = useRef(null);
@@ -75,12 +76,18 @@ function ScriptViewer({
     }
   };
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (scriptHtml) {
       window.electronAPI.openPrompter(scriptHtml);
       onPrompterOpen?.(projectName, scriptName);
     }
-  };
+  }, [scriptHtml, projectName, scriptName, onPrompterOpen]);
+
+  useEffect(() => {
+    if (onSend) {
+      onSend(() => handleSend());
+    }
+  }, [onSend, handleSend]);
 
   useEffect(() => {
     const cleanup = window.electronAPI.onPrompterClosed(() => {
@@ -150,11 +157,6 @@ function ScriptViewer({
               onBlur={handleBlur}
               onInput={handleInput}
             />
-            <div className="send-button-wrapper">
-              <button className="send-button" onClick={handleSend}>
-                Let&apos;s Go!
-              </button>
-            </div>
           </>
         )}
       </div>

@@ -341,7 +341,6 @@ app.whenReady().then(async () => {
             const { birthtimeMs } = fs.statSync(path.join(scriptsDir, file));
             return { name: file, added: birthtimeMs };
           });
-
         const meta = metadata.projects.find((p) => p.name === projectName);
         const added = meta?.added || 0;
         return { name: projectName, scripts, added };

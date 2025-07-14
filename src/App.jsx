@@ -10,6 +10,7 @@ function App() {
   const [loadedScript, setLoadedScript] = useState(null);
   const [loadedProject, setLoadedProject] = useState(null);
   const fileManagerRef = useRef(null);
+  const sendCallbackRef = useRef(null);
 
   const handleScriptSelect = (projectName, scriptName) => {
     setSelectedProject(projectName);
@@ -62,7 +63,18 @@ function App() {
           onCloseViewer={handleViewerClose}
           onCreate={handleCreateRequest}
           onLoad={handleLoadRequest}
+          onSend={(cb) => {
+            sendCallbackRef.current = cb;
+          }}
         />
+        <div className="send-button-container">
+          <button
+            className="send-button"
+            onClick={() => sendCallbackRef.current && sendCallbackRef.current()}
+          >
+            Let&apos;s Go!
+          </button>
+        </div>
       </div>
       <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
     </div>
