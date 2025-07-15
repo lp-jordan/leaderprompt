@@ -492,7 +492,7 @@ app.whenReady().then(async () => {
       }
       finalName = `${candidate}.docx`;
       const dest = path.join(base, finalName);
-      const buffer = await htmlToDocx('');
+      const buffer = await htmlToDocx('<p></p>', null, {});
       fs.writeFileSync(dest, buffer);
       return { success: true, scriptName: finalName };
     } catch (err) {
