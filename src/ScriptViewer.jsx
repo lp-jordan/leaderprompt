@@ -55,6 +55,12 @@ useEffect(() => {
     }
   }, [scriptHtml]);
 
+  useEffect(() => {
+    if (loaded && contentRef.current) {
+      contentRef.current.focus();
+    }
+  }, [loaded]);
+
   const handleEdit = (html) => {
     setScriptHtml(html);
     if (projectName && scriptName) {
