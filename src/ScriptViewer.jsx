@@ -161,12 +161,13 @@ useEffect(() => {
           </button>
         </div>
       )}
+      {showLogo && (
+        <div className="load-placeholder">
+          Welcome to LeaderPrompt. Please load or create a script.
+        </div>
+      )}
       <div className="script-viewer-content">
-        {showLogo ? (
-          <div className="load-placeholder">
-            Welcome to LeaderPrompt. Please load or create a script.
-          </div>
-        ) : (
+        {!showLogo && (
           <>
             <div
               ref={contentRef}
