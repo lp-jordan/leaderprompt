@@ -165,7 +165,8 @@ useEffect(() => {
             <div
               ref={contentRef}
               className="script-content"
-              contentEditable
+              contentEditable={true}
+              suppressContentEditableWarning={true}
               onBlur={handleBlur}
               onInput={handleInput}
             />
