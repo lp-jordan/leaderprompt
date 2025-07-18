@@ -272,10 +272,25 @@ body {
   color: #1e1e1e;
 }
   
+
+.script-item {
+  position: relative;
+}
+
 .script-item.loaded.prompting .script-button {
   background-color: var(--accent-color);
   color: #1e1e1e;
   border-color: var(--accent-color);
+}
+
+.script-item.drop-target::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--accent-color);
 }
 
 .script-actions {
