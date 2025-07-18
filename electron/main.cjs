@@ -626,6 +626,71 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     }
   });
 
+  ipcMain.handle(
+    'move-script',
+    async (_, projectName, newProjectName, scriptName, index) => {
+      log(
+        `Moving script ${scriptName} from ${projectName} to ${newProjectName}`,
+      );
+      if (!projectName || !newProjectName || !scriptName) return false;
+      try {
+        const srcPath = path.join(
+          getProjectsPath(),
+          projectName,
+          scriptName,
+        );
+        const destDir = path.join(getProjectsPath(), newProjectName);
+        const destPath = path.join(destDir, scriptName);
+
+        if (!fs.existsSync(srcPath) || fs.existsSync(destPath)) {
+          error('Move failed: source missing or destination exists');
+          return false;
+        }
+
+        await fs.promises.mkdir(destDir, { recursive: true });
+        fs.renameSync(srcPath, destPath);
+
+        const updateOrder = async (proj, modify) => {
+          const metaPath = path.join(getProjectsPath(), proj, 'scripts.json');
+          let order = [];
+          if (fs.existsSync(metaPath)) {
+            try {
+              const raw = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+              if (Array.isArray(raw.order)) order = raw.order;
+            } catch (err) {
+              error(`Failed to read order for ${proj}:`, err);
+            }
+          }
+          order = modify(order);
+          try {
+            fs.writeFileSync(metaPath, JSON.stringify({ order }, null, 2));
+          } catch (err) {
+            error(`Failed to update order for ${proj}:`, err);
+          }
+        };
+
+        await updateOrder(projectName, (order) =>
+          order.filter((n) => n !== scriptName),
+        );
+
+        await updateOrder(newProjectName, (order) => {
+          let targetIndex = Number(index);
+          if (Number.isNaN(targetIndex) || targetIndex < 0 || targetIndex > order.length) {
+            targetIndex = order.length;
+          }
+          const next = [...order];
+          next.splice(targetIndex, 0, scriptName);
+          return next;
+        });
+
+        return true;
+      } catch (err) {
+        error('Failed to move script:', err);
+        return false;
+      }
+    },
+  );
+
   ipcMain.handle('delete-script', async (_, projectName, scriptName) => {
     const scriptPath = path.join(getProjectsPath(), projectName, scriptName);
     log(`Deleting script: ${scriptPath}`);

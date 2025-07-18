@@ -243,23 +243,49 @@ const FileManager = forwardRef(function FileManager({
 
   const handleDrop = async (e, projectName, index) => {
     e.preventDefault();
-    if (!dragInfo || dragInfo.projectName !== projectName) return;
-    let newOrder = null;
-    setProjects((prev) =>
-      prev.map((p) => {
-        if (p.name !== projectName) return p;
-        const scripts = [...p.scripts];
-        const [moved] = scripts.splice(dragInfo.index, 1);
-        let target = index;
-        if (dragInfo.index < index) target -= 1;
-        scripts.splice(target, 0, moved);
-        newOrder = scripts.map((s) => s.name);
-        return { ...p, scripts };
-      }),
-    );
-    setDragInfo(null);
-    if (newOrder) {
-      await window.electronAPI.reorderScripts(projectName, newOrder);
+    if (!dragInfo) return;
+
+    if (dragInfo.projectName === projectName) {
+      let newOrder = null;
+      setProjects((prev) =>
+        prev.map((p) => {
+          if (p.name !== projectName) return p;
+          const scripts = [...p.scripts];
+          const [moved] = scripts.splice(dragInfo.index, 1);
+          let target = index;
+          if (dragInfo.index < index) target -= 1;
+          scripts.splice(target, 0, moved);
+          newOrder = scripts.map((s) => s.name);
+          return { ...p, scripts };
+        }),
+      );
+      setDragInfo(null);
+      if (newOrder) {
+        await window.electronAPI.reorderScripts(projectName, newOrder);
+      }
+    } else {
+      const sourceProject = dragInfo.projectName;
+      const sourceScripts =
+        projects.find((p) => p.name === sourceProject)?.scripts || [];
+      const scriptName = sourceScripts[dragInfo.index]?.name;
+      if (!scriptName) {
+        setDragInfo(null);
+        return;
+      }
+      const destScripts =
+        projects.find((p) => p.name === projectName)?.scripts.map((s) => s.name) || [];
+      const destOrder = [...destScripts];
+      if (index < 0 || index > destOrder.length) destOrder.push(scriptName);
+      else destOrder.splice(index, 0, scriptName);
+      setDragInfo(null);
+      await window.electronAPI.moveScript(
+        sourceProject,
+        projectName,
+        scriptName,
+        index,
+      );
+      await window.electronAPI.reorderScripts(projectName, destOrder);
+      await loadProjects();
     }
   };
 
