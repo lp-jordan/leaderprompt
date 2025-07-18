@@ -337,17 +337,45 @@ app.whenReady().then(async () => {
 
       const result = projects.map((projectName) => {
         const scriptsDir = path.join(baseDir, projectName);
-        const scripts = fs
+        const scriptFiles = fs
           .readdirSync(scriptsDir)
-          .filter((file) => file.endsWith('.docx'))
-          .map((file) => {
-            const stats = fs.statSync(path.join(scriptsDir, file));
-            const added = stats.birthtimeMs || stats.ctimeMs || stats.mtimeMs;
-            return { name: file, added };
-          });
+          .filter((file) => file.endsWith('.docx'));
+
+        const scripts = scriptFiles.map((file) => {
+          const stats = fs.statSync(path.join(scriptsDir, file));
+          const added = stats.birthtimeMs || stats.ctimeMs || stats.mtimeMs;
+          return { name: file, added };
+        });
+
+        let order = [];
+        const orderPath = path.join(scriptsDir, 'scripts.json');
+        if (fs.existsSync(orderPath)) {
+          try {
+            const raw = JSON.parse(fs.readFileSync(orderPath, 'utf-8'));
+            if (Array.isArray(raw.order)) order = raw.order;
+          } catch (err) {
+            error(`Failed to parse order file for ${projectName}:`, err);
+          }
+        }
+
+        const map = new Map(scripts.map((s) => [s.name, s]));
+        const ordered = [];
+        if (order.length) {
+          for (const name of order) {
+            if (map.has(name)) {
+              ordered.push(map.get(name));
+              map.delete(name);
+            }
+          }
+        }
+        // Append any scripts not in the order file
+        for (const [name, info] of map.entries()) {
+          ordered.push(info);
+        }
+
         const meta = metadata.projects.find((p) => p.name === projectName);
         const added = meta?.added || 0;
-        return { name: projectName, scripts, added };
+        return { name: projectName, scripts: ordered, added };
       });
 
       return result;
@@ -579,6 +607,21 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
       return true;
     } catch (err) {
       error('Failed to save script:', err);
+      return false;
+    }
+  });
+
+  ipcMain.handle('reorder-scripts', async (_, projectName, order) => {
+    log(`Reordering scripts for ${projectName}`);
+    if (!projectName || !Array.isArray(order)) return false;
+    try {
+      const base = path.join(getProjectsPath(), projectName);
+      const metaPath = path.join(base, 'scripts.json');
+      const data = { order };
+      fs.writeFileSync(metaPath, JSON.stringify(data, null, 2));
+      return true;
+    } catch (err) {
+      error('Failed to save script order:', err);
       return false;
     }
   });
