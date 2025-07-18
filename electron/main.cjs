@@ -16,7 +16,6 @@ const pendingLogs = [];
 let viteProcess;
 let isAlwaysOnTop = false;
 let currentScriptHtml = '';
-const NEW_PROJECT_SENTINEL = '__NEW_PROJECT__';
 
 function sendLog(msg) {
   if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
