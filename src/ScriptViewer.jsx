@@ -142,6 +142,15 @@ useEffect(() => {
 
   return (
     <div className="script-viewer">
+      {loaded && scriptName && (
+        <button
+          className="editor-close-button"
+          onClick={handleClose}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      )}
       <div className="viewer-header">
         <div className="header-left">
           <h2 className="header-title">Script Viewer</h2>
@@ -152,13 +161,6 @@ useEffect(() => {
           <div className="script-name">
             {scriptName.replace(/\.[^/.]+$/, '')}
           </div>
-          <button
-            className="close-button"
-            onClick={handleClose}
-            aria-label="Close"
-          >
-            ×
-          </button>
         </div>
       )}
       {showLogo && (

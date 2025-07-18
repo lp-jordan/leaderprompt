@@ -53,6 +53,22 @@
   color: var(--accent-color);
 }
 
+.editor-close-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.editor-close-button:hover {
+  color: var(--accent-color);
+}
+
 .script-viewer .header-buttons {
   display: flex;
   align-items: center;
