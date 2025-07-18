@@ -83,6 +83,7 @@ const FileManager = forwardRef(function FileManager({
   const tooltipTimerRef = useRef(null);
   const [sortBy, setSortBy] = useState('');
   const [confirmState, setConfirmState] = useState(null);
+  const [dragInfo, setDragInfo] = useState(null);
 
 
   useEffect(() => {
@@ -232,6 +233,36 @@ const FileManager = forwardRef(function FileManager({
     setTooltipScript(null);
   };
 
+  const handleDragStart = (projectName, index) => {
+    setDragInfo({ projectName, index });
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e, projectName, index) => {
+    e.preventDefault();
+    if (!dragInfo || dragInfo.projectName !== projectName) return;
+    let newOrder = null;
+    setProjects((prev) =>
+      prev.map((p) => {
+        if (p.name !== projectName) return p;
+        const scripts = [...p.scripts];
+        const [moved] = scripts.splice(dragInfo.index, 1);
+        let target = index;
+        if (dragInfo.index < index) target -= 1;
+        scripts.splice(target, 0, moved);
+        newOrder = scripts.map((s) => s.name);
+        return { ...p, scripts };
+      }),
+    );
+    setDragInfo(null);
+    if (newOrder) {
+      await window.electronAPI.reorderScripts(projectName, newOrder);
+    }
+  };
+
   return (
     <div className="file-manager">
       <div className="file-manager-header">
@@ -336,6 +367,7 @@ const FileManager = forwardRef(function FileManager({
                   return 0;
                 })
                 .map((script) => {
+                  const index = project.scripts.findIndex((s) => s.name === script.name);
                   const scriptName = script.name;
                   const isPrompting =
                     loadedProject === project.name && loadedScript === scriptName;
@@ -348,6 +380,11 @@ const FileManager = forwardRef(function FileManager({
                   return (
                     <li
                       key={scriptName}
+                      draggable
+                      onDragStart={() => handleDragStart(project.name, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, project.name, index)}
+                      onDragEnd={() => setDragInfo(null)}
                       className={`script-item${
                         isPrompting ? ' prompting' : ''
                       }${isLoaded ? ' loaded' : ''}`}

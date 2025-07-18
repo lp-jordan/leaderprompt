@@ -29,6 +29,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('rename-script', projectName, oldName, newName),
   createNewScript: (projectName, scriptName) =>
     ipcRenderer.invoke('create-new-script', projectName, scriptName),
+  reorderScripts: (projectName, order) =>
+    ipcRenderer.invoke('reorder-scripts', projectName, order),
 
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>
