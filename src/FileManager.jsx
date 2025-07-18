@@ -84,6 +84,7 @@ const FileManager = forwardRef(function FileManager({
   const [sortBy, setSortBy] = useState('');
   const [confirmState, setConfirmState] = useState(null);
   const [dragInfo, setDragInfo] = useState(null);
+  const [hoverIndex, setHoverIndex] = useState(null);
 
 
   useEffect(() => {
@@ -241,6 +242,14 @@ const FileManager = forwardRef(function FileManager({
     e.preventDefault();
   };
 
+  const handleDragEnter = (index) => {
+    setHoverIndex(index);
+  };
+
+  const handleDragLeave = (index) => {
+    setHoverIndex((prev) => (prev === index ? null : prev));
+  };
+
   const handleDrop = async (e, projectName, index) => {
     e.preventDefault();
     if (!dragInfo || dragInfo.projectName !== projectName) return;
@@ -258,6 +267,7 @@ const FileManager = forwardRef(function FileManager({
       }),
     );
     setDragInfo(null);
+    setHoverIndex(null);
     if (newOrder) {
       await window.electronAPI.reorderScripts(projectName, newOrder);
     }
@@ -384,10 +394,17 @@ const FileManager = forwardRef(function FileManager({
                       onDragStart={() => handleDragStart(project.name, index)}
                       onDragOver={handleDragOver}
                       onDrop={(e) => handleDrop(e, project.name, index)}
-                      onDragEnd={() => setDragInfo(null)}
+                      onDragEnter={() => handleDragEnter(index)}
+                      onDragLeave={() => handleDragLeave(index)}
+                      onDragEnd={() => {
+                        setDragInfo(null);
+                        setHoverIndex(null);
+                      }}
                       className={`script-item${
                         isPrompting ? ' prompting' : ''
-                      }${isLoaded ? ' loaded' : ''}`}
+                      }${isLoaded ? ' loaded' : ''}${
+                        hoverIndex === index ? ' drop-target' : ''
+                      }`}
                     >
                       {isRenaming ? (
                         <>
