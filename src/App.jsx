@@ -11,6 +11,7 @@ function App() {
   const [loadedProject, setLoadedProject] = useState(null);
   const fileManagerRef = useRef(null);
   const [sendCallback, setSendCallback] = useState(null);
+  const [closeCallback, setCloseCallback] = useState(null);
   const [viewerLoaded, setViewerLoaded] = useState(false);
 
   const handleScriptSelect = (projectName, scriptName) => {
@@ -61,21 +62,34 @@ function App() {
           onPrompterClose={handlePrompterClose}
           onCloseViewer={handleViewerClose}
           onLoadedChange={setViewerLoaded}
+          onClose={(cb) => {
+            setCloseCallback(() => cb);
+          }}
           onSend={(cb) => {
             setSendCallback(() => cb);
           }}
         />
-        {sendCallback && (
-          <div className="send-button-container">
-            <button
-              className="send-button"
-              onClick={() => sendCallback && sendCallback()}
-              disabled={!sendCallback}
-            >
-              Let&apos;s Go!
-            </button>
-          </div>
-        )}
+          {(closeCallback || sendCallback) && (
+            <div className="send-button-container">
+              {closeCallback && (
+                <button
+                  className="send-button"
+                  onClick={() => closeCallback && closeCallback()}
+                >
+                  Close
+                </button>
+              )}
+              {sendCallback && (
+                <button
+                  className="send-button"
+                  onClick={() => sendCallback && sendCallback()}
+                  disabled={!sendCallback}
+                >
+                  Let&apos;s Go!
+                </button>
+              )}
+            </div>
+          )}
       </div>
       <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
     </div>

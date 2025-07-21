@@ -11,6 +11,7 @@ function ScriptViewer({
   onCloseViewer,
   onSend,
   onLoadedChange,
+  onClose,
 }) {
   const [scriptHtml, setScriptHtml] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -129,6 +130,10 @@ useEffect(() => {
     onLoadedChange?.(loaded);
   }, [loaded, onLoadedChange]);
 
+  useEffect(() => {
+    onClose?.(loaded && scriptName ? () => handleClose() : null);
+  }, [onClose, handleClose, loaded, scriptName]);
+
   // Ensure the viewer properly cleans up when no script is selected
   const prevSelection = useRef({ projectName: null, scriptName: null });
 
@@ -147,15 +152,6 @@ useEffect(() => {
 
   return (
     <div className="script-viewer">
-      {loaded && scriptName && (
-        <button
-          className="editor-close-button"
-          onClick={handleClose}
-          aria-label="Close"
-        >
-          ×
-        </button>
-      )}
       <div className="viewer-header">
         <div className="header-left">
           <h2 className="header-title">Script Viewer</h2>
