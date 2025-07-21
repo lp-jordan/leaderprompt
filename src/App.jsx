@@ -85,13 +85,13 @@ function App() {
               )}
             </div>
           )}
+        <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
       </div>
       {!viewerLoaded && (
         <div className="load-placeholder">
           Welcome to LeaderPrompt. Please load or create a script.
         </div>
       )}
-      <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
     </div>
   );
 }
