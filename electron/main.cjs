@@ -514,8 +514,15 @@ app.whenReady().then(async () => {
     if (!projectName || !safeName) return { success: false };
     try {
       const base = path.join(getProjectsPath(), projectName);
-      if (!fs.existsSync(base)) {
-        fs.mkdirSync(base, { recursive: true });
+      let baseExists = true;
+      try {
+        await fs.promises.stat(base);
+      } catch (statErr) {
+        if (statErr.code === 'ENOENT') baseExists = false;
+        else throw statErr;
+      }
+      if (!baseExists) {
+        await fs.promises.mkdir(base, { recursive: true });
         updateProjectMetadata(projectName);
       }
 
@@ -541,7 +548,7 @@ app.whenReady().then(async () => {
       finalName = `${candidate}.docx`;
       const dest = path.join(base, finalName);
       const buffer = await htmlToDocx('<p></p>', null, {});
-      fs.writeFileSync(dest, buffer);
+      await fs.promises.writeFile(dest, buffer);
       return { success: true, scriptName: finalName };
     } catch (err) {
       error('Failed to create new script:', err);
