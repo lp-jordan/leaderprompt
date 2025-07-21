@@ -5,6 +5,10 @@
   font-style: normal;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 :root {
   font-family: 'Metropolis-Bold', sans-serif;
   line-height: 1.5;
