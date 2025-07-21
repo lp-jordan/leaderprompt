@@ -547,8 +547,13 @@ app.whenReady().then(async () => {
       }
       finalName = `${candidate}.docx`;
       const dest = path.join(base, finalName);
-      const buffer = await htmlToDocx('<p></p>', null, {});
-      await fs.promises.writeFile(dest, buffer);
+      const templatePath = path.join(__dirname, '..', 'public', 'template.docx');
+      try {
+        await fs.promises.copyFile(templatePath, dest);
+      } catch (copyErr) {
+        const buffer = await htmlToDocx('<p></p>', null, {});
+        await fs.promises.writeFile(dest, buffer);
+      }
       return { success: true, scriptName: finalName };
     } catch (err) {
       error('Failed to create new script:', err);
