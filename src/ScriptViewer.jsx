@@ -10,6 +10,7 @@ function ScriptViewer({
   onPrompterClose,
   onCloseViewer,
   onSend,
+  onLoadedChange,
 }) {
   const [scriptHtml, setScriptHtml] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -124,6 +125,10 @@ useEffect(() => {
 
   useEffect(() => () => handleClose(), []);
 
+  useEffect(() => {
+    onLoadedChange?.(loaded);
+  }, [loaded, onLoadedChange]);
+
   // Ensure the viewer properly cleans up when no script is selected
   const prevSelection = useRef({ projectName: null, scriptName: null });
 
@@ -138,7 +143,7 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectName, scriptName]);
 
-  const showLogo = !loaded;
+  const showContent = loaded;
 
   return (
     <div className="script-viewer">
@@ -163,13 +168,8 @@ useEffect(() => {
           </div>
         </div>
       )}
-      {showLogo && (
-        <div className="load-placeholder">
-          Welcome to LeaderPrompt. Please load or create a script.
-        </div>
-      )}
       <div className="script-viewer-content">
-        {!showLogo && (
+        {showContent && (
           <>
             <div
               ref={contentRef}

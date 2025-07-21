@@ -11,6 +11,7 @@ function App() {
   const [loadedProject, setLoadedProject] = useState(null);
   const fileManagerRef = useRef(null);
   const [sendCallback, setSendCallback] = useState(null);
+  const [viewerLoaded, setViewerLoaded] = useState(false);
 
   const handleScriptSelect = (projectName, scriptName) => {
     setSelectedProject(projectName);
@@ -46,6 +47,11 @@ function App() {
         />
       </div>
       <div className="right-panel">
+        {!viewerLoaded && (
+          <div className="load-placeholder">
+            Welcome to LeaderPrompt. Please load or create a script.
+          </div>
+        )}
         <ScriptViewer
           projectName={selectedProject}
           scriptName={selectedScript}
@@ -54,6 +60,7 @@ function App() {
           onPrompterOpen={handlePrompterOpen}
           onPrompterClose={handlePrompterClose}
           onCloseViewer={handleViewerClose}
+          onLoadedChange={setViewerLoaded}
           onSend={(cb) => {
             setSendCallback(() => cb);
           }}
