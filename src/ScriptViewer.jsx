@@ -1,5 +1,6 @@
 import './ScriptViewer.css';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 
 function ScriptViewer({
   projectName,
@@ -32,6 +33,7 @@ useEffect(() => {
       })
       .catch((err) => {
         console.error('Failed to load script:', err);
+        toast.error('Failed to load script');
       });
   } else {
     setScriptHtml(null);
