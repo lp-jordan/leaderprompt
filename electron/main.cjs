@@ -166,7 +166,7 @@ function createDevConsoleWindow() {
   })
 
   const url = app.isPackaged
-    ? pathToFile('index.html', '#/dev-console')
+    ? pathToFile('dist/index.html', '#/dev-console')
     : 'http://localhost:5173/#/dev-console'
 
   devConsoleWindow.loadURL(url)
@@ -200,7 +200,7 @@ async function createPrompterWindow() {
   };
 
   const url = app.isPackaged
-    ? pathToFile('index.html', '#/prompter')
+    ? pathToFile('dist/index.html', '#/prompter')
     : 'http://localhost:5173/#/prompter';
 
   if (!prompterWindow || prompterWindow.isDestroyed()) {
