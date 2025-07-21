@@ -77,7 +77,8 @@ const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json
 
 function sanitizeFilename(name) {
   if (!name || typeof name !== 'string') return null;
-  const sanitized = name.replace(/[\\/:*?"<>|]/g, '_').trim();
+  const base = path.basename(name);
+  const sanitized = base.replace(/[\\/:*?"<>|]/g, '_').trim();
   if (!sanitized || sanitized === '.' || sanitized === '..') return null;
   return sanitized;
 }
