@@ -34,3 +34,10 @@ Edits made in the script editor are automatically written back to the underlying
 `html-to-docx` and saves it to the selected project/script location via the new
 `save-script` IPC handler exposed as
 `window.electronAPI.saveScript(projectName, scriptName, html)`.
+
+## Toast Notifications
+
+The interface uses [react-toastify](https://github.com/fkhadra/react-toastify) to
+provide non-intrusive alerts. The `ToastContainer` component is mounted in
+`main.jsx`, and components use `toast.success()` or `toast.error()` after
+operations like creating or deleting projects and saving scripts.

@@ -1,5 +1,6 @@
 import './ScriptViewer.css';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { toast } from './toast';
 
 function ScriptViewer({
   projectName,
@@ -70,6 +71,7 @@ useEffect(() => {
       }
       saveTimeout.current = setTimeout(() => {
         window.electronAPI.saveScript(projectName, scriptName, html);
+        toast.success('Script saved');
         saveTimeout.current = null;
       }, 300);
     }
@@ -115,6 +117,7 @@ useEffect(() => {
     }
     if (projectName && scriptName && scriptHtml) {
       window.electronAPI.saveScript(projectName, scriptName, scriptHtml);
+      toast.success('Script saved');
     }
     setScriptHtml(null);
     setLoaded(false);

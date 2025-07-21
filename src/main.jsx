@@ -1,6 +1,7 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter, Routes, Route } from 'react-router-dom'
+import { ToastContainer } from './toast'
 import './index.css'
 
 import App from './App.jsx'
@@ -25,6 +26,7 @@ export function DevIcon() {
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HashRouter>
+      <ToastContainer />
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/prompter" element={<Prompter />} />

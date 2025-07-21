@@ -6,6 +6,7 @@ import {
   useRef,
 } from 'react';
 import ConfirmModal from './ConfirmModal.jsx';
+import { toast } from './toast';
 // The old project ActionMenu has been replaced with inline buttons
 
 function PencilIcon() {
@@ -112,11 +113,12 @@ const FileManager = forwardRef(function FileManager({
 
     const created = await window.electronAPI.createNewProject(newProjectName.trim());
     if (created) {
+      toast.success('Project created');
       setNewProjectName('');
       setShowNewProjectInput(false);
       loadProjects();
     } else {
-      console.error('Failed to create project');
+      toast.error('Failed to create project');
     }
   };
 
@@ -132,8 +134,11 @@ const FileManager = forwardRef(function FileManager({
     const projectName = 'Quick Scripts';
     const result = await window.electronAPI.createNewScript(projectName, 'New Script');
     if (result && result.success) {
+      toast.success('Script created');
       await loadProjects();
       onScriptSelect(projectName, result.scriptName);
+    } else {
+      toast.error('Failed to create script');
     }
   };
 
@@ -198,7 +203,11 @@ const FileManager = forwardRef(function FileManager({
       `Delete project "${projectName}"? This will remove all its scripts.`,
       async () => {
         const deleted = await window.electronAPI.deleteProject(projectName);
-        if (!deleted) console.error('Failed to delete project');
+        if (deleted) {
+          toast.success('Project deleted');
+        } else {
+          toast.error('Failed to delete project');
+        }
         await loadProjects();
       },
     );
@@ -209,7 +218,11 @@ const FileManager = forwardRef(function FileManager({
       `Delete script "${scriptName}" from "${projectName}"?`,
       async () => {
         const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
-        if (!deleted) console.error('Failed to delete script');
+        if (deleted) {
+          toast.success('Script deleted');
+        } else {
+          toast.error('Failed to delete script');
+        }
         await loadProjects();
       },
     );
