@@ -23,33 +23,9 @@ function Prompter() {
   const [transparentMode, setTransparentMode] = useState(false)
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [settingsPage, setSettingsPage] = useState(0)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  // all settings are now accessible from a single panel
+  const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
   const containerRef = useRef(null)
-  const settingsRef = useRef(null)
-  const touchStartX = useRef(0)
-
-  const handleTouchStart = (e) => {
-    if (e.touches.length === 1) {
-      touchStartX.current = e.touches[0].clientX
-    }
-  }
-
-  const handleTouchEnd = (e) => {
-    const diff = e.changedTouches[0].clientX - touchStartX.current
-    if (Math.abs(diff) > 50) {
-      if (diff < 0 && settingsPage < 1) setSettingsPage(settingsPage + 1)
-      if (diff > 0 && settingsPage > 0) setSettingsPage(settingsPage - 1)
-    }
-  }
-
-  const handleWheel = (e) => {
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 30) {
-      if (e.deltaX > 0 && settingsPage < 1) setSettingsPage(settingsPage + 1)
-      if (e.deltaX < 0 && settingsPage > 0) setSettingsPage(settingsPage - 1)
-    }
-  }
 
   const resetDefaults = () => {
     setAutoscroll(false)
@@ -61,7 +37,7 @@ function Prompter() {
     setShadowStrength(8)
     setStrokeWidth(0)
     setLineHeight(1.6)
-    setTextAlign('left')
+    setTextAlign('center')
     setNotecardMode(false)
     setTransparentMode(false)
   }
@@ -110,14 +86,17 @@ function Prompter() {
       setContent(html)
     }
 
-    window.electronAPI.onScriptLoaded(handleLoaded)
-    window.electronAPI.onScriptUpdated(handleUpdated)
+    const cleanupLoaded = window.electronAPI.onScriptLoaded(handleLoaded)
+    const cleanupUpdated = window.electronAPI.onScriptUpdated(handleUpdated)
     window.electronAPI.getCurrentScript().then((html) => {
       if (html) setContent(html)
       ready = true
     })
 
-    return () => {}
+    return () => {
+      cleanupLoaded?.()
+      cleanupUpdated?.()
+    }
   }, [])
 
 
@@ -189,30 +168,6 @@ function Prompter() {
     }
   }, [notecardMode])
 
-  // Close settings when clicking outside
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (settingsRef.current && !settingsRef.current.contains(e.target)) {
-        setSettingsOpen(false)
-      }
-    }
-    if (settingsOpen) {
-      document.addEventListener('mousedown', handleClick)
-    }
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [settingsOpen])
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape') {
-        setSettingsOpen(false)
-      }
-    }
-    if (settingsOpen) {
-      document.addEventListener('keydown', handleKey)
-    }
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [settingsOpen])
 
   // notify main process when the prompter component is ready
   const mountedRef = useRef(false)
@@ -233,14 +188,14 @@ function Prompter() {
       <div className="resize-handle top-right" onMouseDown={(e) => startResize(e, 'top-right')} />
       <div className="resize-handle bottom-left" onMouseDown={(e) => startResize(e, 'bottom-left')} />
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
-      <button
-        className="sidebar-toggle"
-        style={{ left: sidebarOpen ? '220px' : '0' }}
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        {sidebarOpen ? '←' : '→'}
-      </button>
-      <div className={`side-controls ${sidebarOpen ? 'open' : ''}`}>
+        <button
+          className="main-settings-toggle"
+          style={{ left: mainSettingsOpen ? '220px' : '0' }}
+          onClick={() => setMainSettingsOpen(!mainSettingsOpen)}
+        >
+          {mainSettingsOpen ? '←' : '→'}
+        </button>
+        <div className={`main-settings ${mainSettingsOpen ? 'open' : ''}`}>
         <button
           className={`toggle-btn ${autoscroll ? 'active' : ''}`}
           onClick={() => setAutoscroll(!autoscroll)}
@@ -277,116 +232,74 @@ function Prompter() {
         >
           Transparent
         </button>
-        <button
-          className="settings-button"
-          onClick={() => {
-            const next = !settingsOpen
-            setSettingsOpen(next)
-            if (next) setSettingsPage(0)
-          }}
-        >
-          ⚙
-        </button>
+        <h4>Text Styling</h4>
+        <label>
+          Font Size ({fontSize}rem):
+          <input
+            type="range"
+            min="1"
+            max="6"
+            step="0.1"
+            value={fontSize}
+            onChange={(e) => setFontSize(parseFloat(e.target.value))}
+          />
+        </label>
+        <label>
+          Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
+          <input
+            type="range"
+            min={MARGIN_MIN}
+            max={MARGIN_MAX}
+            value={margin}
+            onChange={(e) => setMargin(parseInt(e.target.value, 10))}
+          />
+        </label>
+        <button onClick={resetDefaults}>Reset to defaults</button>
+        <h4>Advanced Settings</h4>
+        <label>
+          Line Height ({lineHeight})
+          <input
+            type="range"
+            min="1"
+            max="3"
+            step="0.1"
+            value={lineHeight}
+            onChange={(e) => setLineHeight(parseFloat(e.target.value))}
+          />
+        </label>
+        <label>
+          Stroke ({strokeWidth}px)
+          <input
+            type="range"
+            min="0"
+            max="4"
+            step="0.5"
+            value={strokeWidth}
+            onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
+            disabled={!transparentMode}
+          />
+        </label>
+        <label>
+          Shadow ({shadowStrength}px)
+          <input
+            type="range"
+            min="0"
+            max="20"
+            value={shadowStrength}
+            onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
+            disabled={!transparentMode}
+          />
+        </label>
+        <label>
+          Text Alignment:
+          <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+            <option value="justify">Justify</option>
+          </select>
+        </label>
       </div>
-
-      {settingsOpen && (
-        <div className="settings-wrapper" ref={settingsRef}>
-          <div
-            className={`settings-panel ${settingsOpen ? 'open' : ''}`}
-            onWheel={handleWheel}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <button className="settings-close" onClick={() => setSettingsOpen(false)}>
-              ×
-            </button>
-            {settingsPage === 0 ? (
-              <>
-                <h4>Text Styling</h4>
-                <label>
-                  Font Size ({fontSize}rem):
-                  <input
-                    type="range"
-                    min="1"
-                    max="6"
-                    step="0.1"
-                    value={fontSize}
-                    onChange={(e) => setFontSize(parseFloat(e.target.value))}
-                  />
-                </label>
-                <label>
-                  Margin ({Math.round(((margin - MARGIN_MIN) / (MARGIN_MAX - MARGIN_MIN)) * 100)}%):
-                  <input
-                    type="range"
-                    min={MARGIN_MIN}
-                    max={MARGIN_MAX}
-                    value={margin}
-                    onChange={(e) => setMargin(parseInt(e.target.value, 10))}
-                  />
-                </label>
-                <button onClick={resetDefaults}>Reset to defaults</button>
-              </>
-            ) : (
-              <>
-                <h4>Advanced Settings</h4>
-                <label>
-                  Line Height ({lineHeight})
-                  <input
-                    type="range"
-                    min="1"
-                    max="3"
-                    step="0.1"
-                    value={lineHeight}
-                    onChange={(e) => setLineHeight(parseFloat(e.target.value))}
-                  />
-                </label>
-                <label>
-                  Stroke ({strokeWidth}px)
-                  <input
-                    type="range"
-                    min="0"
-                    max="4"
-                    step="0.5"
-                    value={strokeWidth}
-                    onChange={(e) => setStrokeWidth(parseFloat(e.target.value))}
-                    disabled={!transparentMode}
-                  />
-                </label>
-                <label>
-                  Shadow ({shadowStrength}px)
-                  <input
-                    type="range"
-                    min="0"
-                    max="20"
-                    value={shadowStrength}
-                    onChange={(e) => setShadowStrength(parseInt(e.target.value, 10))}
-                    disabled={!transparentMode}
-                  />
-                </label>
-                <label>
-                  Text Alignment:
-                  <select value={textAlign} onChange={(e) => setTextAlign(e.target.value)}>
-                    <option value="left">Left</option>
-                    <option value="center">Center</option>
-                    <option value="right">Right</option>
-                    <option value="justify">Justify</option>
-                  </select>
-                </label>
-              </>
-            )}
-            <div className="page-indicators">
-              <span
-                className={`dot ${settingsPage === 0 ? 'active' : ''}`}
-                onClick={() => setSettingsPage(0)}
-              />
-              <span
-                className={`dot ${settingsPage === 1 ? 'active' : ''}`}
-                onClick={() => setSettingsPage(1)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
       <div
         ref={containerRef}
         className="prompter-container"

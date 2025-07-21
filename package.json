@@ -3,16 +3,34 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.yourcompany.leaderprompt",
+    "productName": "LeaderPrompt",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "electron-dev": "electron electron/main.cjs"
+    "electron-dev": "electron electron/main.cjs",
+    "package": "electron-builder"
   },
   "dependencies": {
+    "docx": "^9.5.1",
     "html-to-docx": "^1.8.0",
     "mammoth": "^1.9.1",
+    "electron-updater": "^6.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.3"
@@ -24,6 +42,7 @@
     "@vitejs/plugin-react": "^4.5.2",
     "concurrently": "^9.2.0",
     "electron": "^37.1.0",
+    "electron-builder": "^26.0.12",
     "eslint": "^9.29.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",

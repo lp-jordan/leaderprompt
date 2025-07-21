@@ -1,8 +1,12 @@
-import { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
-import ActionMenu from './ActionMenu';
-import NameModal from './NameModal';
-import MessageModal from './MessageModal';
-import ProjectSelectModal from './ProjectSelectModal';
+import {
+  useEffect,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+} from 'react';
+import ConfirmModal from './ConfirmModal.jsx';
+// The old project ActionMenu has been replaced with inline buttons
 
 function PencilIcon() {
   return (
@@ -42,6 +46,25 @@ function TrashIcon() {
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 4.5v15m7.5-7.5h-15"
+      />
+    </svg>
+  );
+}
+
 const FileManager = forwardRef(function FileManager({
   onScriptSelect,
   loadedProject,
@@ -56,10 +79,12 @@ const FileManager = forwardRef(function FileManager({
   const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
-  const [newScriptProject, setNewScriptProject] = useState(null);
-  const [showProjectNameModal, setShowProjectNameModal] = useState(false);
-  const [showProjectSelectModal, setShowProjectSelectModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
+  const [tooltipScript, setTooltipScript] = useState(null);
+  const tooltipTimerRef = useRef(null);
+  const [sortBy, setSortBy] = useState('');
+  const [confirmState, setConfirmState] = useState(null);
+  const [dragInfo, setDragInfo] = useState(null);
+  const [hoverIndex, setHoverIndex] = useState(null);
 
 
   useEffect(() => {
@@ -91,7 +116,7 @@ const FileManager = forwardRef(function FileManager({
       setShowNewProjectInput(false);
       loadProjects();
     } else {
-      setErrorMessage('Failed to create project');
+      console.error('Failed to create project');
     }
   };
 
@@ -103,40 +128,15 @@ const FileManager = forwardRef(function FileManager({
     await loadProjects();
   };
 
-  const handleNewScript = () => {
-    setShowProjectSelectModal(true);
-  };
-
-  const confirmNewProjectForScript = async (name) => {
-    setShowProjectNameModal(false);
-    if (!name) return;
-    const created = await window.electronAPI.createNewProject(name);
-    if (created) {
+  const handleNewScript = async () => {
+    const projectName = 'Quick Scripts';
+    const result = await window.electronAPI.createNewScript(projectName, 'New Script');
+    if (result && result.success) {
       await loadProjects();
-      setNewScriptProject(name);
-    } else {
-      alert('Failed to create project');
+      onScriptSelect(projectName, result.scriptName);
     }
   };
 
-  const cancelNewProjectForScript = () => setShowProjectNameModal(false);
-
-  const cancelProjectSelect = () => setShowProjectSelectModal(false);
-
-  const openNewProjectForScript = () => {
-    setShowProjectSelectModal(false);
-    setShowProjectNameModal(true);
-  };
-
-  const chooseExistingProject = (name) => {
-    setShowProjectSelectModal(false);
-    if (name) setNewScriptProject(name);
-  };
-
-  const backToProjectSelect = () => {
-    setNewScriptProject(null);
-    setShowProjectSelectModal(true);
-  };
 
   useImperativeHandle(ref, () => ({
     newScript: handleNewScript,
@@ -167,7 +167,7 @@ const FileManager = forwardRef(function FileManager({
       oldName,
       renameValue.trim(),
     );
-    if (!success) setErrorMessage('Failed to rename project');
+    if (!success) console.error('Failed to rename project');
     cancelRename();
     await loadProjects();
   };
@@ -183,36 +183,36 @@ const FileManager = forwardRef(function FileManager({
       oldName,
       newName,
     );
-    if (!success) setErrorMessage('Failed to rename script');
+    if (!success) console.error('Failed to rename script');
     cancelRename();
     await loadProjects();
   };
 
-  const confirmNewScript = async (name) => {
-    const projectName = newScriptProject;
-    setNewScriptProject(null);
-    if (!name || !projectName) return;
-    const result = await window.electronAPI.createNewScript(projectName, name);
-    if (result && result.success) {
-      await loadProjects();
-      onScriptSelect(projectName, result.scriptName);
-    } else {
-      setErrorMessage('Failed to create script');
-    }
+
+  const openConfirm = (message, action) => {
+    setConfirmState({ message, action });
   };
 
-  const cancelNewScript = () => setNewScriptProject(null);
-
-  const handleDeleteProject = async (projectName) => {
-    const deleted = await window.electronAPI.deleteProject(projectName);
-    if (!deleted) setErrorMessage('Failed to delete project');
-    await loadProjects();
+  const handleDeleteProject = (projectName) => {
+    openConfirm(
+      `Delete project "${projectName}"? This will remove all its scripts.`,
+      async () => {
+        const deleted = await window.electronAPI.deleteProject(projectName);
+        if (!deleted) console.error('Failed to delete project');
+        await loadProjects();
+      },
+    );
   };
 
-  const handleDeleteScript = async (projectName, scriptName) => {
-    const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
-    if (!deleted) setErrorMessage('Failed to delete script');
-    await loadProjects();
+  const handleDeleteScript = (projectName, scriptName) => {
+    openConfirm(
+      `Delete script "${scriptName}" from "${projectName}"?`,
+      async () => {
+        const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
+        if (!deleted) console.error('Failed to delete script');
+        await loadProjects();
+      },
+    );
   };
 
   const toggleCollapse = (projectName) => {
@@ -222,16 +222,94 @@ const FileManager = forwardRef(function FileManager({
     }));
   };
 
+  const handleScriptMouseEnter = (scriptName) => {
+    tooltipTimerRef.current = setTimeout(() => {
+      setTooltipScript(scriptName);
+    }, 2000);
+  };
+
+  const handleScriptMouseLeave = () => {
+    clearTimeout(tooltipTimerRef.current);
+    tooltipTimerRef.current = null;
+    setTooltipScript(null);
+  };
+
+  const handleDragStart = (projectName, index) => {
+    setDragInfo({ projectName, index });
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDragEnter = (index) => {
+    setHoverIndex(index);
+  };
+
+  const handleDragLeave = (index) => {
+    setHoverIndex((prev) => (prev === index ? null : prev));
+  };
+
+  const handleDrop = async (e, projectName, index) => {
+    e.preventDefault();
+    if (!dragInfo) return;
+
+    if (dragInfo.projectName === projectName) {
+      let newOrder = null;
+      setProjects((prev) =>
+        prev.map((p) => {
+          if (p.name !== projectName) return p;
+          const scripts = [...p.scripts];
+          const [moved] = scripts.splice(dragInfo.index, 1);
+          let target = index;
+          if (dragInfo.index < index) target -= 1;
+          scripts.splice(target, 0, moved);
+          newOrder = scripts.map((s) => s.name);
+          return { ...p, scripts };
+        }),
+      );
+      setDragInfo(null);
+      if (newOrder) {
+        await window.electronAPI.reorderScripts(projectName, newOrder);
+      }
+    } else {
+      const sourceProject = dragInfo.projectName;
+      const sourceScripts =
+        projects.find((p) => p.name === sourceProject)?.scripts || [];
+      const scriptName = sourceScripts[dragInfo.index]?.name;
+      if (!scriptName) {
+        setDragInfo(null);
+        return;
+      }
+      const destScripts =
+        projects.find((p) => p.name === projectName)?.scripts.map((s) => s.name) || [];
+      const destOrder = [...destScripts];
+      if (index < 0 || index > destOrder.length) destOrder.push(scriptName);
+      else destOrder.splice(index, 0, scriptName);
+      setDragInfo(null);
+      await window.electronAPI.moveScript(
+        sourceProject,
+        projectName,
+        scriptName,
+        index,
+      );
+      await window.electronAPI.reorderScripts(projectName, destOrder);
+      await loadProjects();
+    }
+  };
+
   return (
     <div className="file-manager">
       <div className="file-manager-header">
-        <h2 className="header-title">Projects</h2>
-        <div className="header-buttons">
-          <button onClick={handleNewScript}>+ New Script</button>
-          <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
-            + New Project
-          </button>
+        <div className="header-left">
+          <h2 className="header-title">Projects</h2>
         </div>
+      </div>
+      <div className="header-buttons">
+        <button onClick={handleNewScript}>+ New Script</button>
+        <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
+          + New Project
+        </button>
       </div>
 
       {showNewProjectInput && (
@@ -274,108 +352,145 @@ const FileManager = forwardRef(function FileManager({
                     </button>
                     <h4>{project.name}</h4>
                   </div>
-                  <ActionMenu
-                    actions={[
-                      { label: 'Add File', onClick: () => handleImportClick(project.name) },
-                      { label: 'Rename', onClick: () => startRenameProject(project.name) },
-                      { label: 'Delete', onClick: () => handleDeleteProject(project.name) },
-                    ]}
-                  />
+                  <div className="project-actions">
+                    <button
+                      className="icon-button"
+                      onClick={() => handleImportClick(project.name)}
+                      aria-label="Add Script"
+                    >
+                      <PlusIcon />
+                    </button>
+                    <button
+                      className="icon-button"
+                      onClick={() => startRenameProject(project.name)}
+                      aria-label="Rename"
+                    >
+                      <PencilIcon />
+                    </button>
+                    <button
+                      className="icon-button"
+                      onClick={() => handleDeleteProject(project.name)}
+                      aria-label="Delete"
+                    >
+                      <TrashIcon />
+                    </button>
+                    <select
+                      className="sort-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="" disabled>
+                        Sort
+                      </option>
+                      <option value="name">Name</option>
+                      <option value="date">Date Added</option>
+                    </select>
+                  </div>
                 </>
               )}
             </div>
             <ul>
-              {project.scripts.map((script) => {
-                const isPrompting =
-                  loadedProject === project.name && loadedScript === script;
-                const isLoaded =
-                  currentProject === project.name && currentScript === script;
-                const isRenaming =
-                  renamingScript &&
-                  renamingScript.projectName === project.name &&
-                  renamingScript.scriptName === script;
-                return (
-                  <li
-                    key={script}
-                    className={`script-item${
-                      isPrompting ? ' prompting' : ''
-                    }${isLoaded ? ' loaded' : ''}`}
-                  >
-                    {isRenaming ? (
-                      <>
-                        <input
-                          type="text"
-                          value={renameValue}
-                          onChange={(e) => setRenameValue(e.target.value)}
-                        />
-                        <button onClick={() => confirmRenameScript(project.name, script)}>Save</button>
-                        <button onClick={cancelRename}>Cancel</button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          className="script-button"
-                          onClick={() => onScriptSelect(project.name, script)}
-                        >
-                          {script.replace(/\.[^/.]+$/, '')}
-                        </button>
-                        <div className="script-actions">
+              {project.scripts
+                .slice()
+                .sort((a, b) => {
+                  if (sortBy === 'name') {
+                    return a.name.localeCompare(b.name);
+                  }
+                  if (sortBy === 'date') {
+                    return (a.added || 0) - (b.added || 0);
+                  }
+                  return 0;
+                })
+                .map((script) => {
+                  const index = project.scripts.findIndex((s) => s.name === script.name);
+                  const scriptName = script.name;
+                  const isPrompting =
+                    loadedProject === project.name && loadedScript === scriptName;
+                  const isLoaded =
+                    currentProject === project.name && currentScript === scriptName;
+                  const isRenaming =
+                    renamingScript &&
+                    renamingScript.projectName === project.name &&
+                    renamingScript.scriptName === scriptName;
+                  return (
+                    <li
+                      key={scriptName}
+                      draggable
+                      onDragStart={() => handleDragStart(project.name, index)}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, project.name, index)}
+                      onDragEnter={() => handleDragEnter(index)}
+                      onDragLeave={() => handleDragLeave(index)}
+                      onDragEnd={() => {
+                        setDragInfo(null);
+                        setHoverIndex(null);
+                      }}
+                      className={`script-item${
+                        isPrompting ? ' prompting' : ''
+                      }${isLoaded ? ' loaded' : ''}${
+                        hoverIndex === index ? ' drop-target' : ''
+                      }`}
+                    >
+                      {isRenaming ? (
+                        <>
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                          />
+                          <button onClick={() => confirmRenameScript(project.name, scriptName)}>Save</button>
+                          <button onClick={cancelRename}>Cancel</button>
+                        </>
+                      ) : (
+                        <>
                           <button
-                            className="icon-button"
-                            onClick={() => startRenameScript(project.name, script)}
-                            aria-label="Rename"
+                            className="script-button"
+                            onClick={() => onScriptSelect(project.name, scriptName)}
+                            onMouseEnter={() => handleScriptMouseEnter(scriptName)}
+                            onMouseLeave={handleScriptMouseLeave}
                           >
-                            <PencilIcon />
+                            {scriptName.replace(/\.[^/.]+$/, '')}
+                            {tooltipScript === scriptName && (
+                              <span className="script-tooltip">{scriptName}</span>
+                            )}
                           </button>
-                          <button
-                            className="icon-button"
-                            onClick={() => handleDeleteScript(project.name, script)}
-                            aria-label="Delete"
-                          >
-                            <TrashIcon />
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                );
-              })}
+                          <div className="script-actions">
+                            <button
+                              className="icon-button"
+                              onClick={() => startRenameScript(project.name, scriptName)}
+                              aria-label="Rename"
+                            >
+                              <PencilIcon />
+                            </button>
+                            <button
+                              className="icon-button"
+                              onClick={() => handleDeleteScript(project.name, scriptName)}
+                              aria-label="Delete"
+                            >
+                              <TrashIcon />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </li>
+                  );
+                })}
             </ul>
           </div>
         ))}
       </div>
-      {showProjectSelectModal && (
-        <ProjectSelectModal
-          projects={projects.map((p) => p.name)}
-          onCreateNew={openNewProjectForScript}
-          onSelect={chooseExistingProject}
-          onCancel={cancelProjectSelect}
+      {confirmState && (
+        <ConfirmModal
+          message={confirmState.message}
+          onConfirm={() => {
+            const { action } = confirmState;
+            setConfirmState(null);
+            action();
+          }}
+          onCancel={() => setConfirmState(null)}
         />
       )}
-      {showProjectNameModal && (
-        <NameModal
-          title="New Project Name"
-          placeholder="Project name"
-          onConfirm={confirmNewProjectForScript}
-          onCancel={cancelNewProjectForScript}
-        />
-      )}
-      {newScriptProject && (
-        <NameModal
-          title="New Script Name"
-          placeholder="Script name"
-          onConfirm={confirmNewScript}
-          onCancel={cancelNewScript}
-          onBack={backToProjectSelect}
-        />
-      )}
-      {errorMessage && (
-        <MessageModal
-          title="Error"
-          message={errorMessage}
-          onClose={() => setErrorMessage(null)}
-        />
-      )}
+
     </div>
   );
 });

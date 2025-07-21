@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Metropolis-Bold';
-  src: url('/fonts/Metropolis-Bold.otf') format('opentype');
+  src: url('../fonts/Metropolis-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
 }
@@ -39,8 +39,8 @@ body {
   margin: 0;
   display: flex;
   place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  min-width: 1200px;
+  min-height: 800px;
 }
 
 h1 {

@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -16,7 +17,6 @@ const pendingLogs = [];
 let viteProcess;
 let isAlwaysOnTop = false;
 let currentScriptHtml = '';
-const NEW_PROJECT_SENTINEL = '__NEW_PROJECT__';
 
 function sendLog(msg) {
   if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
@@ -71,9 +71,16 @@ function stopViteServer() {
   }
 }
 
-const getUserDataPath = () => path.join(app.getPath('home'), 'LeaderPrompt');
+const getUserDataPath = () => path.join(app.getPath('home'), 'leaderprompt');
 const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
 const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json');
+
+function sanitizeFilename(name) {
+  if (!name || typeof name !== 'string') return null;
+  const sanitized = name.replace(/[\\/:*?"<>|]/g, '_').trim();
+  if (!sanitized || sanitized === '.' || sanitized === '..') return null;
+  return sanitized;
+}
 
 function ensureDirectories() {
   log('Ensuring data directories');
@@ -92,6 +99,25 @@ function ensureDirectories() {
     log('Created projects.json metadata file');
   }
 
+}
+
+function setupAutoUpdates() {
+  if (!app.isPackaged) return;
+  autoUpdater.on('error', (err) => error('Auto update error:', err));
+  autoUpdater.on('update-available', () => {
+    log('Update available');
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message:
+        'A new version is being downloaded and will be installed after restart.',
+    });
+  });
+  autoUpdater.on('update-downloaded', () => {
+    log('Update downloaded and ready');
+  });
+
+  autoUpdater.checkForUpdates();
 }
 
 function getProjectMetadata() {
@@ -116,7 +142,7 @@ function getProjectMetadata() {
 function updateProjectMetadata(projectName) {
   const metadata = getProjectMetadata();
   if (!metadata.projects.some((p) => p.name === projectName)) {
-    metadata.projects.push({ name: projectName });
+    metadata.projects.push({ name: projectName, added: Date.now() });
     fs.writeFileSync(getProjectMetadataPath(), JSON.stringify(metadata, null, 2));
     log(`Metadata updated with new project: ${projectName}`);
   }
@@ -124,8 +150,10 @@ function updateProjectMetadata(projectName) {
 
 function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: 1200,
+    height: 800,
+    minWidth: 1200,
+    minHeight: 800,
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -158,7 +186,7 @@ function createDevConsoleWindow() {
   })
 
   const url = app.isPackaged
-    ? pathToFile('index.html', '#/dev-console')
+    ? pathToFile('dist/index.html', '#/dev-console')
     : 'http://localhost:5173/#/dev-console'
 
   devConsoleWindow.loadURL(url)
@@ -178,6 +206,8 @@ async function createPrompterWindow() {
   const baseOptions = {
     width: 1200,
     height: 800,
+    minWidth: 1200,
+    minHeight: 800,
     show: false,
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.cjs'),
@@ -190,7 +220,7 @@ async function createPrompterWindow() {
   };
 
   const url = app.isPackaged
-    ? pathToFile('index.html', '#/prompter')
+    ? pathToFile('dist/index.html', '#/prompter')
     : 'http://localhost:5173/#/prompter';
 
   if (!prompterWindow || prompterWindow.isDestroyed()) {
@@ -221,6 +251,7 @@ app.whenReady().then(async () => {
   await waitForVite();
   ensureDirectories();
   createMainWindow();
+  setupAutoUpdates();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -318,6 +349,8 @@ app.whenReady().then(async () => {
       const baseDir = getProjectsPath();
       if (!fs.existsSync(baseDir)) return [];
 
+      const metadata = getProjectMetadata();
+
       const projects = fs.readdirSync(baseDir).filter((file) => {
         const fullPath = path.join(baseDir, file);
         return fs.statSync(fullPath).isDirectory();
@@ -325,8 +358,45 @@ app.whenReady().then(async () => {
 
       const result = projects.map((projectName) => {
         const scriptsDir = path.join(baseDir, projectName);
-        const scripts = fs.readdirSync(scriptsDir).filter((file) => file.endsWith('.docx'));
-        return { name: projectName, scripts };
+        const scriptFiles = fs
+          .readdirSync(scriptsDir)
+          .filter((file) => file.endsWith('.docx'));
+
+        const scripts = scriptFiles.map((file) => {
+          const stats = fs.statSync(path.join(scriptsDir, file));
+          const added = stats.birthtimeMs || stats.ctimeMs || stats.mtimeMs;
+          return { name: file, added };
+        });
+
+        let order = [];
+        const orderPath = path.join(scriptsDir, 'scripts.json');
+        if (fs.existsSync(orderPath)) {
+          try {
+            const raw = JSON.parse(fs.readFileSync(orderPath, 'utf-8'));
+            if (Array.isArray(raw.order)) order = raw.order;
+          } catch (err) {
+            error(`Failed to parse order file for ${projectName}:`, err);
+          }
+        }
+
+        const map = new Map(scripts.map((s) => [s.name, s]));
+        const ordered = [];
+        if (order.length) {
+          for (const name of order) {
+            if (map.has(name)) {
+              ordered.push(map.get(name));
+              map.delete(name);
+            }
+          }
+        }
+        // Append any scripts not in the order file
+        for (const [name, info] of map.entries()) {
+          ordered.push(info);
+        }
+
+        const meta = metadata.projects.find((p) => p.name === projectName);
+        const added = meta?.added || 0;
+        return { name: projectName, scripts: ordered, added };
       });
 
       return result;
@@ -337,28 +407,8 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('select-project-folder', async () => {
-    log('Project selection invoked');
-    const { response } = await dialog.showMessageBox(mainWindow, {
-      type: 'question',
-      buttons: ['Select Existing Project', 'Create New Project', 'Cancel'],
-      message: 'Choose a project folder option:',
-    });
-
-    if (response === 2) return null; // Cancel
-
-    if (response === 0) {
-      const metadata = getProjectMetadata();
-      const choices = metadata.projects.map((p) => p.name);
-      const choice = await dialog.showMessageBox(mainWindow, {
-        type: 'question',
-        buttons: [...choices, 'Cancel'],
-        message: 'Select a project:',
-      });
-      return choice.response === choices.length ? null : choices[choice.response];
-    } else {
-      log('Create new project requested');
-      return NEW_PROJECT_SENTINEL;
-    }
+    log('Project selection invoked but disabled');
+    return null;
   });
 
   ipcMain.handle('create-new-project', async (_, projectName) => {
@@ -381,12 +431,22 @@ app.whenReady().then(async () => {
 });
 
   ipcMain.handle('select-files', async () => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'Word Docs', extensions: ['docx'] }],
-    });
-
-    return canceled ? null : filePaths;
+    try {
+      const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+        title: 'Select script files',
+        properties: ['openFile', 'multiSelections'],
+        filters: [{ name: 'Scripts', extensions: ['docx'] }],
+      });
+      if (canceled) {
+        log('File selection cancelled');
+        return null;
+      }
+      log(`Files selected: ${filePaths.join(', ')}`);
+      return filePaths;
+    } catch (err) {
+      error('File selection failed:', err);
+      return null;
+    }
   });
 
   ipcMain.handle('rename-project', async (_, oldName, newName) => {
@@ -449,8 +509,9 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle('create-new-script', async (_, projectName, scriptName) => {
+    const safeName = sanitizeFilename(scriptName);
     log(`Creating new script ${scriptName} in project ${projectName}`);
-    if (!projectName || !scriptName) return { success: false };
+    if (!projectName || !safeName) return { success: false };
     try {
       const base = path.join(getProjectsPath(), projectName);
       if (!fs.existsSync(base)) {
@@ -458,29 +519,29 @@ app.whenReady().then(async () => {
         updateProjectMetadata(projectName);
       }
 
-      let finalName = scriptName;
+      let finalName = safeName;
       if (!finalName.toLowerCase().endsWith('.docx')) {
         finalName += '.docx';
       }
       const rootName = finalName.replace(/\.docx$/i, '');
+
+      const existingFiles = await fs.promises.readdir(base);
+      const names = new Set(
+        existingFiles
+          .filter((f) => f.toLowerCase().endsWith('.docx'))
+          .map((f) => f.replace(/\.docx$/i, '')),
+      );
+
       let candidate = rootName;
       let counter = 1;
-      while (fs.existsSync(path.join(base, `${candidate}.docx`))) {
+      while (names.has(candidate)) {
         candidate = `${rootName} ${counter}`;
         counter += 1;
       }
       finalName = `${candidate}.docx`;
       const dest = path.join(base, finalName);
-      const template = path.join(
-        __dirname,
-        '..',
-        'node_modules',
-        'mammoth',
-        'test',
-        'test-data',
-        'empty.docx'
-      );
-      fs.copyFileSync(template, dest);
+      const buffer = await htmlToDocx('<p></p>', null, {});
+      fs.writeFileSync(dest, buffer);
       return { success: true, scriptName: finalName };
     } catch (err) {
       error('Failed to create new script:', err);
@@ -496,9 +557,11 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
   }
 
   const destDir = path.join(getProjectsPath(), projectName);
-  if (!fs.existsSync(destDir)) {
-    fs.mkdirSync(destDir, { recursive: true });
-    log(`Created missing destination directory for project: ${destDir}`);
+  try {
+    await fs.promises.mkdir(destDir, { recursive: true });
+  } catch (err) {
+    error('Failed to ensure destination directory:', err);
+    return;
   }
 
   for (const file of filePaths) {
@@ -508,12 +571,24 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     }
 
     try {
-      const fileName = path.basename(file);
-      const dest = path.join(destDir, fileName);
-      fs.copyFileSync(file, dest);
-      log(`Copied script: ${fileName} → ${dest}`);
+      const result = await mammoth.convertToHtml({ path: file });
+      const html = result.value || '';
+
+      let safeName = sanitizeFilename(path.basename(file));
+      if (!safeName) {
+        error('Invalid sanitized file name for', file);
+        continue;
+      }
+      if (!safeName.toLowerCase().endsWith('.docx')) {
+        safeName += '.docx';
+      }
+
+      const dest = path.join(destDir, safeName);
+      const buffer = await htmlToDocx(html);
+      await fs.promises.writeFile(dest, buffer);
+      log(`Imported script: ${safeName} → ${dest}`);
     } catch (err) {
-      error(`Failed to copy file ${file}:`, err);
+      error(`Failed to import file ${file}:`, err);
     }
   }
 
@@ -556,6 +631,86 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
       return false;
     }
   });
+
+  ipcMain.handle('reorder-scripts', async (_, projectName, order) => {
+    log(`Reordering scripts for ${projectName}`);
+    if (!projectName || !Array.isArray(order)) return false;
+    try {
+      const base = path.join(getProjectsPath(), projectName);
+      const metaPath = path.join(base, 'scripts.json');
+      const data = { order };
+      fs.writeFileSync(metaPath, JSON.stringify(data, null, 2));
+      return true;
+    } catch (err) {
+      error('Failed to save script order:', err);
+      return false;
+    }
+  });
+
+  ipcMain.handle(
+    'move-script',
+    async (_, projectName, newProjectName, scriptName, index) => {
+      log(
+        `Moving script ${scriptName} from ${projectName} to ${newProjectName}`,
+      );
+      if (!projectName || !newProjectName || !scriptName) return false;
+      try {
+        const srcPath = path.join(
+          getProjectsPath(),
+          projectName,
+          scriptName,
+        );
+        const destDir = path.join(getProjectsPath(), newProjectName);
+        const destPath = path.join(destDir, scriptName);
+
+        if (!fs.existsSync(srcPath) || fs.existsSync(destPath)) {
+          error('Move failed: source missing or destination exists');
+          return false;
+        }
+
+        await fs.promises.mkdir(destDir, { recursive: true });
+        fs.renameSync(srcPath, destPath);
+
+        const updateOrder = async (proj, modify) => {
+          const metaPath = path.join(getProjectsPath(), proj, 'scripts.json');
+          let order = [];
+          if (fs.existsSync(metaPath)) {
+            try {
+              const raw = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+              if (Array.isArray(raw.order)) order = raw.order;
+            } catch (err) {
+              error(`Failed to read order for ${proj}:`, err);
+            }
+          }
+          order = modify(order);
+          try {
+            fs.writeFileSync(metaPath, JSON.stringify({ order }, null, 2));
+          } catch (err) {
+            error(`Failed to update order for ${proj}:`, err);
+          }
+        };
+
+        await updateOrder(projectName, (order) =>
+          order.filter((n) => n !== scriptName),
+        );
+
+        await updateOrder(newProjectName, (order) => {
+          let targetIndex = Number(index);
+          if (Number.isNaN(targetIndex) || targetIndex < 0 || targetIndex > order.length) {
+            targetIndex = order.length;
+          }
+          const next = [...order];
+          next.splice(targetIndex, 0, scriptName);
+          return next;
+        });
+
+        return true;
+      } catch (err) {
+        error('Failed to move script:', err);
+        return false;
+      }
+    },
+  );
 
   ipcMain.handle('delete-script', async (_, projectName, scriptName) => {
     const scriptPath = path.join(getProjectsPath(), projectName, scriptName);

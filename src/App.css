@@ -16,34 +16,25 @@ body {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 .left-panel {
-  width: 300px;
-  min-width: 260px;
+  flex: 0 0 clamp(300px, 25%, 320px);
   background-color: #111;
   border-right: 1px solid #333;
   padding: calc(var(--space-4) + var(--space-1));
   overflow-y: auto;
-}
-
-.divider {
-  width: 5px;
-  cursor: col-resize;
-  background-color: #333;
-  user-select: none;
-}
-
-.divider:hover {
-  background-color: #555;
+  overflow-x: visible;
 }
 
 .right-panel {
-  flex-grow: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
   padding: calc(var(--space-4) * 2.5);
-  overflow-y: auto;
+  overflow-y: hidden;
+  overflow-x: visible;
   position: relative;
 }
 
@@ -70,10 +61,10 @@ body {
 
 .file-manager-header {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
   padding: 0.5rem;
 }
 
@@ -81,19 +72,47 @@ body {
   margin: 0;
 }
 
+.file-manager-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .header-buttons {
   display: flex;
   gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.file-manager .header-buttons {
+  margin-bottom: var(--space-4);
 }
 
 .file-manager-header button {
   padding: var(--space-2) var(--space-4);
   background-color: #333;
   color: #e0e0e0;
-
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  white-space: nowrap;
+  min-width: max-content;
+  overflow: hidden;
+}
+
+
+.sort-select {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  padding: 2px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sort-select option {
+  background-color: #333;
+  color: #e0e0e0;
 }
 
 .file-manager-header button:hover {
@@ -162,6 +181,9 @@ body {
   margin: 0;
   font-size: 16px;
   color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .project-header button:not(.toggle-button) {
@@ -176,6 +198,16 @@ body {
 
 .project-header button:not(.toggle-button):hover {
   background: #555;
+}
+
+.project-actions {
+  display: none;
+  margin-left: auto;
+  gap: var(--space-1);
+}
+
+.project-header:hover .project-actions {
+  display: flex;
 }
 
 .project-group.collapsed ul {
@@ -206,10 +238,28 @@ body {
   padding: var(--space-1) var(--space-3);
   cursor: pointer;
   transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
 }
 
 .script-button:hover {
   color: var(--accent-color);
+}
+
+.script-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #333;
+  color: #e0e0e0;
+  padding: 2px 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  border-radius: 4px;
+  margin-top: 2px;
+  z-index: 5;
 }
 
 
@@ -222,10 +272,25 @@ body {
   color: #1e1e1e;
 }
   
+
+.script-item {
+  position: relative;
+}
+
 .script-item.loaded.prompting .script-button {
   background-color: var(--accent-color);
   color: #1e1e1e;
   border-color: var(--accent-color);
+}
+
+.script-item.drop-target::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--accent-color);
 }
 
 .script-actions {
@@ -297,48 +362,57 @@ body {
   background: #333;
 }
 
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+.main-logo {
+  width: 120px;
+  position: absolute;
+  bottom: var(--space-3);
+  right: var(--space-3);
 }
 
-.modal-window {
-  background: #222;
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: calc(var(--space-4) * 2);
+/* Send button positioned at the bottom of the right panel */
+.send-button-container {
+  position: sticky;
+  bottom: var(--space-3);
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  padding-top: var(--space-3);
+  background-color: #1e1e1e;
+  width: 100%;
   gap: var(--space-2);
 }
 
-.modal-window input {
-  padding: var(--space-2);
-  background: #111;
-  border: 1px solid #444;
+.send-button {
+  padding: var(--space-3) calc(var(--space-2) * 3);
+  font-size: 16px;
+  background-color: #444;
   color: #e0e0e0;
-  border-radius: 4px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2);
+.send-button:hover {
+  background-color: var(--accent-color);
+  color: #1e1e1e;
 }
 
-.modal-window select {
-  padding: var(--space-2);
-  background: #111;
-  border: 1px solid #444;
-  color: #e0e0e0;
-  border-radius: 4px;
+.send-button:disabled {
+  background-color: #666;
+  color: #999;
+  cursor: not-allowed;
 }
+
+.load-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  color: #aaa;
+}
+

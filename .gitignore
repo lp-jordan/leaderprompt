@@ -3,6 +3,7 @@ node_modules/
 dist/
 build/
 out/
+release/
 *.log
 *.tmp
 *.bak
@@ -28,3 +29,5 @@ Thumbs.db
 LeaderPrompt/projects/
 # Ignore font binaries
 public/fonts/*.otf
+
+bfg.jar
