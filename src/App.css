@@ -401,3 +401,15 @@ body {
   cursor: not-allowed;
 }
 
+.load-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  color: #aaa;
+}
+
