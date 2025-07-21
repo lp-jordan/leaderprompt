@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -98,6 +99,25 @@ function ensureDirectories() {
     log('Created projects.json metadata file');
   }
 
+}
+
+function setupAutoUpdates() {
+  if (!app.isPackaged) return;
+  autoUpdater.on('error', (err) => error('Auto update error:', err));
+  autoUpdater.on('update-available', () => {
+    log('Update available');
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message:
+        'A new version is being downloaded and will be installed after restart.',
+    });
+  });
+  autoUpdater.on('update-downloaded', () => {
+    log('Update downloaded and ready');
+  });
+
+  autoUpdater.checkForUpdates();
 }
 
 function getProjectMetadata() {
@@ -231,6 +251,7 @@ app.whenReady().then(async () => {
   await waitForVite();
   ensureDirectories();
   createMainWindow();
+  setupAutoUpdates();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -493,8 +514,15 @@ app.whenReady().then(async () => {
     if (!projectName || !safeName) return { success: false };
     try {
       const base = path.join(getProjectsPath(), projectName);
-      if (!fs.existsSync(base)) {
-        fs.mkdirSync(base, { recursive: true });
+      let baseExists = true;
+      try {
+        await fs.promises.stat(base);
+      } catch (statErr) {
+        if (statErr.code === 'ENOENT') baseExists = false;
+        else throw statErr;
+      }
+      if (!baseExists) {
+        await fs.promises.mkdir(base, { recursive: true });
         updateProjectMetadata(projectName);
       }
 

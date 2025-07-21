@@ -374,9 +374,11 @@ body {
   position: sticky;
   bottom: var(--space-3);
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   padding-top: var(--space-3);
   background-color: #1e1e1e;
+  width: 100%;
+  gap: var(--space-2);
 }
 
 .send-button {
@@ -409,6 +411,7 @@ body {
   width: 100%;
   text-align: center;
   pointer-events: none;
+  z-index: 5;
   font-size: clamp(1rem, 2.5vw, 1.5rem);
   color: #aaa;
 }
