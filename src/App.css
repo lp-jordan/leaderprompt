@@ -374,7 +374,8 @@ body {
   position: sticky;
   bottom: var(--space-3);
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   padding-top: var(--space-3);
   padding-left: clamp(1rem, 5vw, 2.5rem);
   padding-right: clamp(1rem, 5vw, 2.5rem);
