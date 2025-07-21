@@ -1,0 +1,4 @@
+owner: lp-jordan
+repo: leaderprompt
+provider: github
+updaterCacheDirName: leaderprompt-updater
