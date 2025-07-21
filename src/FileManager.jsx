@@ -6,6 +6,7 @@ import {
   useRef,
 } from 'react';
 import ConfirmModal from './ConfirmModal.jsx';
+import { toast } from 'react-hot-toast';
 // The old project ActionMenu has been replaced with inline buttons
 
 function PencilIcon() {
@@ -115,8 +116,10 @@ const FileManager = forwardRef(function FileManager({
       setNewProjectName('');
       setShowNewProjectInput(false);
       loadProjects();
+      toast.success('Project created');
     } else {
       console.error('Failed to create project');
+      toast.error('Failed to create project');
     }
   };
 
@@ -126,6 +129,7 @@ const FileManager = forwardRef(function FileManager({
 
     await window.electronAPI.importScriptsToProject(filePaths, projectName);
     await loadProjects();
+    toast.success('Scripts imported');
   };
 
   const handleNewScript = async () => {
@@ -134,6 +138,7 @@ const FileManager = forwardRef(function FileManager({
     if (result && result.success) {
       await loadProjects();
       onScriptSelect(projectName, result.scriptName);
+      toast.success('Script created');
     }
   };
 
@@ -167,7 +172,12 @@ const FileManager = forwardRef(function FileManager({
       oldName,
       renameValue.trim(),
     );
-    if (!success) console.error('Failed to rename project');
+    if (!success) {
+      console.error('Failed to rename project');
+      toast.error('Failed to rename project');
+    } else {
+      toast.success('Project renamed');
+    }
     cancelRename();
     await loadProjects();
   };
@@ -183,7 +193,12 @@ const FileManager = forwardRef(function FileManager({
       oldName,
       newName,
     );
-    if (!success) console.error('Failed to rename script');
+    if (!success) {
+      console.error('Failed to rename script');
+      toast.error('Failed to rename script');
+    } else {
+      toast.success('Script renamed');
+    }
     cancelRename();
     await loadProjects();
   };
@@ -198,7 +213,12 @@ const FileManager = forwardRef(function FileManager({
       `Delete project "${projectName}"? This will remove all its scripts.`,
       async () => {
         const deleted = await window.electronAPI.deleteProject(projectName);
-        if (!deleted) console.error('Failed to delete project');
+        if (!deleted) {
+          console.error('Failed to delete project');
+          toast.error('Failed to delete project');
+        } else {
+          toast.success('Project deleted');
+        }
         await loadProjects();
       },
     );
@@ -209,7 +229,12 @@ const FileManager = forwardRef(function FileManager({
       `Delete script "${scriptName}" from "${projectName}"?`,
       async () => {
         const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
-        if (!deleted) console.error('Failed to delete script');
+        if (!deleted) {
+          console.error('Failed to delete script');
+          toast.error('Failed to delete script');
+        } else {
+          toast.success('Script deleted');
+        }
         await loadProjects();
       },
     );
