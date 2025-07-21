@@ -48,6 +48,11 @@ function App() {
         />
       </div>
       <div className="right-panel">
+        {!viewerLoaded && (
+          <div className="load-placeholder">
+            Welcome to LeaderPrompt. Please load or create a script.
+          </div>
+        )}
         <ScriptViewer
           projectName={selectedProject}
           scriptName={selectedScript}
@@ -64,34 +69,29 @@ function App() {
             setSendCallback(() => cb);
           }}
         />
-          {(closeCallback || sendCallback) && (
-            <div className="send-button-container">
-              {closeCallback && (
-                <button
-                  className="send-button"
-                  onClick={() => closeCallback && closeCallback()}
-                >
-                  Close
-                </button>
-              )}
-              {sendCallback && (
-                <button
-                  className="send-button"
-                  onClick={() => sendCallback && sendCallback()}
-                  disabled={!sendCallback}
-                >
-                  Let&apos;s Go!
-                </button>
-              )}
-            </div>
-          )}
+        {(closeCallback || sendCallback) && (
+          <div className="send-button-container">
+            {closeCallback && (
+              <button
+                className="send-button"
+                onClick={() => closeCallback && closeCallback()}
+              >
+                Close
+              </button>
+            )}
+            {sendCallback && (
+              <button
+                className="send-button"
+                onClick={() => sendCallback && sendCallback()}
+                disabled={!sendCallback}
+              >
+                Let&apos;s Go!
+              </button>
+            )}
+          </div>
+        )}
         <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
       </div>
-      {!viewerLoaded && (
-        <div className="load-placeholder">
-          Welcome to LeaderPrompt. Please load or create a script.
-        </div>
-      )}
     </div>
   );
 }
