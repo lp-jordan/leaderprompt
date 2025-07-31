@@ -1,5 +1,5 @@
 import './App.css';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
@@ -13,6 +13,19 @@ function App() {
   const [sendCallback, setSendCallback] = useState(null);
   const [closeCallback, setCloseCallback] = useState(null);
   const [viewerLoaded, setViewerLoaded] = useState(false);
+  const [showFileManager, setShowFileManager] = useState(() => window.innerWidth >= 1000);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1000) {
+        setShowFileManager(false);
+      } else {
+        setShowFileManager(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleScriptSelect = (projectName, scriptName) => {
     setSelectedProject(projectName);
@@ -37,15 +50,17 @@ function App() {
 
  return (
   <div className="main-layout">
-    <div className="left-panel">
-      <FileManager
-        ref={fileManagerRef}
-        onScriptSelect={handleScriptSelect}
-        loadedProject={loadedProject}
-        loadedScript={loadedScript}
-        currentProject={selectedProject}
-        currentScript={selectedScript}
-      />
+    <div className={`left-panel ${showFileManager ? '' : 'collapsed'}`}>
+      {showFileManager && (
+        <FileManager
+          ref={fileManagerRef}
+          onScriptSelect={handleScriptSelect}
+          loadedProject={loadedProject}
+          loadedScript={loadedScript}
+          currentProject={selectedProject}
+          currentScript={selectedScript}
+        />
+      )}
     </div>
     <div className="right-panel">
       <ScriptViewer

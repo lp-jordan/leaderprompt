@@ -28,6 +28,9 @@ body {
   overflow-y: auto;
   overflow-x: visible;
 }
+.left-panel.collapsed {
+  display: none;
+}
 
 .right-panel {
   flex: 1;
