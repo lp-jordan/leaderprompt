@@ -34,3 +34,9 @@ Edits made in the script editor are automatically written back to the underlying
 `html-to-docx` and saves it to the selected project/script location via the new
 `save-script` IPC handler exposed as
 `window.electronAPI.saveScript(projectName, scriptName, html)`.
+
+## Packaging and Releases
+
+Run `npm run package` on a Mac to build the application. Electron Builder will
+generate `dmg` and `zip` files in the `release` directory. Releases are
+published to GitHub so the app can receive updates through `electron-updater`.
