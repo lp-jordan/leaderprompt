@@ -7,6 +7,10 @@ const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
 
+// Toggle automatic update behavior with an environment variable. All update
+// logic remains in place so it can be re-enabled easily.
+const ENABLE_AUTO_UPDATES = process.env.ENABLE_AUTO_UPDATES === 'true';
+
 const pathToFile = (file, hash = '') =>
   `file://${path.resolve(__dirname, '..', file).replace(/\\/g, '/')}${hash}`;
 
@@ -117,6 +121,10 @@ function ensureDirectories() {
 }
 
 function setupAutoUpdates() {
+  if (!ENABLE_AUTO_UPDATES) {
+    log('Auto updates disabled');
+    return;
+  }
   if (!app.isPackaged) return;
   autoUpdater.on('error', (err) => {
     error('Auto update error:', err)
@@ -170,6 +178,10 @@ function setupAutoUpdates() {
 }
 
 function manualCheckForUpdates() {
+  if (!ENABLE_AUTO_UPDATES) {
+    log('Auto updates disabled');
+    return;
+  }
   if (!app.isPackaged) {
     dialog.showMessageBox({
       type: 'info',
@@ -848,6 +860,10 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
   });
 
   ipcMain.handle('check-for-updates', () => {
+    if (!ENABLE_AUTO_UPDATES) {
+      log('Auto updates disabled');
+      return null
+    }
     if (!app.isPackaged) {
       dialog.showMessageBox({
         type: 'info',
