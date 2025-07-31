@@ -60,7 +60,52 @@ function App() {
           currentProject={selectedProject}
           currentScript={selectedScript}
         />
-      )}
+      </div>
+      <div className="right-panel">
+        {!viewerLoaded && (
+          <div className="load-placeholder">
+            Welcome to LeaderPrompt. Please load or create a script.
+          </div>
+        )}
+        <ScriptViewer
+          projectName={selectedProject}
+          scriptName={selectedScript}
+          loadedProject={loadedProject}
+          loadedScript={loadedScript}
+          onPrompterOpen={handlePrompterOpen}
+          onPrompterClose={handlePrompterClose}
+          onCloseViewer={handleViewerClose}
+          onLoadedChange={setViewerLoaded}
+          onClose={(cb) => {
+            setCloseCallback(() => cb);
+          }}
+          onSend={(cb) => {
+            setSendCallback(() => cb);
+          }}
+        />
+        {(closeCallback || sendCallback) && (
+          <div className="send-button-container">
+            {closeCallback && (
+              <button
+                className="send-button"
+                onClick={() => closeCallback && closeCallback()}
+              >
+                Close
+              </button>
+            )}
+            {sendCallback && (
+              <button
+                className="send-button"
+                onClick={() => sendCallback && sendCallback()}
+                disabled={!sendCallback}
+              >
+                Let&apos;s Go!
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
     </div>
     <div className="right-panel">
       <ScriptViewer
