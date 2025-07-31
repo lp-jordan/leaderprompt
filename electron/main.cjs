@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const path = require('path');
@@ -127,6 +127,52 @@ function setupAutoUpdates() {
   });
 
   autoUpdater.checkForUpdates();
+}
+
+function manualCheckForUpdates() {
+  if (!app.isPackaged) {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Check for Updates',
+      message: 'Updates are only available in packaged builds.',
+    });
+    return;
+  }
+
+  const notifyLatest = () => {
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'No Updates Available',
+      message: 'You are running the latest version.',
+    });
+    autoUpdater.removeListener('update-not-available', notifyLatest);
+  };
+
+  autoUpdater.once('update-not-available', notifyLatest);
+  autoUpdater.checkForUpdates();
+}
+
+function createAppMenu() {
+  const template = [
+    ...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Check for Updates…',
+          click: manualCheckForUpdates,
+        },
+        process.platform === 'darwin' ? { role: 'close' } : { role: 'quit' },
+      ],
+    },
+    { role: 'editMenu' },
+    { role: 'viewMenu' },
+    { role: 'windowMenu' },
+    { role: 'help' },
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
 }
 
 function getProjectMetadata() {
@@ -263,6 +309,7 @@ app.whenReady().then(async () => {
   ensureDirectories();
   createMainWindow();
   setupAutoUpdates();
+  createAppMenu();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
