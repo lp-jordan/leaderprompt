@@ -45,6 +45,12 @@ const error = (...args) => {
   sendLog(`[ERROR] ${msg}`)
 }
 
+function sendUpdateStatus(data) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update-status', data)
+  }
+}
+
 function startViteServer() {
   if (viteProcess || app.isPackaged) return;
   viteProcess = spawn('npm', ['run', 'dev'], {
@@ -112,21 +118,55 @@ function ensureDirectories() {
 
 function setupAutoUpdates() {
   if (!app.isPackaged) return;
-  autoUpdater.on('error', (err) => error('Auto update error:', err));
-  autoUpdater.on('update-available', () => {
-    log('Update available');
+  autoUpdater.on('error', (err) => {
+    error('Auto update error:', err)
+    sendUpdateStatus({ status: 'error', message: err.message })
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-error', err.message)
+    }
+  })
+  autoUpdater.on('checking-for-update', () => {
+    log('Checking for update')
+    sendUpdateStatus({ status: 'checking' })
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('checking-for-update')
+    }
+  })
+  autoUpdater.on('update-available', (info) => {
+    log('Update available')
+    sendUpdateStatus({ status: 'available', info })
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-available', info)
+    }
     dialog.showMessageBox({
       type: 'info',
       title: 'Update Available',
       message:
         'A new version is being downloaded and will be installed after restart.',
-    });
-  });
-  autoUpdater.on('update-downloaded', () => {
-    log('Update downloaded and ready');
-  });
+    })
+  })
+  autoUpdater.on('update-not-available', () => {
+    log('No updates available')
+    sendUpdateStatus({ status: 'none' })
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-not-available')
+    }
+  })
+  autoUpdater.on('download-progress', (progress) => {
+    sendUpdateStatus({ status: 'downloading', progress })
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('download-progress', progress)
+    }
+  })
+  autoUpdater.on('update-downloaded', (info) => {
+    log('Update downloaded and ready')
+    sendUpdateStatus({ status: 'downloaded', info })
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-downloaded', info)
+    }
+  })
 
-  autoUpdater.checkForUpdates();
+  autoUpdater.checkForUpdates()
 }
 
 function manualCheckForUpdates() {
@@ -796,6 +836,22 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
       return false;
     }
   });
+
+  ipcMain.handle('check-for-updates', () => {
+    if (!app.isPackaged) {
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Check for Updates',
+        message: 'Updates are only available in packaged builds.',
+      })
+      return null
+    }
+    return autoUpdater.checkForUpdates()
+  })
+
+  ipcMain.handle('quit-and-install', () => {
+    autoUpdater.quitAndInstall()
+  })
 });
 
 // --- App Exit Handler ---

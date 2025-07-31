@@ -7,6 +7,7 @@ import './index.css'
 import App from './App.jsx'
 import Prompter from './Prompter.jsx'
 import DevConsole from './DevConsole.jsx'
+import Updater from './Updater.jsx'
 
 export function DevIcon() {
   return (
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')).render(
       >
         <DevIcon />
       </button>
+      <Updater />
       <Toaster position="top-right" />
     </HashRouter>
   </React.StrictMode>

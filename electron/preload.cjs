@@ -73,4 +73,27 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('set-prompter-bounds', bounds),
 
   prompterReady: () => ipcRenderer.send('prompter-ready'),
+
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  restartAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+  onUpdateChecking: (callback) => {
+    const handler = () => callback()
+    ipcRenderer.on('checking-for-update', handler)
+    return () => ipcRenderer.removeListener('checking-for-update', handler)
+  },
+  onUpdateAvailable: (callback) => {
+    const handler = (_, info) => callback(info)
+    ipcRenderer.on('update-available', handler)
+    return () => ipcRenderer.removeListener('update-available', handler)
+  },
+  onUpdateProgress: (callback) => {
+    const handler = (_, progress) => callback(progress)
+    ipcRenderer.on('download-progress', handler)
+    return () => ipcRenderer.removeListener('download-progress', handler)
+  },
+  onUpdateDownloaded: (callback) => {
+    const handler = (_, info) => callback(info)
+    ipcRenderer.on('update-downloaded', handler)
+    return () => ipcRenderer.removeListener('update-downloaded', handler)
+  },
 });
