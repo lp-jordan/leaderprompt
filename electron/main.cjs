@@ -10,6 +10,14 @@ const { spawn } = require('child_process');
 const pathToFile = (file, hash = '') =>
   `file://${path.resolve(__dirname, '..', file).replace(/\\/g, '/')}${hash}`;
 
+// Resolve a path to a static asset. During development assets live in the
+// `public` folder. When packaged, Vite copies them to `dist` so adjust the
+// root accordingly.
+const assetPath = (...segments) =>
+  app.isPackaged
+    ? path.join(__dirname, '..', 'dist', ...segments)
+    : path.join(__dirname, '..', 'public', ...segments);
+
 let mainWindow;
 let prompterWindow;
 let devConsoleWindow;
@@ -160,7 +168,7 @@ function createMainWindow() {
       contextIsolation: true,
       sandbox: true,
     },
-    icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
+    icon: assetPath('logos', 'LP_white.png'),
     backgroundColor: '#000000',
   });
 
@@ -216,7 +224,7 @@ async function createPrompterWindow() {
       sandbox: true,
       backgroundThrottling: false,
     },
-    icon: path.resolve(__dirname, '..', 'public', 'logos', 'LP_white.png'),
+    icon: assetPath('logos', 'LP_white.png'),
     titleBarStyle: 'default',
   };
 
@@ -249,7 +257,9 @@ async function createPrompterWindow() {
 app.whenReady().then(async () => {
   log('App ready');
   startViteServer();
-  await waitForVite();
+  if (!app.isPackaged) {
+    await waitForVite();
+  }
   ensureDirectories();
   createMainWindow();
   setupAutoUpdates();
@@ -548,7 +558,7 @@ app.whenReady().then(async () => {
       }
       finalName = `${candidate}.docx`;
       const dest = path.join(base, finalName);
-      const templatePath = path.join(__dirname, '..', 'public', 'template.docx');
+      const templatePath = assetPath('template.docx');
       try {
         await fs.promises.copyFile(templatePath, dest);
       } catch (copyErr) {
