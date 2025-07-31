@@ -13,6 +13,17 @@ function Updater() {
       toast.loading(`Downloading update ${info?.version || ''}...`, { id: 'update-download' })
     })
 
+    const cleanNotAvailable = window.electronAPI.onUpdateNotAvailable(() => {
+      toast.dismiss('update-check')
+      toast('No updates available.')
+    })
+
+    const cleanError = window.electronAPI.onUpdateError((message) => {
+      toast.dismiss('update-check')
+      toast.dismiss('update-download')
+      toast.error(`Update error: ${message}`)
+    })
+
     const cleanProgress = window.electronAPI.onUpdateProgress((progress) => {
       const percent = Math.round(progress.percent || 0)
       toast.loading(`Downloading update... ${percent}%`, { id: 'update-download' })
@@ -32,6 +43,8 @@ function Updater() {
     return () => {
       cleanChecking?.()
       cleanAvailable?.()
+      cleanNotAvailable?.()
+      cleanError?.()
       cleanProgress?.()
       cleanDownloaded?.()
     }
