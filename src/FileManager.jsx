@@ -101,7 +101,7 @@ const FileManager = forwardRef(function FileManager({
         const next = { ...prev };
         result.forEach((p) => {
           if (typeof next[p.name] === 'undefined') {
-            next[p.name] = false;
+            next[p.name] = true;
           }
         });
         return next;
@@ -390,10 +390,16 @@ const FileManager = forwardRef(function FileManager({
                 </>
               ) : (
                 <>
-                  <div className="project-title">
+                  <div
+                    className="project-title"
+                    onClick={() => toggleCollapse(project.name)}
+                  >
                     <button
                       className="toggle-button"
-                      onClick={() => toggleCollapse(project.name)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCollapse(project.name);
+                      }}
                     >
                       {collapsed[project.name] ? '▶' : '▼'}
                     </button>
