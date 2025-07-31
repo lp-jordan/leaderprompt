@@ -17,7 +17,7 @@ function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      setShowFileManager(window.innerWidth >= 500);
+      setShowFileManager(window.innerWidth >= 700);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
