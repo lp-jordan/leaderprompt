@@ -8,6 +8,7 @@
   "build": {
     "appId": "com.yourcompany.leaderprompt",
     "productName": "LeaderPrompt",
+    "icon": "build/icons/icon",
     "directories": {
       "output": "release"
     },
@@ -16,10 +17,12 @@
       "electron/**/*"
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icons/icon.ico"
     },
     "mac": {
-      "target": ["dmg", "zip"]
+      "target": ["dmg", "zip"],
+      "icon": "build/icons/icon.icns"
     },
     "publish": [
       { "provider": "github" }
