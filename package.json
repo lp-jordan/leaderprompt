@@ -21,11 +21,16 @@
       "icon": "build/icons/icon.ico"
     },
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "icon": "build/icons/icon.icns"
     },
     "publish": [
-      { "provider": "github" }
+      {
+        "provider": "github"
+      }
     ]
   },
   "scripts": {
@@ -37,6 +42,8 @@
     "package": "electron-builder"
   },
   "dependencies": {
+    "@tiptap/react": "^3.0.7",
+    "@tiptap/starter-kit": "^3.0.7",
     "docx": "^9.5.1",
     "electron-updater": "^6.6.2",
     "html-to-docx": "^1.8.0",
