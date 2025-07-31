@@ -86,6 +86,7 @@ const FileManager = forwardRef(function FileManager({
   const [confirmState, setConfirmState] = useState(null);
   const [dragInfo, setDragInfo] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
+  const [hoverProject, setHoverProject] = useState(null);
 
 
   useEffect(() => {
@@ -275,6 +276,21 @@ const FileManager = forwardRef(function FileManager({
     setHoverIndex((prev) => (prev === index ? null : prev));
   };
 
+  const handleProjectDragEnter = (projectName) => {
+    setHoverProject(projectName);
+  };
+
+  const handleProjectDragLeave = (projectName) => {
+    setHoverProject((prev) => (prev === projectName ? null : prev));
+  };
+
+  const handleProjectDrop = (e, projectName) => {
+    const proj = projects.find((p) => p.name === projectName);
+    const index = proj ? proj.scripts.length : -1;
+    handleDrop(e, projectName, index);
+    setHoverProject(null);
+  };
+
   const handleDrop = async (e, projectName, index) => {
     e.preventDefault();
     if (!dragInfo) return;
@@ -355,7 +371,13 @@ const FileManager = forwardRef(function FileManager({
             className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}
             key={project.name}
           >
-            <div className="project-header">
+            <div
+              className={`project-header${hoverProject === project.name ? ' drop-target' : ''}`}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleProjectDrop(e, project.name)}
+              onDragEnter={() => handleProjectDragEnter(project.name)}
+              onDragLeave={() => handleProjectDragLeave(project.name)}
+            >
               {renamingProject === project.name ? (
                 <>
                   <input

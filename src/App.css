@@ -215,6 +215,11 @@ body {
   display: flex;
 }
 
+.project-header.drop-target {
+  border: 1px dashed var(--accent-color);
+  border-radius: 4px;
+}
+
 .project-group.collapsed ul {
   display: none;
 }
