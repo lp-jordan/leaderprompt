@@ -197,6 +197,12 @@ function Prompter() {
         </button>
         <div className={`main-settings ${mainSettingsOpen ? 'open' : ''}`}>
         <button
+          className="stop-button"
+          onClick={() => window.electronAPI.closePrompter()}
+        >
+          Stop Prompting
+        </button>
+        <button
           className={`toggle-btn ${autoscroll ? 'active' : ''}`}
           onClick={() => setAutoscroll(!autoscroll)}
           disabled={notecardMode}
