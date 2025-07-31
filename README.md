@@ -40,3 +40,7 @@ Edits made in the script editor are automatically written back to the underlying
 Run `npm run package` on a Mac to build the application. Electron Builder will
 generate `dmg` and `zip` files in the `release` directory. Releases are
 published to GitHub so the app can receive updates through `electron-updater`.
+
+Packaged apps use icons from the `build/icons` directory. Provide
+`icon.ico` for Windows and `icon.icns` for macOS in that folder before
+running `npm run package`.

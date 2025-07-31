@@ -1,7 +1,9 @@
 # Ignore node modules and build files
 node_modules/
 dist/
-build/
+build/*
+!build/icons/
+!build/icons/README.md
 out/
 release/
 *.log
