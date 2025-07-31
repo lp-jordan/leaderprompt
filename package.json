@@ -42,6 +42,7 @@
     "package": "electron-builder"
   },
   "dependencies": {
+    "@tiptap/core": "^3.0.7",
     "@tiptap/react": "^3.0.7",
     "@tiptap/starter-kit": "^3.0.7",
     "docx": "^9.5.1",
