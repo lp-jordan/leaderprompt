@@ -549,15 +549,25 @@ app.whenReady().then(async () => {
   ipcMain.handle('rename-script', async (_, projectName, oldName, newName) => {
     log(`Renaming script: ${oldName} -> ${newName} in ${projectName}`);
     if (!projectName || !oldName || !newName || oldName === newName) return false;
+
+    const safeName = sanitizeFilename(newName);
+    if (!safeName) {
+      error('Invalid sanitized script name:', newName);
+      return false;
+    }
+
     try {
       const base = path.join(getProjectsPath(), projectName);
       const oldPath = path.join(base, oldName);
-      let targetName = newName;
+
+      let targetName = safeName;
       if (!targetName.toLowerCase().endsWith('.docx')) {
         targetName += '.docx';
       }
+
       const newPath = path.join(base, targetName);
       if (!fs.existsSync(oldPath) || fs.existsSync(newPath)) return false;
+
       fs.renameSync(oldPath, newPath);
       return true;
     } catch (err) {
