@@ -17,11 +17,7 @@ function App() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1000) {
-        setShowFileManager(false);
-      } else {
-        setShowFileManager(true);
-      }
+      setShowFileManager(window.innerWidth >= 500);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -47,26 +43,28 @@ function App() {
     setSelectedScript(null);
   };
 
-
- return (
-  <div className="main-layout">
-    <div className={`left-panel ${showFileManager ? '' : 'collapsed'}`}>
-      {showFileManager && (
-        <FileManager
-          ref={fileManagerRef}
-          onScriptSelect={handleScriptSelect}
-          loadedProject={loadedProject}
-          loadedScript={loadedScript}
-          currentProject={selectedProject}
-          currentScript={selectedScript}
-        />
+  return (
+    <div className="main-layout">
+      <div className={`left-panel ${showFileManager ? '' : 'collapsed'}`}>
+        {showFileManager && (
+          <FileManager
+            ref={fileManagerRef}
+            onScriptSelect={handleScriptSelect}
+            loadedProject={loadedProject}
+            loadedScript={loadedScript}
+            currentProject={selectedProject}
+            currentScript={selectedScript}
+          />
+        )}
       </div>
+
       <div className="right-panel">
         {!viewerLoaded && (
           <div className="load-placeholder">
             Welcome to LeaderPrompt. Please load or create a script.
           </div>
         )}
+
         <ScriptViewer
           projectName={selectedProject}
           scriptName={selectedScript}
@@ -83,6 +81,7 @@ function App() {
             setSendCallback(() => cb);
           }}
         />
+
         {(closeCallback || sendCallback) && (
           <div className="send-button-container">
             {closeCallback && (
@@ -105,55 +104,10 @@ function App() {
           </div>
         )}
       </div>
+
       <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
     </div>
-    <div className="right-panel">
-      <ScriptViewer
-        projectName={selectedProject}
-        scriptName={selectedScript}
-        loadedProject={loadedProject}
-        loadedScript={loadedScript}
-        onPrompterOpen={handlePrompterOpen}
-        onPrompterClose={handlePrompterClose}
-        onCloseViewer={handleViewerClose}
-        onLoadedChange={setViewerLoaded}
-        onClose={(cb) => {
-          setCloseCallback(() => cb);
-        }}
-        onSend={(cb) => {
-          setSendCallback(() => cb);
-        }}
-      />
-      {(closeCallback || sendCallback) && (
-        <div className="send-button-container">
-          {closeCallback && (
-            <button
-              className="send-button"
-              onClick={() => closeCallback && closeCallback()}
-            >
-              Close
-            </button>
-          )}
-          {sendCallback && (
-            <button
-              className="send-button"
-              onClick={() => sendCallback && sendCallback()}
-              disabled={!sendCallback}
-            >
-              Let&apos;s Go!
-            </button>
-          )}
-        </div>
-      )}
-    </div> {/* ← this was missing, closes .right-panel */}
-
-    {!viewerLoaded && (
-      <div className="load-placeholder">
-        Welcome to LeaderPrompt. Please load or create a script.
-      </div>
-    )}
-    <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" />
-  </div>
-);
+  );
 }
+
 export default App;
