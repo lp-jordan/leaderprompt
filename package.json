@@ -2,6 +2,7 @@
   "name": "leaderprompt",
   "private": true,
   "version": "0.0.0",
+  "repository": "https://github.com/yourname/leaderprompt",
   "type": "module",
   "main": "electron/main.cjs",
   "build": {
@@ -16,7 +17,13 @@
     ],
     "win": {
       "target": "nsis"
-    }
+    },
+    "mac": {
+      "target": ["dmg", "zip"]
+    },
+    "publish": [
+      { "provider": "github" }
+    ]
   },
   "scripts": {
     "dev": "vite",
