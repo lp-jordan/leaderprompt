@@ -166,3 +166,16 @@
   background: var(--accent-color);
   color: #000;
 }
+
+.stop-button {
+  background-color: #bb4444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 4px;
+}
+
+.stop-button:hover {
+  background-color: #dd5555;
+}
