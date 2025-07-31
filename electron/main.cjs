@@ -179,11 +179,7 @@ function setupAutoUpdates() {
 
 function manualCheckForUpdates() {
   if (!ENABLE_AUTO_UPDATES) {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Updates Disabled',
-      message: 'Automatic updates are currently disabled.',
-    });
+    log('Auto updates disabled');
     return;
   }
   if (!app.isPackaged) {
@@ -865,11 +861,7 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
 
   ipcMain.handle('check-for-updates', () => {
     if (!ENABLE_AUTO_UPDATES) {
-      dialog.showMessageBox({
-        type: 'info',
-        title: 'Updates Disabled',
-        message: 'Automatic updates are currently disabled.',
-      })
+      log('Auto updates disabled');
       return null
     }
     if (!app.isPackaged) {
