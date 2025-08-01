@@ -1,5 +1,6 @@
 import './ScriptViewer.css';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import TipTapEditor from './TipTapEditor.jsx';
 import { toast } from 'react-hot-toast';
 
 function ScriptViewer({
@@ -16,7 +17,6 @@ function ScriptViewer({
 }) {
   const [scriptHtml, setScriptHtml] = useState(null);
   const [loaded, setLoaded] = useState(false);
-  const contentRef = useRef(null);
   const saveTimeout = useRef(null);
 
 useEffect(() => {
@@ -39,31 +39,11 @@ useEffect(() => {
     setScriptHtml(null);
     setLoaded(false);
     window.electronAPI.sendUpdatedScript('');
-    // ✅ Fallback clear
-    if (contentRef.current) {
-      contentRef.current.innerHTML = '';
-    }
   }
   return () => {
     cancelled = true;
   };
 }, [projectName, scriptName]);
-
-  useEffect(() => {
-    if (contentRef.current) {
-      if (scriptHtml !== null && contentRef.current.innerHTML !== scriptHtml) {
-        contentRef.current.innerHTML = scriptHtml;
-      } else if (scriptHtml === null) {
-        contentRef.current.innerHTML = '';
-      }
-    }
-  }, [scriptHtml]);
-
-  useEffect(() => {
-    if (loaded && contentRef.current) {
-      contentRef.current.focus();
-    }
-  }, [loaded]);
 
   const handleEdit = (html) => {
     setScriptHtml(html);
@@ -81,17 +61,6 @@ useEffect(() => {
     }
   };
 
-  const handleBlur = () => {
-    if (contentRef.current) {
-      handleEdit(contentRef.current.innerHTML);
-    }
-  };
-
-  const handleInput = () => {
-    if (contentRef.current) {
-      handleEdit(contentRef.current.innerHTML);
-    }
-  };
 
   const handleSend = useCallback(() => {
     window.electronAPI.openPrompter(scriptHtml || '');
@@ -168,16 +137,7 @@ useEffect(() => {
       )}
       <div className="script-viewer-content">
         {showContent && (
-          <>
-            <div
-              ref={contentRef}
-              className="script-content"
-              contentEditable={true}
-              suppressContentEditableWarning={true}
-              onBlur={handleBlur}
-              onInput={handleInput}
-            />
-          </>
+          <TipTapEditor initialHtml={scriptHtml || ''} onUpdate={handleEdit} />
         )}
       </div>
     </div>
