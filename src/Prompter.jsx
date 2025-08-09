@@ -315,8 +315,6 @@ function Prompter() {
           lineHeight,
           textAlign,
           transform: `scale(${mirrorX ? -1 : 1}, ${mirrorY ? -1 : 1})`,
-          background: '#000',
-          color: '#e0e0e0',
           textShadow:
             transparentMode && shadowStrength > 0
               ? `0 0 ${shadowStrength}px rgba(0,0,0,0.8)`

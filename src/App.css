@@ -1,15 +1,11 @@
 /* App.css */
 
-:root {
-  --accent-color: #ffd166;
-}
-
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Metropolis-Bold', sans-serif;
-  background-color: #1e1e1e;
-  color: #e0e0e0;
+  font-family: var(--font-sans);
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 .main-layout {
@@ -21,10 +17,10 @@ body {
 }
 
 .left-panel {
-  flex: 0 0 clamp(300px, 25%, 320px);
-  background-color: #111;
-  border-right: 1px solid #333;
-  padding: calc(var(--space-4) + var(--space-1));
+  flex: 0 0 260px;
+  background-color: var(--panel-bg);
+  border-right: 1px solid var(--border-color);
+  padding: var(--space-lg);
   overflow-y: auto;
   overflow-x: visible;
 }
@@ -37,25 +33,28 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 2vw;
+  padding: var(--space-lg);
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
+  background-color: var(--bg-color);
 }
 
 .import-button {
-  padding: var(--space-3) calc(var(--space-2) * 3);
+  padding: var(--space-md) calc(var(--space-md) * 1.5);
   font-size: 16px;
   background-color: var(--accent-color);
-  color: #e0e0e0;
-  border: none;
+  color: var(--bg-color);
+  border: 1px solid var(--accent-color);
   border-radius: 6px;
   cursor: pointer;
-  margin-bottom: calc(var(--space-4) + var(--space-1));
+  margin-bottom: var(--space-lg);
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .import-button:hover {
-  background-color: var(--accent-color);
+  filter: brightness(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
 }
 
 /* FileManager styles */
@@ -68,9 +67,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-  padding: 0.5rem;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  padding: var(--space-sm);
 }
 
 .file-manager-header .header-title {
@@ -94,12 +93,7 @@ body {
 }
 
 .file-manager-header button {
-  padding: var(--space-2) var(--space-4);
-  background-color: #333;
-  color: #e0e0e0;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  padding: var(--space-xs) var(--space-md);
   white-space: nowrap;
   min-width: max-content;
   overflow: hidden;
@@ -107,49 +101,40 @@ body {
 
 
 .sort-select {
-  background: none;
-  border: none;
-  color: #e0e0e0;
-  padding: 2px;
-  border-radius: 4px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: var(--space-xs);
+  border-radius: 6px;
   cursor: pointer;
 }
 
 .sort-select option {
-  background-color: #333;
-  color: #e0e0e0;
+  background-color: var(--panel-bg);
+  color: var(--text-color);
 }
 
-.file-manager-header button:hover {
-  background-color: var(--accent-color);
-}
+
+
 
 .new-project-input {
-  margin: 0.5rem 0;
+  margin: var(--space-sm) 0;
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
+
 
 .new-project-input input {
   flex: 1;
-  padding: 0.25rem;
-  background-color: #222;
-  border: 1px solid #444;
-  color: #e0e0e0;
-  border-radius: 4px;
+  padding: var(--space-xs);
+  background-color: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  border-radius: 6px;
 }
 
 .new-project-input button {
-  padding: 0.25rem 0.5rem;
-  background-color: #444;
-  border: none;
-  color: #e0e0e0;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.new-project-input button:hover {
-  background-color: #666;
+  padding: var(--space-xs) var(--space-sm);
 }
 
 /* Project and script list */
@@ -178,7 +163,7 @@ body {
 .toggle-button {
   background: none;
   border: none;
-  color: #e0e0e0;
+  color: var(--text-color);
   padding: 2px 4px;
   cursor: pointer;
 }
@@ -186,24 +171,20 @@ body {
 .project-header h4 {
   margin: 0;
   font-size: 16px;
-  color: #ccc;
+  color: var(--muted-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .project-header button:not(.toggle-button) {
-  background: #333;
-  border: none;
-  color: #e0e0e0;
   padding: 2px 6px;
   font-size: 14px;
   border-radius: 4px;
-  cursor: pointer;
 }
 
 .project-header button:not(.toggle-button):hover {
-  background: #555;
+  background: var(--bg-color);
 }
 
 .project-actions {
@@ -244,7 +225,7 @@ body {
   background: none;
   border: 1px solid transparent;
   border-radius: 9999px;
-  color: #e0e0e0;
+  color: var(--text-color);
   text-align: left;
   padding: var(--space-1) var(--space-3);
   cursor: pointer;
@@ -263,8 +244,8 @@ body {
   position: absolute;
   top: 100%;
   left: 0;
-  background: #333;
-  color: #e0e0e0;
+  background: var(--panel-bg);
+  color: var(--text-color);
   padding: 2px 6px;
   font-size: 12px;
   white-space: nowrap;
@@ -280,7 +261,7 @@ body {
 
 .script-item.prompting .script-button {
   background-color: var(--accent-color);
-  color: #1e1e1e;
+  color: var(--bg-color);
 }
   
 
@@ -290,7 +271,7 @@ body {
 
 .script-item.loaded.prompting .script-button {
   background-color: var(--accent-color);
-  color: #1e1e1e;
+  color: var(--bg-color);
   border-color: var(--accent-color);
 }
 
@@ -317,7 +298,7 @@ body {
 .icon-button {
   background: none;
   border: none;
-  color: #e0e0e0;
+  color: var(--text-color);
   padding: 2px;
   cursor: pointer;
 }
@@ -335,14 +316,14 @@ body {
 .menu-toggle {
   background: none;
   border: none;
-  color: #e0e0e0;
+  color: var(--text-color);
   font-size: 18px;
   padding: 2px 6px;
   cursor: pointer;
 }
 
 .menu-toggle:hover {
-  background: #555;
+  background: var(--bg-color);
 }
 
 .menu {
@@ -350,8 +331,8 @@ body {
   right: 0;
   top: 100%;
   margin-top: var(--space-1);
-  background: #222;
-  border: 1px solid #444;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   list-style: none;
   padding: var(--space-1) 0;
@@ -362,7 +343,7 @@ body {
 .menu li button {
   background: none;
   border: none;
-  color: #e0e0e0;
+  color: var(--text-color);
   width: 100%;
   text-align: left;
   padding: 6px 12px;
@@ -370,7 +351,7 @@ body {
 }
 
 .menu li button:hover {
-  background: #333;
+  background: var(--bg-color);
 }
 
 .main-logo {
@@ -387,31 +368,27 @@ body {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  padding: 1vw 2vw;
-  background-color: #1e1e1e;
+  padding: var(--space-sm) var(--space-lg);
+  background-color: var(--bg-color);
   width: 100%;
   gap: var(--space-2);
 }
 
 .send-button {
-  padding: var(--space-3) calc(var(--space-2) * 3);
+  padding: var(--space-md) calc(var(--space-md) * 1.5);
   font-size: 16px;
-  background-color: #444;
-  color: #e0e0e0;
-  border: none;
-  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .send-button:hover {
   background-color: var(--accent-color);
-  color: #1e1e1e;
+  color: var(--bg-color);
 }
 
 .send-button:disabled {
-  background-color: #666;
-  color: #999;
+  background-color: var(--border-color);
+  color: var(--muted-text);
   cursor: not-allowed;
 }
 
@@ -425,6 +402,6 @@ body {
   pointer-events: none;
   z-index: 5;
   font-size: clamp(1rem, 2.5vw, 1.5rem);
-  color: #aaa;
+  color: var(--muted-text);
 }
 

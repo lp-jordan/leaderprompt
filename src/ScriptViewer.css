@@ -6,8 +6,8 @@
   width: 100%;
   position: relative;
   align-items: center;
-  background-color: #1e1e1e;
-  color: #e0e0e0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
 }
 
 .viewer-header {
@@ -36,8 +36,8 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 2vw;
-  background-color: #1e1e1e;
+  padding: var(--space-lg);
+  background-color: var(--bg-color);
   line-height: 1.6;
   font-size: 1rem;
   width: 100%;
@@ -51,7 +51,7 @@
 .close-button {
   background: none;
   border: none;
-  color: #aaa;
+  color: var(--muted-text);
   cursor: pointer;
   padding: 0 0.25rem;
   font-size: 1rem;
@@ -84,19 +84,16 @@
 }
 
 .send-button {
-  padding: var(--space-3) calc(var(--space-2) * 3);
+  padding: var(--space-md) calc(var(--space-md) * 1.5);
   font-size: 1rem;
-  background-color: #444;
-  color: #e0e0e0;
-  border: none;
   border-radius: 0.375rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .send-button:hover {
   background-color: var(--accent-color);
-  color: #1e1e1e;
+  color: var(--bg-color);
 }
 
 .script-content {
@@ -106,8 +103,8 @@
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
   padding: 0;
-  background-color: #1e1e1e;
-  font-family: sans-serif;
+  background-color: var(--bg-color);
+  font-family: var(--font-mono);
   width: 100%;
   white-space: pre-wrap;
   overflow-wrap: break-word;

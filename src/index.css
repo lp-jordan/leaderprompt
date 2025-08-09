@@ -1,27 +1,29 @@
-@font-face {
-  font-family: 'Metropolis-Bold';
-  src: url('../fonts/Metropolis-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 :root {
-  font-family: 'Metropolis-Bold', sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: #e0e0e0;
-  background-color: #1e1e1e;
-  --accent-color: #ffd166;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
+  --font-sans: 'Inter', 'Source Sans Pro', sans-serif;
+  --font-mono: 'Source Code Pro', monospace;
+
+  --bg-color: #f9f9fb;
+  --panel-bg: #ffffff;
+  --text-color: #1a1a1d;
+  --muted-text: #6e6e73;
+  --accent-color: #2563eb;
+  --border-color: #e4e4e7;
+
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -31,9 +33,9 @@
 
 a {
   font-weight: 500;
-  color: #e0e0e0;
+  color: var(--text-color);
   text-decoration: inherit;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
 }
 a:hover {
   color: var(--accent-color);
@@ -45,6 +47,9 @@ body {
   place-items: center;
   width: 100vw;
   height: 100vh;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-sans);
 }
 
 #root {
@@ -57,42 +62,83 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  font-weight: 700;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 1rem;
   font-weight: 500;
   font-family: inherit;
-  background-color: #1a1a1a;
+  background-color: var(--panel-bg);
+  color: var(--text-color);
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: background-color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 button:hover {
+  background-color: var(--bg-color);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+button:active,
+button.selected {
+  background-color: var(--accent-color);
   border-color: var(--accent-color);
+  color: var(--bg-color);
+  transform: translateY(0);
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+input,
+select,
+textarea {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: var(--space-sm);
+  background-color: var(--panel-bg);
+  color: var(--text-color);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--accent-color);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+.muted {
+  color: var(--muted-text);
 }
 
 .dev-console-button {
   position: fixed;
   bottom: 10px;
   left: 10px;
-  background: #333;
-  border: none;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
   padding: 4px;
-  border-radius: 4px;
-  color: #e0e0e0;
+  border-radius: 6px;
+  color: var(--text-color);
   cursor: pointer;
   z-index: 1000;
+  transition: background-color 0.2s ease;
 }
 
 .dev-console-button:hover {
-  background: #555;
+  background: var(--bg-color);
 }
 
 .dev-console-button svg {
@@ -105,15 +151,13 @@ button:focus-visible {
   font-size: 1.5rem;
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: var(--accent-color);
-  }
-  button {
-    background-color: #f9f9f9;
+    --bg-color: #18181b;
+    --panel-bg: #202022;
+    --text-color: #f5f5f7;
+    --muted-text: #a1a1aa;
+    --accent-color: #3b82f6;
+    --border-color: #3f3f46;
   }
 }

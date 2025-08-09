@@ -6,9 +6,9 @@
 .prompter-container {
   height: 100vh;
   overflow-y: scroll;
-  background: #000000;
-  color: #e0e0e0;
-  font-family: sans-serif;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-mono);
   transform-origin: center;
 }
 
@@ -92,21 +92,15 @@
   transform: translateX(-50%);
   display: flex;
   gap: var(--space-2);
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--panel-bg);
   padding: var(--space-2) var(--space-3);
   border-radius: 6px;
   z-index: 999;
 }
 
-.notecard-controls button {
-  background: #333;
-  border: none;
-  color: #e0e0e0;
-  cursor: pointer;
-}
 
-.notecard-controls button:hover {
-  background: var(--accent-color);
+.notecard-controls button {
+  cursor: pointer;
 }
 
 .notecard-index {
@@ -124,11 +118,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  background: rgba(0, 0, 0, 0.8);
-  padding: var(--space-4);
+  background: var(--panel-bg);
+  padding: var(--space-lg);
   overflow-y: auto;
   z-index: 999;
-  color: #e0e0e0;
+  color: var(--text-color);
 }
 
 .main-settings.open {
@@ -145,18 +139,16 @@
   top: var(--space-3);
   left: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  color: #e0e0e0;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
   cursor: pointer;
   padding: var(--space-2);
   border-radius: 0 4px 4px 0;
 }
 
+
 .toggle-btn {
-  background: #333;
-  border: none;
-  color: #e0e0e0;
   cursor: pointer;
   padding: var(--space-2) var(--space-3);
   border-radius: 4px;
@@ -164,11 +156,11 @@
 
 .toggle-btn.active {
   background: var(--accent-color);
-  color: #000;
+  color: var(--bg-color);
 }
 
 .stop-button {
-  background-color: #bb4444;
+  background-color: #dc2626;
   color: #fff;
   border: none;
   cursor: pointer;
@@ -177,5 +169,5 @@
 }
 
 .stop-button:hover {
-  background-color: #dd5555;
+  background-color: #ef4444;
 }
