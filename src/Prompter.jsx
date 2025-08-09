@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import TipTapEditor from './TipTapEditor.jsx'
 import './Prompter.css'
 
 const MARGIN_MIN = 0
@@ -21,11 +22,17 @@ function Prompter() {
   const [textAlign, setTextAlign] = useState('left')
   const [notecardMode, setNotecardMode] = useState(false)
   const [transparentMode, setTransparentMode] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
   // all settings are now accessible from a single panel
   const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
   const containerRef = useRef(null)
+
+  const handleEdit = (html) => {
+    setContent(html)
+    window.electronAPI.sendUpdatedScript(html)
+  }
 
   const resetDefaults = () => {
     setAutoscroll(false)
@@ -238,6 +245,19 @@ function Prompter() {
         >
           Transparent
         </button>
+        <button
+          className={`toggle-btn ${editing ? 'active' : ''}`}
+          onClick={() => {
+            const next = !editing
+            setEditing(next)
+            if (next) {
+              setAutoscroll(false)
+              setNotecardMode(false)
+            }
+          }}
+        >
+          {editing ? 'Done Editing' : 'Edit Script'}
+        </button>
         <h4>Text Styling</h4>
         <label>
           Font Size ({fontSize}rem):
@@ -325,10 +345,17 @@ function Prompter() {
             transparentMode && strokeWidth > 0 ? `${strokeWidth}px black` : '0',
           overflowY: notecardMode ? 'hidden' : 'scroll',
         }}
-        dangerouslySetInnerHTML={{
-          __html: notecardMode ? slides[currentSlide] || '' : content,
-        }}
-      />
+      >
+        {editing ? (
+          <TipTapEditor initialHtml={content} onUpdate={handleEdit} />
+        ) : (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: notecardMode ? slides[currentSlide] || '' : content,
+            }}
+          />
+        )}
+      </div>
       {notecardMode && slides.length > 1 && (
         <div className="notecard-controls">
           <button
