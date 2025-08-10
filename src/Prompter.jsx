@@ -8,21 +8,41 @@ const DEFAULT_MARGIN = (MARGIN_MAX - MARGIN_MIN) * 0.4
 const SPEED_MIN = 0.25
 const SPEED_MAX = 10
 
+const DEFAULT_SETTINGS = {
+  autoscroll: false,
+  speed: 1,
+  margin: DEFAULT_MARGIN,
+  fontSize: 2,
+  mirrorX: false,
+  mirrorY: false,
+  shadowStrength: 8,
+  strokeWidth: 0,
+  lineHeight: 1.6,
+  textAlign: 'left',
+  notecardMode: false,
+  transparentMode: false,
+}
+
 function Prompter() {
   const [content, setContent] = useState('')
-  const [autoscroll, setAutoscroll] = useState(false)
-  const [speed, setSpeed] = useState(1)
-  const [margin, setMargin] = useState(DEFAULT_MARGIN)
-  const [fontSize, setFontSize] = useState(2)
-  const [mirrorX, setMirrorX] = useState(false)
-  const [mirrorY, setMirrorY] = useState(false)
-  const [shadowStrength, setShadowStrength] = useState(8)
-  const [strokeWidth, setStrokeWidth] = useState(0)
-  const [lineHeight, setLineHeight] = useState(1.6)
-  const [textAlign, setTextAlign] = useState('left')
-  const [notecardMode, setNotecardMode] = useState(false)
-  const [transparentMode, setTransparentMode] = useState(false)
-  const [editing, setEditing] = useState(false)
+  const [autoscroll, setAutoscroll] = useState(DEFAULT_SETTINGS.autoscroll)
+  const [speed, setSpeed] = useState(DEFAULT_SETTINGS.speed)
+  const [margin, setMargin] = useState(DEFAULT_SETTINGS.margin)
+  const [fontSize, setFontSize] = useState(DEFAULT_SETTINGS.fontSize)
+  const [mirrorX, setMirrorX] = useState(DEFAULT_SETTINGS.mirrorX)
+  const [mirrorY, setMirrorY] = useState(DEFAULT_SETTINGS.mirrorY)
+  const [shadowStrength, setShadowStrength] = useState(
+    DEFAULT_SETTINGS.shadowStrength,
+  )
+  const [strokeWidth, setStrokeWidth] = useState(DEFAULT_SETTINGS.strokeWidth)
+  const [lineHeight, setLineHeight] = useState(DEFAULT_SETTINGS.lineHeight)
+  const [textAlign, setTextAlign] = useState(DEFAULT_SETTINGS.textAlign)
+  const [notecardMode, setNotecardMode] = useState(
+    DEFAULT_SETTINGS.notecardMode,
+  )
+  const [transparentMode, setTransparentMode] = useState(
+    DEFAULT_SETTINGS.transparentMode,
+  )
   const [slides, setSlides] = useState([])
   const [currentSlide, setCurrentSlide] = useState(0)
   // all settings are now accessible from a single panel
@@ -35,19 +55,81 @@ function Prompter() {
   }
 
   const resetDefaults = () => {
-    setAutoscroll(false)
-    setSpeed(1)
-    setMargin(DEFAULT_MARGIN)
-    setFontSize(2)
-    setMirrorX(false)
-    setMirrorY(false)
-    setShadowStrength(8)
-    setStrokeWidth(0)
-    setLineHeight(1.6)
-    setTextAlign('center')
-    setNotecardMode(false)
-    setTransparentMode(false)
+    setAutoscroll(DEFAULT_SETTINGS.autoscroll)
+    setSpeed(DEFAULT_SETTINGS.speed)
+    setMargin(DEFAULT_SETTINGS.margin)
+    setFontSize(DEFAULT_SETTINGS.fontSize)
+    setMirrorX(DEFAULT_SETTINGS.mirrorX)
+    setMirrorY(DEFAULT_SETTINGS.mirrorY)
+    setShadowStrength(DEFAULT_SETTINGS.shadowStrength)
+    setStrokeWidth(DEFAULT_SETTINGS.strokeWidth)
+    setLineHeight(DEFAULT_SETTINGS.lineHeight)
+    setTextAlign(DEFAULT_SETTINGS.textAlign)
+    setNotecardMode(DEFAULT_SETTINGS.notecardMode)
+    setTransparentMode(DEFAULT_SETTINGS.transparentMode)
+    localStorage.removeItem('prompterSettings')
   }
+
+  useEffect(() => {
+    const saved = localStorage.getItem('prompterSettings')
+    if (!saved) return
+    try {
+      const settings = JSON.parse(saved)
+      if (settings.autoscroll !== undefined)
+        setAutoscroll(settings.autoscroll)
+      if (settings.speed !== undefined) setSpeed(settings.speed)
+      if (settings.margin !== undefined) setMargin(settings.margin)
+      if (settings.fontSize !== undefined) setFontSize(settings.fontSize)
+      if (settings.mirrorX !== undefined) setMirrorX(settings.mirrorX)
+      if (settings.mirrorY !== undefined) setMirrorY(settings.mirrorY)
+      if (settings.shadowStrength !== undefined)
+        setShadowStrength(settings.shadowStrength)
+      if (settings.strokeWidth !== undefined)
+        setStrokeWidth(settings.strokeWidth)
+      if (settings.lineHeight !== undefined)
+        setLineHeight(settings.lineHeight)
+      if (settings.textAlign !== undefined) setTextAlign(settings.textAlign)
+      if (settings.notecardMode !== undefined)
+        setNotecardMode(settings.notecardMode)
+      if (settings.transparentMode !== undefined)
+        setTransparentMode(settings.transparentMode)
+    } catch (err) {
+      console.error('Failed to parse prompter settings', err)
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(
+      'prompterSettings',
+      JSON.stringify({
+        autoscroll,
+        speed,
+        margin,
+        fontSize,
+        mirrorX,
+        mirrorY,
+        shadowStrength,
+        strokeWidth,
+        lineHeight,
+        textAlign,
+        notecardMode,
+        transparentMode,
+      }),
+    )
+  }, [
+    autoscroll,
+    speed,
+    margin,
+    fontSize,
+    mirrorX,
+    mirrorY,
+    shadowStrength,
+    strokeWidth,
+    lineHeight,
+    textAlign,
+    notecardMode,
+    transparentMode,
+  ])
 
   const startResize = async (e, edge) => {
     e.preventDefault()
