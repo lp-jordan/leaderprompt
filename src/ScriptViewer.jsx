@@ -61,6 +61,26 @@ useEffect(() => {
     }
   };
 
+  useEffect(() => {
+    const cleanup = window.electronAPI.onScriptUpdated((html) => {
+      if (html !== scriptHtml) {
+        setScriptHtml(html);
+        if (projectName && scriptName) {
+          if (saveTimeout.current) {
+            clearTimeout(saveTimeout.current);
+          }
+          saveTimeout.current = setTimeout(() => {
+            window.electronAPI.saveScript(projectName, scriptName, html);
+            saveTimeout.current = null;
+          }, 300);
+        }
+      }
+    });
+    return () => {
+      cleanup?.();
+    };
+  }, [scriptHtml, projectName, scriptName]);
+
 
   const handleSend = useCallback(() => {
     window.electronAPI.openPrompter(scriptHtml || '');
@@ -69,7 +89,7 @@ useEffect(() => {
 
   useEffect(() => {
     onSend?.(loaded && scriptHtml?.trim() ? () => handleSend() : null);
-  }, [onSend, handleSend, loaded]);
+  }, [onSend, handleSend, loaded, scriptHtml]);
 
   useEffect(() => {
     const cleanup = window.electronAPI.onPrompterClosed(() => {
@@ -95,7 +115,7 @@ useEffect(() => {
     onCloseViewer?.();
   }, [projectName, scriptName, scriptHtml, onPrompterClose, onCloseViewer]);
 
-  useEffect(() => () => handleClose(), []);
+  useEffect(() => () => handleClose(), [handleClose]);
 
   useEffect(() => {
     onLoadedChange?.(loaded);

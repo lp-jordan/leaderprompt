@@ -408,6 +408,9 @@ app.whenReady().then(async () => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.webContents.send('update-script', html);
     }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-script', html);
+    }
     log('Updated script content');
   });
 

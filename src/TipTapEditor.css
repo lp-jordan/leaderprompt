@@ -1,0 +1,29 @@
+.tiptap-editor {
+  position: relative;
+}
+
+.editor-context-menu {
+  position: absolute;
+  z-index: 1000;
+  background: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 140px;
+}
+
+.editor-context-menu button {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 4px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.editor-context-menu button:hover {
+  background: #555;
+}
