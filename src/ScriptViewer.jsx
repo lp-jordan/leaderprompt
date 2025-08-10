@@ -18,6 +18,7 @@ function ScriptViewer({
   const [scriptHtml, setScriptHtml] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const saveTimeout = useRef(null);
+  const scriptHtmlRef = useRef(null);
 
 useEffect(() => {
   let cancelled = false;
@@ -28,6 +29,7 @@ useEffect(() => {
       .then((html) => {
         if (!cancelled) {
           setScriptHtml(html);
+          scriptHtmlRef.current = html;
           setLoaded(true);
         }
       })
@@ -37,6 +39,7 @@ useEffect(() => {
       });
   } else {
     setScriptHtml(null);
+    scriptHtmlRef.current = null;
     setLoaded(false);
     window.electronAPI.sendUpdatedScript('');
   }
@@ -47,6 +50,7 @@ useEffect(() => {
 
   const handleEdit = (html) => {
     setScriptHtml(html);
+    scriptHtmlRef.current = html;
     if (projectName && scriptName) {
       if (saveTimeout.current) {
         clearTimeout(saveTimeout.current);
@@ -63,8 +67,9 @@ useEffect(() => {
 
   useEffect(() => {
     const cleanup = window.electronAPI.onScriptUpdated((html) => {
-      if (html !== scriptHtml) {
+      if (html !== scriptHtmlRef.current) {
         setScriptHtml(html);
+        scriptHtmlRef.current = html;
         if (projectName && scriptName) {
           if (saveTimeout.current) {
             clearTimeout(saveTimeout.current);
@@ -79,7 +84,7 @@ useEffect(() => {
     return () => {
       cleanup?.();
     };
-  }, [scriptHtml, projectName, scriptName]);
+  }, [projectName, scriptName]);
 
 
   const handleSend = useCallback(() => {
@@ -105,17 +110,20 @@ useEffect(() => {
       clearTimeout(saveTimeout.current);
       saveTimeout.current = null;
     }
-    if (projectName && scriptName && scriptHtml) {
-      window.electronAPI.saveScript(projectName, scriptName, scriptHtml);
+    if (projectName && scriptName && scriptHtmlRef.current) {
+      window.electronAPI.saveScript(projectName, scriptName, scriptHtmlRef.current);
     }
     setScriptHtml(null);
+    scriptHtmlRef.current = null;
     setLoaded(false);
     onPrompterClose?.();
     window.electronAPI.sendUpdatedScript('');
     onCloseViewer?.();
-  }, [projectName, scriptName, scriptHtml, onPrompterClose, onCloseViewer]);
+  }, [projectName, scriptName, onPrompterClose, onCloseViewer]);
 
-  useEffect(() => () => handleClose(), [handleClose]);
+  // Run cleanup only on unmount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => handleClose(), []);
 
   useEffect(() => {
     onLoadedChange?.(loaded);
