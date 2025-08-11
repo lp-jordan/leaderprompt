@@ -50,7 +50,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteScript: (projectName, scriptName) =>
     ipcRenderer.invoke('delete-script', projectName, scriptName),
 
-  rewriteSelection: (text) => ipcRenderer.invoke('rewrite-selection', text),
+  rewriteSelection: (text, signal) =>
+    ipcRenderer.invoke('rewrite-selection', text, { signal }),
 
   onLogMessage: (callback) => {
     const handler = (_, msg) => callback(msg)

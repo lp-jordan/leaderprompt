@@ -940,6 +940,49 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     }
   });
 
+  ipcMain.handle('rewrite-selection', async (event, text) => {
+    try {
+      if (!text) return [];
+      const apiKey = OPENAI_API_KEY;
+      if (!apiKey) {
+        log('OpenAI API key not set');
+        return [];
+      }
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'Provide three alternative rewrites of the user text. Return each option as a short sentence.',
+            },
+            { role: 'user', content: text },
+          ],
+          n: 3,
+        }),
+        signal: event.signal,
+      });
+      const data = await res.json();
+      if (!data.choices) return [];
+      return data.choices
+        .map((c) => c.message?.content?.trim())
+        .filter(Boolean);
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        log('Rewrite selection aborted');
+        return [];
+      }
+      error('Rewrite selection failed:', err);
+      return [];
+    }
+  });
+
   ipcMain.handle('check-for-updates', () => {
     if (!ENABLE_AUTO_UPDATES) {
       log('Auto updates disabled');
