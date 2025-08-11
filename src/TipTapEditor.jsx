@@ -25,6 +25,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [_menuHistory, setMenuHistory] = useState(['root'])
   const colorInputRef = useRef(null)
   const selectionRef = useRef(null)
+  const [isColorPickerOpen, setColorPickerOpen] = useState(false)
 
   const openMenu = (pos) => {
     setMenuPos(pos)
@@ -88,6 +89,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
 
   useEffect(() => {
     const hide = (e) => {
+      if (isColorPickerOpen) return
       if (!e.target.closest('.context-menu-root')) {
         setMenuPos(null)
         setActiveMenu('root')
@@ -96,7 +98,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     }
     window.addEventListener('mousedown', hide)
     return () => window.removeEventListener('mousedown', hide)
-  }, [])
+  }, [isColorPickerOpen])
 
   useEffect(() => {
     if (editor && initialHtml !== editor.getHTML()) {
@@ -160,6 +162,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                     el.focus()
                     if (typeof el.showPicker === 'function') el.showPicker()
                     else el.click()
+                    setColorPickerOpen(true)
                   }}
                 >
                   🎨
@@ -169,7 +172,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                   type="color"
                   // minimal change: keep it in DOM & focusable (not fully offscreen)
                   style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     apply(
                       () => {
                         const { from, to } =
@@ -184,7 +187,9 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                       },
                       false,
                     )
-                  }
+                    setColorPickerOpen(false)
+                  }}
+                  onBlur={() => setColorPickerOpen(false)}
                 />
               </div>
               <button onClick={() => navigateTo('size')}>Size</button>
