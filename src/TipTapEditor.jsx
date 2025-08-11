@@ -109,6 +109,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   }, [activeMenu, editor, selectedText])
 
   useEffect(() => {
+    if (!window.electronAPI?.rewriteSelection) return
     if (activeMenu !== 'ai' || !selectedText.trim()) return
     const controller = new AbortController()
     window.electronAPI
