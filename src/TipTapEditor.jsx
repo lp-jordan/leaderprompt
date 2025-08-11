@@ -127,8 +127,14 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                   <input
                     type="color"
                     onChange={(e) =>
-                      apply(() =>
-                        document.execCommand('foreColor', false, e.target.value)
+                      apply(
+                        () =>
+                          document.execCommand(
+                            'foreColor',
+                            false,
+                            e.target.value
+                          ),
+                        false
                       )
                     }
                   />
