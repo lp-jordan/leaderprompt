@@ -4,6 +4,11 @@ import StarterKit from '@tiptap/starter-kit'
 import { TextStyle, Color } from '@tiptap/extension-text-style'
 import './TipTapEditor.css'
 
+const DEBUG_COLOR_PICKER = true
+const colorDebug = (...args) => {
+  if (DEBUG_COLOR_PICKER) console.log('[color]', ...args)
+}
+
 const AI_SUGGESTIONS = [
   'Lorem ipsum dolor sit amet',
   'Consectetur adipiscing elit',
@@ -89,9 +94,12 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   useEffect(() => {
     const hide = (e) => {
       if (!e.target.closest('.context-menu-root')) {
+        colorDebug('hide: click outside menu', e.target)
         setMenuPos(null)
         setActiveMenu('root')
         setMenuHistory(['root'])
+      } else {
+        colorDebug('hide: click inside menu, ignoring')
       }
     }
     window.addEventListener('mousedown', hide)
@@ -151,15 +159,32 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                 <button
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
+                    colorDebug('color button clicked')
                     const sel = editor.state.selection
                     selectionRef.current = { from: sel.from, to: sel.to }
                     const input = colorInputRef.current
-                    if (input) {
-                      if (input.showPicker) {
+                    if (!input) {
+                      colorDebug('color input ref missing')
+                      return
+                    }
+                    colorDebug('color input ref found')
+                    const supportsShowPicker = typeof input.showPicker === 'function'
+                    colorDebug('supports showPicker', supportsShowPicker)
+                    const styles = window.getComputedStyle(input)
+                    colorDebug('input styles', {
+                      display: styles.display,
+                      pointerEvents: styles.pointerEvents,
+                    })
+                    try {
+                      if (supportsShowPicker) {
                         input.showPicker()
+                        colorDebug('showPicker invoked')
                       } else {
+                        colorDebug('falling back to click()')
                         input.click()
                       }
+                    } catch (err) {
+                      colorDebug('failed to open color picker', err)
                     }
                   }}
                 >
@@ -172,6 +197,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                   onChange={(e) =>
                     apply(
                       () => {
+                        colorDebug('color input changed', e.target.value)
                         const { from, to } =
                           selectionRef.current || editor.state.selection
                         editor
