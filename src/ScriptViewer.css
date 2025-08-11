@@ -37,6 +37,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 2vw;
+  border-radius: 6px;
   background-color: #1e1e1e;
   line-height: 1.6;
   font-size: 1rem;
@@ -109,6 +110,7 @@
   background-color: #1e1e1e;
   font-family: sans-serif;
   width: 100%;
+  border-radius: 6px;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: break-word;
