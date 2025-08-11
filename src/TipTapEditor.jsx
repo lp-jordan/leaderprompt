@@ -4,7 +4,8 @@ import StarterKit from '@tiptap/starter-kit'
 import { TextStyle, Color } from '@tiptap/extension-text-style'
 import './TipTapEditor.css'
 
-const DEBUG_COLOR_PICKER = true
+const DEBUG_COLOR_PICKER =
+  window.localStorage.getItem('DEBUG_COLOR_PICKER') !== 'false'
 const colorDebug = (...args) => {
   if (DEBUG_COLOR_PICKER) console.log('[color]', ...args)
 }
@@ -30,6 +31,10 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [_menuHistory, setMenuHistory] = useState(['root'])
   const colorInputRef = useRef(null)
   const selectionRef = useRef(null)
+
+  useEffect(() => {
+    colorDebug('debug logging active')
+  }, [])
 
   const openMenu = (pos) => {
     setMenuPos(pos)
