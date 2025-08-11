@@ -187,7 +187,6 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                       },
                       false,
                     )
-                    setColorPickerOpen(false)
                   }}
                   onBlur={() => setColorPickerOpen(false)}
                 />
