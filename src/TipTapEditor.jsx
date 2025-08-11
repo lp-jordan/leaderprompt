@@ -3,6 +3,12 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import './TipTapEditor.css'
 
+const AI_SUGGESTIONS = [
+  'Lorem ipsum dolor sit amet',
+  'Consectetur adipiscing elit',
+  'Sed do eiusmod tempor incididunt',
+]
+
 function TipTapEditor({ initialHtml = '', onUpdate }) {
   const editor = useEditor({
     extensions: [StarterKit],
@@ -13,16 +19,38 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   })
 
   const [menuPos, setMenuPos] = useState(null)
+  const [activeMenu, setActiveMenu] = useState('root')
+  const [showColor, setShowColor] = useState(false)
+
+  const openMenu = (pos) => {
+    setMenuPos(pos)
+    setActiveMenu('root')
+    setShowColor(false)
+  }
 
   const apply = (action) => {
-    action()
+    action?.()
     setMenuPos(null)
+    setActiveMenu('root')
   }
 
   const handleContextMenu = (e) => {
     e.preventDefault()
-    setMenuPos({ x: e.clientX, y: e.clientY })
+    openMenu({ x: e.clientX, y: e.clientY })
   }
+
+  useEffect(() => {
+    if (!editor) return
+    const selectionHandler = () => {
+      const sel = editor.state.selection
+      if (!sel.empty) {
+        const start = editor.view.coordsAtPos(sel.from)
+        openMenu({ x: start.left, y: start.top - 40 })
+      }
+    }
+    editor.on('selectionUpdate', selectionHandler)
+    return () => editor.off('selectionUpdate', selectionHandler)
+  }, [editor])
 
   useEffect(() => {
     const hide = () => setMenuPos(null)
@@ -36,53 +64,102 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     }
   }, [initialHtml, editor])
 
+  const replaceSelection = (text) => {
+    editor
+      ?.chain()
+      .focus()
+      .insertContent(text)
+      .run()
+    setMenuPos(null)
+  }
+
   return (
     <div className="tiptap-editor" onContextMenu={handleContextMenu}>
       <EditorContent editor={editor} />
       {menuPos && editor && (
         <div
-          className="editor-context-menu"
+          className="context-menu-root"
           style={{ top: menuPos.y, left: menuPos.x }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <button
-            onClick={() =>
-              apply(() => editor.chain().focus().toggleBold().run())
-            }
-          >
-            Bold
-          </button>
-          <button
-            onClick={() =>
-              apply(() => editor.chain().focus().toggleItalic().run())
-            }
-          >
-            Italic
-          </button>
-          <button
-            onClick={() =>
-              apply(() => editor.chain().focus().setParagraph().run())
-            }
-          >
-            Normal
-          </button>
-          <button
-            onClick={() =>
-              apply(() =>
-                editor.chain().focus().toggleHeading({ level: 1 }).run()
-              )
-            }
-          >
-            Heading 1
-          </button>
-          <button
-            onClick={() =>
-              apply(() =>
-                editor.chain().focus().toggleHeading({ level: 2 }).run()
-              )
-            }
-          >
-            Heading 2
-          </button>
+          {activeMenu === 'root' && (
+            <div className="context-menu fade-in">
+              <button onClick={() => setActiveMenu('format')}>A</button>
+              <button onClick={() => setActiveMenu('ai')}>✨</button>
+            </div>
+          )}
+          {activeMenu === 'format' && (
+            <div className="context-menu format fade-in">
+              <button
+                onClick={() =>
+                  apply(() => editor.chain().focus().toggleBold().run())
+                }
+              >
+                B
+              </button>
+              <button
+                onClick={() =>
+                  apply(() => editor.chain().focus().toggleItalic().run())
+                }
+              >
+                I
+              </button>
+              <div className="color-wrapper">
+                <button onClick={() => setShowColor((v) => !v)}>🎨</button>
+                {showColor && (
+                  <input
+                    type="color"
+                    onChange={(e) =>
+                      apply(() =>
+                        document.execCommand('foreColor', false, e.target.value)
+                      )
+                    }
+                  />
+                )}
+              </div>
+              <button onClick={() => setActiveMenu('size')}>Size</button>
+            </div>
+          )}
+          {activeMenu === 'size' && (
+            <div className="context-menu format fade-in">
+              <button
+                onClick={() =>
+                  apply(() => editor.chain().focus().setParagraph().run())
+                }
+              >
+                Normal
+              </button>
+              {[1, 2, 3, 4].map((lvl) => (
+                <button
+                  key={lvl}
+                  onClick={() =>
+                    apply(() =>
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHeading({ level: lvl })
+                        .run()
+                    )
+                  }
+                >
+                  {`H${lvl}`}
+                </button>
+              ))}
+            </div>
+          )}
+          {activeMenu === 'ai' && (
+            <div className="ai-rescript-panel fade-in">
+              {AI_SUGGESTIONS.map((s, i) => (
+                <div
+                  key={i}
+                  className="ai-line"
+                  onClick={() => replaceSelection(s)}
+                >
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

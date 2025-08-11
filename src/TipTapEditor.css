@@ -1,3 +1,4 @@
+/* Editor container */
 .tiptap-editor,
 .tiptap-editor .ProseMirror {
   width: 100%;
@@ -9,28 +10,85 @@
   position: relative;
 }
 
-.editor-context-menu {
+/* Context menu base */
+.context-menu-root {
   position: absolute;
   z-index: 1000;
+}
+
+.context-menu {
   background: #333;
   color: #e0e0e0;
   border: 1px solid #555;
   border-radius: 4px;
-  padding: 4px 0;
-  min-width: 140px;
+  padding: 4px;
+  display: flex;
+  gap: 4px;
 }
 
-.editor-context-menu button {
-  display: block;
-  width: 100%;
+.context-menu.format {
+  flex-direction: column;
+  min-width: 120px;
+}
+
+.context-menu button {
   background: transparent;
   border: none;
   color: inherit;
-  padding: 4px 12px;
-  text-align: left;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.context-menu button:hover {
+  background: #555;
+}
+
+.color-wrapper {
+  position: relative;
+}
+
+.color-wrapper input[type='color'] {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  border: none;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.ai-rescript-panel {
+  background: #333;
+  color: #e0e0e0;
+  border: 1px solid #555;
+  border-radius: 4px;
+  width: 220px;
+}
+
+.ai-line {
+  padding: 6px 8px;
   cursor: pointer;
 }
 
-.editor-context-menu button:hover {
+.ai-line + .ai-line {
+  border-top: 1px solid #555;
+}
+
+.ai-line:hover {
   background: #555;
+}
+
+.fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
