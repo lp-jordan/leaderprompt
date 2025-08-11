@@ -454,6 +454,46 @@ app.whenReady().then(async () => {
     log(`Prompter bounds set: ${JSON.stringify(bounds)}`);
   });
 
+  ipcMain.handle('rewrite-selection', async (_, text) => {
+    try {
+      if (!text) return [];
+      const truncated = text.slice(0, 1000);
+      log(`Rewrite selection request length: ${text.length}`);
+      const apiKey = OPENAI_API_KEY;
+      if (!apiKey) {
+        log('OpenAI API key not set');
+        return [];
+      }
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'Provide three alternative rewrites of the user text. Return each option as a short sentence.',
+            },
+            { role: 'user', content: truncated },
+          ],
+          n: 3,
+        }),
+      });
+      const data = await res.json();
+      if (!data.choices) return [];
+      return data.choices
+        .map((c) => c.message?.content?.trim())
+        .filter(Boolean);
+    } catch (err) {
+      error('Rewrite selection failed:', err);
+      return [];
+    }
+  });
+
   ipcMain.handle('get-all-projects-with-scripts', async () => {
     log('Fetching all projects with scripts');
     try {
