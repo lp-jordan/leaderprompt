@@ -9,7 +9,7 @@ const { spawn } = require('child_process');
 
 // Hard-coded OpenAI API key used by the rewrite feature. Replace the placeholder
 // string with a real key for production deployments.
-const OPENAI_API_KEY = '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';
+const OPENAI_API_KEY = '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';
 
 // Toggle automatic update behavior with an environment variable. All update
 // logic remains in place so it can be re-enabled easily.
