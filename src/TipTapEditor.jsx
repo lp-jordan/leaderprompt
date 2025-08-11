@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import TextStyle from '@tiptap/extension-text-style'
+import Color from '@tiptap/extension-color'
 import './TipTapEditor.css'
 
 const AI_SUGGESTIONS = [
@@ -12,7 +14,7 @@ const AI_SUGGESTIONS = [
 function TipTapEditor({ initialHtml = '', onUpdate }) {
   const containerRef = useRef(null)
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, TextStyle, Color],
     content: initialHtml,
     onUpdate: ({ editor }) => {
       onUpdate?.(editor.getHTML())
@@ -129,11 +131,11 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                     onChange={(e) =>
                       apply(
                         () =>
-                          document.execCommand(
-                            'foreColor',
-                            false,
-                            e.target.value
-                          ),
+                          editor
+                            .chain()
+                            .focus()
+                            .setColor(e.target.value)
+                            .run(),
                         false
                       )
                     }
