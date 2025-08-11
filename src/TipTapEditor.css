@@ -49,6 +49,11 @@
   background: #555;
 }
 
+.context-menu button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 .color-wrapper { position: relative; }
 
 .color-wrapper input[type='color'] {
@@ -111,6 +116,17 @@
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
+}
+
+.network-warning {
+  margin-top: 4px;
+  background: #a00;
+  color: #fff;
+  border: 1px solid #f55;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.85em;
+  text-align: center;
 }
 
 .fade-in {
