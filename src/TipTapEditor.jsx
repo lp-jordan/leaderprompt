@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { TextStyle, Color } from '@tiptap/extension-text-style'
-import Color from '@tiptap/extension-color'
 import './TipTapEditor.css'
 
 const AI_SUGGESTIONS = [
