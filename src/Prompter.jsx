@@ -47,7 +47,6 @@ function Prompter() {
   const [currentSlide, setCurrentSlide] = useState(0)
   // all settings are now accessible from a single panel
   const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
-  const [editing, setEditing] = useState(false)
   const containerRef = useRef(null)
 
   const handleEdit = (html) => {
@@ -326,19 +325,6 @@ function Prompter() {
         >
           Transparent
         </button>
-        <button
-          className={`toggle-btn ${editing ? 'active' : ''}`}
-          onClick={() => {
-            const next = !editing
-            setEditing(next)
-            if (next) {
-              setAutoscroll(false)
-              setNotecardMode(false)
-            }
-          }}
-        >
-          {editing ? 'Done Editing' : 'Edit Script'}
-        </button>
         <h4>Text Styling</h4>
         <label>
           Font Size ({fontSize}rem):
@@ -427,15 +413,15 @@ function Prompter() {
           overflowY: notecardMode ? 'hidden' : 'scroll',
         }}
       >
-        {editing ? (
+        <div
+          className="script-output"
+          dangerouslySetInnerHTML={{
+            __html: notecardMode ? slides[currentSlide] || '' : content,
+          }}
+        />
+        <div className="editor-overlay">
           <TipTapEditor initialHtml={content} onUpdate={handleEdit} />
-        ) : (
-          <div
-            dangerouslySetInnerHTML={{
-              __html: notecardMode ? slides[currentSlide] || '' : content,
-            }}
-          />
-        )}
+        </div>
       </div>
       {notecardMode && slides.length > 1 && (
         <div className="notecard-controls">
