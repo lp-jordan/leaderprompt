@@ -462,7 +462,7 @@ app.whenReady().then(async () => {
       const apiKey = OPENAI_API_KEY;
       if (!apiKey) {
         log('OpenAI API key not set');
-        return [];
+        return { error: 'Missing OpenAI API key' };
       }
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -483,14 +483,18 @@ app.whenReady().then(async () => {
           n: 3,
         }),
       });
+      if (!res.ok) {
+        error('Rewrite selection request failed:', res.statusText);
+        return { error: 'Request failed' };
+      }
       const data = await res.json();
-      if (!data.choices) return [];
+      if (!data.choices) return { error: 'No suggestions' };
       return data.choices
         .map((c) => c.message?.content?.trim())
         .filter(Boolean);
     } catch (err) {
       error('Rewrite selection failed:', err);
-      return [];
+      return { error: 'Request failed' };
     }
   });
 
@@ -946,7 +950,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
       const apiKey = OPENAI_API_KEY;
       if (!apiKey) {
         log('OpenAI API key not set');
-        return [];
+        return { error: 'Missing OpenAI API key' };
       }
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -968,8 +972,12 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
         }),
         signal: event.signal,
       });
+      if (!res.ok) {
+        error('Rewrite selection request failed:', res.statusText);
+        return { error: 'Request failed' };
+      }
       const data = await res.json();
-      if (!data.choices) return [];
+      if (!data.choices) return { error: 'No suggestions' };
       return data.choices
         .map((c) => c.message?.content?.trim())
         .filter(Boolean);
@@ -979,7 +987,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
         return [];
       }
       error('Rewrite selection failed:', err);
-      return [];
+      return { error: 'Request failed' };
     }
   });
 

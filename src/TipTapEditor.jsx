@@ -131,7 +131,12 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     window.electronAPI
       .rewriteSelection(selectedText, ctrl.signal)
       .then((res) => {
-        setSuggestions(res)
+        if (!Array.isArray(res) || res.length === 0) {
+          setError(true)
+          setSuggestions(['No suggestions available'])
+        } else {
+          setSuggestions(res)
+        }
         clearInterval(loaderRef.current)
         loaderRef.current = null
       })
@@ -140,7 +145,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           setError(true)
           clearInterval(loaderRef.current)
           loaderRef.current = null
-          setSuggestions([])
+          setSuggestions(['No suggestions available'])
         }
       })
     return () => ctrl.abort()
@@ -313,7 +318,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                 <div
                   key={i}
                   className="ai-line"
-                  onClick={() => replaceSelection(result)}
+                  onClick={!error ? () => replaceSelection(result) : undefined}
                 >
                   {result}
                 </div>
