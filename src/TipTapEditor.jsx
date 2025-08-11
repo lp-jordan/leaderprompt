@@ -129,22 +129,26 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
               >
                 Normal
               </button>
-              {[1, 2, 3, 4].map((lvl) => (
-                <button
-                  key={lvl}
-                  onClick={() =>
-                    apply(() =>
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHeading({ level: lvl })
-                        .run()
-                    )
-                  }
-                >
-                  {`H${lvl}`}
-                </button>
-              ))}
+                {[
+                  { label: 'Big', level: 1 },
+                  { label: 'Medium', level: 2 },
+                  { label: 'Small', level: 3 },
+                ].map(({ label, level }) => (
+                  <button
+                    key={level}
+                    onClick={() =>
+                      apply(() =>
+                        editor
+                          .chain()
+                          .focus()
+                          .toggleHeading({ level })
+                          .run()
+                      )
+                    }
+                  >
+                    {label}
+                  </button>
+                ))}
             </div>
           )}
           {activeMenu === 'ai' && (
