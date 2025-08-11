@@ -391,7 +391,8 @@ body {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  padding: 1vw 2vw;
+  /* Add extra right padding so buttons don't overlap with the logo */
+  padding: 1vw 14vw 1vw 2vw;
   background-color: #1e1e1e;
   width: 100%;
   gap: var(--space-2);
