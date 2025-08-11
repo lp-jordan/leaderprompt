@@ -22,12 +22,12 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
 
   const [menuPos, setMenuPos] = useState(null)
   const [activeMenu, setActiveMenu] = useState('root')
-  const [showColor, setShowColor] = useState(false)
+  const colorInputRef = useRef(null)
+  const selectionRef = useRef(null)
 
   const openMenu = (pos) => {
     setMenuPos(pos)
     setActiveMenu('root')
-    setShowColor(false)
   }
 
   const apply = (action, close = true) => {
@@ -123,23 +123,36 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                 I
               </button>
               <div className="color-wrapper">
-                <button onClick={() => setShowColor((v) => !v)}>🎨</button>
-                {showColor && (
-                  <input
-                    type="color"
-                    onChange={(e) =>
-                      apply(
-                        () =>
-                          editor
-                            .chain()
-                            .focus()
-                            .setColor(e.target.value)
-                            .run(),
-                        false
-                      )
-                    }
-                  />
-                )}
+                <button
+                  onClick={() => {
+                    const sel = editor.state.selection
+                    selectionRef.current = { from: sel.from, to: sel.to }
+                    colorInputRef.current?.click()
+                  }}
+                >
+                  🎨
+                </button>
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  style={{ position: 'absolute', left: '-9999px' }}
+                  onChange={(e) =>
+                    apply(
+                      () => {
+                        const { from, to } =
+                          selectionRef.current || editor.state.selection
+                        editor
+                          .chain()
+                          .focus()
+                          .setTextSelection({ from, to })
+                          .setColor(e.target.value)
+                          .run()
+                        editor.commands.setTextSelection({ from, to })
+                      },
+                      false,
+                    )
+                  }
+                />
               </div>
               <button onClick={() => setActiveMenu('size')}>Size</button>
             </div>
