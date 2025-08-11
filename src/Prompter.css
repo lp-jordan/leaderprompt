@@ -191,6 +191,9 @@
 
 .editor-overlay .tiptap-editor .ProseMirror {
   outline: none;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .stop-button {
