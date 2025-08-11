@@ -104,8 +104,6 @@
   outline: none;
   flex-grow: 1;
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
   padding: 0;
   background-color: #1e1e1e;
   font-family: sans-serif;
@@ -116,9 +114,6 @@
   word-break: break-word;
 }
 
-.script-content::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
-}
 
 
 .link-button {
