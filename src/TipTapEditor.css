@@ -1,3 +1,10 @@
+.tiptap-editor,
+.tiptap-editor .ProseMirror {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .tiptap-editor {
   position: relative;
 }
