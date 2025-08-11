@@ -68,6 +68,21 @@
   border: 1px solid #555;
   border-radius: 4px;
   width: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-rescript-panel .back-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.ai-rescript-panel .back-btn:hover {
+  background: #555;
 }
 
 .ai-line {
