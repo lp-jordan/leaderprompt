@@ -87,6 +87,7 @@ const FileManager = forwardRef(function FileManager({
   const [dragInfo, setDragInfo] = useState(null);
   const [hoverIndex, setHoverIndex] = useState(null);
   const [hoverProject, setHoverProject] = useState(null);
+  const [rootDrag, setRootDrag] = useState(false);
 
 
   useEffect(() => {
@@ -291,8 +292,43 @@ const FileManager = forwardRef(function FileManager({
     setHoverProject(null);
   };
 
+  const handleRootDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleRootDragEnter = (e) => {
+    if (e.target === e.currentTarget && e.dataTransfer.files?.length) {
+      setRootDrag(true);
+    }
+  };
+
+  const handleRootDragLeave = (e) => {
+    if (e.target === e.currentTarget) setRootDrag(false);
+  };
+
+  const handleRootDrop = async (e) => {
+    e.preventDefault();
+    if (e.target !== e.currentTarget) return;
+    setRootDrag(false);
+    const paths = Array.from(e.dataTransfer.files || []).map((f) => f.path);
+    if (paths.length) {
+      await window.electronAPI.importFoldersAsProjects(paths);
+      await loadProjects();
+      toast.success('Projects imported');
+    }
+  };
+
   const handleDrop = async (e, projectName, index) => {
     e.preventDefault();
+    e.stopPropagation();
+    const external = e.dataTransfer.files && e.dataTransfer.files.length;
+    if (external && !dragInfo) {
+      const filePaths = Array.from(e.dataTransfer.files).map((f) => f.path);
+      await window.electronAPI.importScriptsToProject(filePaths, projectName);
+      await loadProjects();
+      toast.success('Scripts imported');
+      return;
+    }
     if (!dragInfo) return;
 
     if (dragInfo.projectName === projectName) {
@@ -365,7 +401,13 @@ const FileManager = forwardRef(function FileManager({
         </div>
       )}
 
-      <div className="file-manager-list">
+      <div
+        className={`file-manager-list${rootDrag ? ' drop-target' : ''}`}
+        onDragOver={handleRootDragOver}
+        onDragEnter={handleRootDragEnter}
+        onDragLeave={handleRootDragLeave}
+        onDrop={handleRootDrop}
+      >
         {projects.map((project) => (
           <div
             className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}

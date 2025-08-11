@@ -221,6 +221,10 @@ body {
   border-radius: 4px;
 }
 
+.file-manager-list.drop-target {
+  border: 2px dashed var(--accent-color);
+}
+
 .project-group.collapsed ul {
   display: none;
 }
