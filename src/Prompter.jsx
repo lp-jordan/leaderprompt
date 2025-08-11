@@ -419,7 +419,10 @@ function Prompter() {
             __html: notecardMode ? slides[currentSlide] || '' : content,
           }}
         />
-        <div className="editor-overlay">
+        <div
+          className="editor-overlay"
+          style={{ padding: `2rem ${margin}px` }}
+        >
           <TipTapEditor initialHtml={content} onUpdate={handleEdit} />
         </div>
       </div>
