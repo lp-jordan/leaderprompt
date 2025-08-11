@@ -149,10 +149,17 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
               </button>
               <div className="color-wrapper">
                 <button
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    // minimal change: ensure native picker opens reliably
+                    e.preventDefault()
+                    e.stopPropagation()
                     const sel = editor.state.selection
                     selectionRef.current = { from: sel.from, to: sel.to }
-                    colorInputRef.current?.click()
+                    const el = colorInputRef.current
+                    if (!el) return
+                    el.focus()
+                    if (typeof el.showPicker === 'function') el.showPicker()
+                    else el.click()
                   }}
                 >
                   🎨
@@ -160,7 +167,8 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                 <input
                   ref={colorInputRef}
                   type="color"
-                  style={{ position: 'absolute', left: '-9999px' }}
+                  // minimal change: keep it in DOM & focusable (not fully offscreen)
+                  style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
                   onChange={(e) =>
                     apply(
                       () => {
