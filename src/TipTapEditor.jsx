@@ -22,6 +22,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [isColorPickerOpen, setColorPickerOpen] = useState(false)
   const [selectedText, setSelectedText] = useState('')
   const [suggestions, setSuggestions] = useState([])
+  const loaderRef = useRef(null)
 
   const openMenu = (pos) => {
     setMenuPos(pos)
@@ -93,7 +94,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     const frames = ['▹▹▹', '▸▹▹', '▹▸▹', '▹▹▸']
     let i = 0
     setSuggestions([frames[0], frames[1], frames[2]])
-    const id = setInterval(() => {
+    loaderRef.current = setInterval(() => {
       i = (i + 1) % frames.length
       setSuggestions([
         frames[i],
@@ -101,8 +102,25 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         frames[(i + 2) % frames.length],
       ])
     }, 150)
-    return () => clearInterval(id)
+    return () => {
+      clearInterval(loaderRef.current)
+      loaderRef.current = null
+    }
   }, [activeMenu, editor, selectedText])
+
+  useEffect(() => {
+    if (activeMenu !== 'ai' || !selectedText.trim()) return
+    const controller = new AbortController()
+    window.electronAPI
+      .rewriteSelection(selectedText, controller.signal)
+      .then((res) => {
+        setSuggestions(res)
+        clearInterval(loaderRef.current)
+        loaderRef.current = null
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [activeMenu, selectedText])
 
   useEffect(() => {
     const hide = (e) => {
