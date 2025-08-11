@@ -112,10 +112,59 @@
 .ai-rescript-panel .retry button {
   background: none;
   border: none;
-  color: inherit;
+  color: #89c4ff;
   cursor: pointer;
   text-decoration: underline;
   padding: 0;
+}
+
+.ai-rescript-panel .retry button:hover {
+  color: #cde2ff;
+}
+
+.ai-rescript-panel .error {
+  margin: 8px;
+  background: #4a0000;
+  color: #ffb3b3;
+  border: 1px solid #aa0000;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.85em;
+  text-align: center;
+}
+
+.ai-rescript-panel .skeleton-line {
+  position: relative;
+  height: 1em;
+  margin: 4px 8px;
+  border-radius: 4px;
+  background: #444;
+  overflow: hidden;
+}
+
+.ai-rescript-panel .skeleton-line.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.ai-rescript-panel .skeleton-line.rotate::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid #555;
+  border-top-color: #89c4ff;
+  border-radius: 50%;
+  animation: rotate 1s linear infinite;
+}
+
+.ai-rescript-panel .loading-delay {
+  padding: 4px 8px;
+  font-size: 0.8em;
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
 }
 
 .network-warning {
@@ -141,5 +190,23 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
   }
 }
