@@ -7,6 +7,10 @@ const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
 
+// Hard-coded OpenAI API key used by the rewrite feature. Replace the placeholder
+// string with a real key for production deployments.
+const OPENAI_API_KEY = 'REPLACE_WITH_OPENAI_KEY';
+
 // Toggle automatic update behavior with an environment variable. All update
 // logic remains in place so it can be re-enabled easily.
 const ENABLE_AUTO_UPDATES = process.env.ENABLE_AUTO_UPDATES === 'true';
@@ -899,7 +903,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
   ipcMain.handle('rewrite-selection', async (event, { text }) => {
     try {
       if (!text) return [];
-      const apiKey = process.env.OPENAI_API_KEY;
+      const apiKey = OPENAI_API_KEY;
       if (!apiKey) {
         log('OpenAI API key not set');
         return [];

@@ -26,6 +26,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [error, setError] = useState(null)
   const [retryCount, setRetryCount] = useState(0)
   const loaderRef = useRef(null)
+  const [isOnline, setIsOnline] = useState(navigator.onLine)
 
   const openMenu = (pos) => {
     setMenuPos(pos)
@@ -67,6 +68,16 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
       openMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top })
     }
   }
+
+  useEffect(() => {
+    const updateOnline = () => setIsOnline(navigator.onLine)
+    window.addEventListener('online', updateOnline)
+    window.addEventListener('offline', updateOnline)
+    return () => {
+      window.removeEventListener('online', updateOnline)
+      window.removeEventListener('offline', updateOnline)
+    }
+  }, [])
 
   useEffect(() => {
     if (!editor) return
@@ -180,11 +191,24 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           onClick={(e) => e.stopPropagation()}
         >
           {activeMenu === 'root' && (
-            <div className="context-menu fade-in">
-              <button onClick={goBack}>x</button>
-              <button onClick={() => navigateTo('format')}>A</button>
-              <button onClick={() => navigateTo('ai')}>✨</button>
-            </div>
+            <>
+              <div className="context-menu fade-in">
+                <button onClick={goBack}>x</button>
+                <button onClick={() => navigateTo('format')}>A</button>
+                <button
+                  onClick={() => navigateTo('ai')}
+                  disabled={!isOnline}
+                  title={isOnline ? '' : 'No internet connection'}
+                >
+                  ✨
+                </button>
+              </div>
+              {!isOnline && (
+                <div className="network-warning fade-in">
+                  No internet connection
+                </div>
+              )}
+            </>
           )}
           {activeMenu === 'format' && (
             <div className="context-menu format fade-in">
