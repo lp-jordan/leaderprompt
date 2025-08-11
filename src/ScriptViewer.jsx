@@ -88,9 +88,9 @@ useEffect(() => {
 
 
   const handleSend = useCallback(() => {
-    window.electronAPI.openPrompter(scriptHtml || '');
+    window.electronAPI.openPrompter(scriptHtmlRef.current || '');
     onPrompterOpen?.(projectName, scriptName);
-  }, [scriptHtml, projectName, scriptName, onPrompterOpen]);
+  }, [projectName, scriptName, onPrompterOpen]);
 
   useEffect(() => {
     onSend?.(loaded && scriptHtml?.trim() ? () => handleSend() : null);
