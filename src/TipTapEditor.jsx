@@ -29,10 +29,12 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     setShowColor(false)
   }
 
-  const apply = (action) => {
+  const apply = (action, close = true) => {
     action?.()
-    setMenuPos(null)
-    setActiveMenu('root')
+    if (close) {
+      setMenuPos(null)
+      setActiveMenu('root')
+    }
   }
 
   const handleContextMenu = (e) => {
@@ -63,9 +65,14 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   }, [editor])
 
   useEffect(() => {
-    const hide = () => setMenuPos(null)
-    window.addEventListener('click', hide)
-    return () => window.removeEventListener('click', hide)
+    const hide = (e) => {
+      if (!e.target.closest('.context-menu-root')) {
+        setMenuPos(null)
+        setActiveMenu('root')
+      }
+    }
+    window.addEventListener('mousedown', hide)
+    return () => window.removeEventListener('mousedown', hide)
   }, [])
 
   useEffect(() => {
@@ -134,31 +141,33 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
             <div className="context-menu format fade-in">
               <button
                 onClick={() =>
-                  apply(() => editor.chain().focus().setParagraph().run())
+                  apply(() => editor.chain().focus().setParagraph().run(), false)
                 }
               >
                 Normal
               </button>
-                {[
-                  { label: 'Big', level: 1 },
-                  { label: 'Medium', level: 2 },
-                  { label: 'Small', level: 3 },
-                ].map(({ label, level }) => (
-                  <button
-                    key={level}
-                    onClick={() =>
-                      apply(() =>
+              {[
+                { label: 'Big', level: 1 },
+                { label: 'Medium', level: 2 },
+                { label: 'Small', level: 3 },
+              ].map(({ label, level }) => (
+                <button
+                  key={level}
+                  onClick={() =>
+                    apply(
+                      () =>
                         editor
                           .chain()
                           .focus()
                           .toggleHeading({ level })
-                          .run()
-                      )
-                    }
-                  >
-                    {label}
-                  </button>
-                ))}
+                          .run(),
+                      false,
+                    )
+                  }
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           )}
           {activeMenu === 'ai' && (
