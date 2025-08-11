@@ -900,7 +900,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     }
   });
 
-  ipcMain.handle('rewrite-selection', async (event, { text }) => {
+  ipcMain.handle('rewrite-selection', async (event, text) => {
     try {
       if (!text) return [];
       const apiKey = OPENAI_API_KEY;
