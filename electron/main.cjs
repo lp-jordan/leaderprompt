@@ -11,9 +11,6 @@ const { spawn } = require('child_process');
 // logic remains in place so it can be re-enabled easily.
 const ENABLE_AUTO_UPDATES = process.env.ENABLE_AUTO_UPDATES === 'true';
 
-const pathToFile = (file, hash = '') =>
-  `file://${path.resolve(__dirname, '..', file).replace(/\\/g, '/')}${hash}`;
-
 // Resolve a path to a static asset. During development assets live in the
 // `public` folder. When packaged, Vite copies them to `dist` so adjust the
 // root accordingly.
@@ -270,11 +267,11 @@ function createMainWindow() {
     backgroundColor: '#000000',
   });
 
-  const startUrl = app.isPackaged
-    ? pathToFile('dist/index.html')
-    : 'http://localhost:5173';
-
-  mainWindow.loadURL(startUrl);
+  if (app.isPackaged) {
+    mainWindow.loadFile(path.join('dist', 'index.html'));
+  } else {
+    mainWindow.loadURL('http://localhost:5173');
+  }
 
   log('Main window created and loaded');
 }
@@ -292,11 +289,11 @@ function createDevConsoleWindow() {
     title: 'Dev Console',
   })
 
-  const url = app.isPackaged
-    ? pathToFile('dist/index.html', '#/dev-console')
-    : 'http://localhost:5173/#/dev-console'
-
-  devConsoleWindow.loadURL(url)
+  if (app.isPackaged) {
+    devConsoleWindow.loadFile(path.join('dist', 'index.html'), { hash: '/dev-console' })
+  } else {
+    devConsoleWindow.loadURL('http://localhost:5173/#/dev-console')
+  }
   devConsoleWindow.on('closed', () => {
     devConsoleWindow = null
   })
@@ -326,10 +323,6 @@ async function createPrompterWindow() {
     titleBarStyle: 'default',
   };
 
-  const url = app.isPackaged
-    ? pathToFile('dist/index.html', '#/prompter')
-    : 'http://localhost:5173/#/prompter';
-
   if (!prompterWindow || prompterWindow.isDestroyed()) {
     prompterWindow = new BrowserWindow({
       ...baseOptions,
@@ -344,7 +337,11 @@ async function createPrompterWindow() {
         mainWindow.webContents.send('prompter-closed')
       }
     })
-    prompterWindow.loadURL(url)
+    if (app.isPackaged) {
+      prompterWindow.loadFile(path.join('dist', 'index.html'), { hash: '/prompter' })
+    } else {
+      prompterWindow.loadURL('http://localhost:5173/#/prompter')
+    }
     await new Promise((resolve) => prompterWindow.once('ready-to-show', resolve))
   }
 
