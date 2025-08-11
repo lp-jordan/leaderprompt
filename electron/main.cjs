@@ -386,6 +386,8 @@ app.whenReady().then(async () => {
       if (prompterWindow && !prompterWindow.isDestroyed()) {
         prompterWindow.show();
         prompterWindow.focus();
+        prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
+        prompterWindow.webContents.send('load-script', currentScriptHtml);
         log('Prompter window shown');
       }
     };
@@ -395,11 +397,6 @@ app.whenReady().then(async () => {
       await createPrompterWindow();
     } else {
       showWindow();
-    }
-
-    if (prompterWindow && !prompterWindow.isDestroyed()) {
-      prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
-      prompterWindow.webContents.send('load-script', currentScriptHtml);
     }
   });
 
