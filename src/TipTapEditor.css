@@ -49,8 +49,8 @@
 .color-wrapper input[type='color'] {
   position: absolute;
   left: -9999px;
-  width: 0;
-  height: 0;
+  width: 1px;
+  height: 1px;
   border: none;
   padding: 0;
 }
