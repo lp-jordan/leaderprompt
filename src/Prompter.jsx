@@ -47,6 +47,7 @@ function Prompter() {
   const [currentSlide, setCurrentSlide] = useState(0)
   // all settings are now accessible from a single panel
   const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
+  const [editing, setEditing] = useState(false)
   const containerRef = useRef(null)
 
   const handleEdit = (html) => {
@@ -167,9 +168,8 @@ function Prompter() {
 
   // Initial script loading on mount only
   useEffect(() => {
-    let ready = false
     const handleLoaded = (html) => {
-      if (ready) setContent(html)
+      setContent(html)
     }
     const handleUpdated = (html) => {
       setContent(html)
@@ -179,7 +179,6 @@ function Prompter() {
     const cleanupUpdated = window.electronAPI.onScriptUpdated(handleUpdated)
     window.electronAPI.getCurrentScript().then((html) => {
       if (html) setContent(html)
-      ready = true
     })
 
     return () => {
