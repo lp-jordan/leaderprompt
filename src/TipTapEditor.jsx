@@ -124,10 +124,18 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
               </button>
               <div className="color-wrapper">
                 <button
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
                     const sel = editor.state.selection
                     selectionRef.current = { from: sel.from, to: sel.to }
-                    colorInputRef.current?.click()
+                    const input = colorInputRef.current
+                    if (input) {
+                      if (input.showPicker) {
+                        input.showPicker()
+                      } else {
+                        input.click()
+                      }
+                    }
                   }}
                 >
                   🎨
