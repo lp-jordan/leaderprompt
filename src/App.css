@@ -37,7 +37,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 2vw;
+  padding: 2vw 2vw 0;
   overflow-y: auto;
   overflow-x: hidden;
   position: relative;
@@ -387,7 +387,7 @@ body {
 /* Send button positioned at the bottom of the right panel */
 .send-button-container {
   position: sticky;
-  bottom: 2vh;
+  bottom: 0;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
