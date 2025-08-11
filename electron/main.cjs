@@ -947,6 +947,8 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
   ipcMain.handle('rewrite-selection', async (event, text) => {
     try {
       if (!text) return [];
+      const truncated = text.slice(0, 1000);
+      log(`Rewrite selection request length: ${text.length}`);
       const apiKey = OPENAI_API_KEY;
       if (!apiKey) {
         log('OpenAI API key not set');
@@ -966,7 +968,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
               content:
                 'Provide three alternative rewrites of the user text. Return each option as a short sentence.',
             },
-            { role: 'user', content: text },
+            { role: 'user', content: truncated },
           ],
           n: 3,
         }),
