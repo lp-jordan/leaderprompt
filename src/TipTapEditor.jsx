@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import TextStyle from '@tiptap/extension-text-style'
+import { TextStyle, Color } from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
 import './TipTapEditor.css'
 
