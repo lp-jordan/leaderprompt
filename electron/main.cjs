@@ -727,6 +727,46 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
   updateProjectMetadata(projectName);
 });
 
+ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
+  if (!Array.isArray(folderPaths)) return;
+  for (const folder of folderPaths) {
+    if (!folder || typeof folder !== 'string') continue;
+    let stats;
+    try {
+      stats = await fs.promises.stat(folder);
+    } catch {
+      stats = null;
+    }
+    if (!stats || !stats.isDirectory()) continue;
+    const projectName = sanitizeFilename(path.basename(folder));
+    if (!projectName) continue;
+    const destDir = path.join(getProjectsPath(), projectName);
+    try {
+      await fs.promises.mkdir(destDir, { recursive: true });
+      const entries = await fs.promises.readdir(folder, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.docx')) continue;
+        const src = path.join(folder, entry.name);
+        try {
+          const result = await mammoth.convertToHtml({ path: src });
+          const html = result.value || '';
+          let safeName = sanitizeFilename(entry.name);
+          if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
+          const dest = path.join(destDir, safeName);
+          const buffer = await htmlToDocx(html);
+          await fs.promises.writeFile(dest, buffer);
+          log(`Imported script: ${safeName} → ${dest}`);
+        } catch (err) {
+          error(`Failed to import file ${src}:`, err);
+        }
+      }
+      updateProjectMetadata(projectName);
+    } catch (err) {
+      error('Failed to import folder', folder, err);
+    }
+  }
+});
+
   ipcMain.handle('get-projects', () => {
     log('Fetching list of projects');
     const metadata = getProjectMetadata();

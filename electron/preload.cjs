@@ -36,6 +36,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>
     ipcRenderer.invoke('import-scripts-to-project', filePaths, projectName),
+  importFoldersAsProjects: (folderPaths) =>
+    ipcRenderer.invoke('import-folders-as-projects', folderPaths),
   getScriptsForProject: (projectName) =>
     ipcRenderer.invoke('get-scripts-for-project', projectName),
   getAllProjectsWithScripts: () =>
