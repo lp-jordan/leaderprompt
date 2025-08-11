@@ -49,16 +49,16 @@
   background: #555;
 }
 
-.color-wrapper {
-  position: relative;
-}
+.color-wrapper { position: relative; }
 
 .color-wrapper input[type='color'] {
   position: absolute;
-  left: -9999px;
+  top: 0;
+  left: 0;        /* keep it on-screen so the popover has an anchor */
   width: 1px;
   height: 1px;
-  border: none;
+  opacity: 0;     /* hide it visually without removing it from layout */
+  border: 0;
   padding: 0;
 }
 
