@@ -10,6 +10,7 @@
   color: #e0e0e0;
   font-family: sans-serif;
   transform-origin: center;
+  position: relative;
 }
 
 
@@ -165,6 +166,30 @@
 .toggle-btn.active {
   background: var(--accent-color);
   color: #000;
+}
+
+.script-output {
+  pointer-events: none;
+}
+
+.editor-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.editor-overlay .tiptap-editor {
+  pointer-events: auto;
+  color: transparent;
+  caret-color: #e0e0e0;
+  background: transparent;
+}
+
+.editor-overlay .tiptap-editor .ProseMirror {
+  outline: none;
 }
 
 .stop-button {
