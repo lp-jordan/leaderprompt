@@ -149,6 +149,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
       .insertContent(text)
       .run()
     setMenuPos(null)
+    setActiveMenu('root')
     setMenuHistory(['root'])
   }
 
@@ -267,13 +268,13 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           {activeMenu === 'ai' && (
             <div className="ai-rescript-panel fade-in">
               <button className="back-btn" onClick={goBack}>←</button>
-              {suggestions.map((s, i) => (
+              {suggestions.map((result, i) => (
                 <div
                   key={i}
                   className="ai-line"
-                  onClick={() => replaceSelection(s)}
+                  onClick={() => replaceSelection(result)}
                 >
-                  {s}
+                  {result}
                 </div>
               ))}
             </div>
