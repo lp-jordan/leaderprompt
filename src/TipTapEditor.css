@@ -10,6 +10,13 @@
   position: relative;
 }
 
+.tiptap-editor .ProseMirror {
+  outline: none;
+  background: #2a2a2a;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
 /* Context menu base */
 .context-menu-root {
   position: absolute;
@@ -61,6 +68,21 @@
   border: 1px solid #555;
   border-radius: 4px;
   width: 220px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-rescript-panel .back-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.ai-rescript-panel .back-btn:hover {
+  background: #555;
 }
 
 .ai-line {

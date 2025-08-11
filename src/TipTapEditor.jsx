@@ -28,6 +28,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
 
   const [menuPos, setMenuPos] = useState(null)
   const [activeMenu, setActiveMenu] = useState('root')
+  const [_menuHistory, setMenuHistory] = useState(['root'])
   const colorInputRef = useRef(null)
   const selectionRef = useRef(null)
 
@@ -38,6 +39,25 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const openMenu = (pos) => {
     setMenuPos(pos)
     setActiveMenu('root')
+    setMenuHistory(['root'])
+  }
+
+  const navigateTo = (menu) => {
+    setActiveMenu(menu)
+    setMenuHistory((prev) => [...prev, menu])
+  }
+
+  const goBack = () => {
+    setMenuHistory((prev) => {
+      if (prev.length <= 1) {
+        setMenuPos(null)
+        setActiveMenu('root')
+        return ['root']
+      }
+      const next = prev.slice(0, -1)
+      setActiveMenu(next[next.length - 1])
+      return next
+    })
   }
 
   const apply = (action, close = true) => {
@@ -45,6 +65,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     if (close) {
       setMenuPos(null)
       setActiveMenu('root')
+      setMenuHistory(['root'])
     }
   }
 
@@ -81,6 +102,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         colorDebug('hide: click outside menu', e.target)
         setMenuPos(null)
         setActiveMenu('root')
+        setMenuHistory(['root'])
       } else {
         colorDebug('hide: click inside menu, ignoring')
       }
@@ -102,6 +124,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
       .insertContent(text)
       .run()
     setMenuPos(null)
+    setMenuHistory(['root'])
   }
 
   return (
@@ -115,12 +138,14 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         >
           {activeMenu === 'root' && (
             <div className="context-menu fade-in">
-              <button onClick={() => setActiveMenu('format')}>A</button>
-              <button onClick={() => setActiveMenu('ai')}>✨</button>
+              <button onClick={goBack}>x</button>
+              <button onClick={() => navigateTo('format')}>A</button>
+              <button onClick={() => navigateTo('ai')}>✨</button>
             </div>
           )}
           {activeMenu === 'format' && (
             <div className="context-menu format fade-in">
+              <button onClick={goBack}>←</button>
               <button
                 onClick={() =>
                   apply(() => editor.chain().focus().toggleBold().run())
@@ -193,11 +218,12 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                   }
                 />
               </div>
-              <button onClick={() => setActiveMenu('size')}>Size</button>
+              <button onClick={() => navigateTo('size')}>Size</button>
             </div>
           )}
           {activeMenu === 'size' && (
             <div className="context-menu format fade-in">
+              <button onClick={goBack}>←</button>
               <button
                 onClick={() =>
                   apply(() => editor.chain().focus().setParagraph().run(), false)
@@ -231,6 +257,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           )}
           {activeMenu === 'ai' && (
             <div className="ai-rescript-panel fade-in">
+              <button className="back-btn" onClick={goBack}>←</button>
               {AI_SUGGESTIONS.map((s, i) => (
                 <div
                   key={i}
