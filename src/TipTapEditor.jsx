@@ -22,6 +22,9 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [isColorPickerOpen, setColorPickerOpen] = useState(false)
   const [selectedText, setSelectedText] = useState('')
   const [suggestions, setSuggestions] = useState([])
+  const [controller, setController] = useState(null)
+  const [error, setError] = useState(null)
+  const [retryCount, setRetryCount] = useState(0)
   const loaderRef = useRef(null)
 
   const openMenu = (pos) => {
@@ -85,7 +88,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   }, [editor])
 
   useEffect(() => {
-    if (!editor || activeMenu !== 'ai') return
+    if (!editor || activeMenu !== 'ai' || menuPos === null) return
     const sel = editor.state.selection
     const text = sel.empty
       ? ''
@@ -106,22 +109,36 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
       clearInterval(loaderRef.current)
       loaderRef.current = null
     }
-  }, [activeMenu, editor, selectedText])
+  }, [activeMenu, editor, selectedText, retryCount, menuPos])
 
   useEffect(() => {
     if (!window.electronAPI?.rewriteSelection) return
-    if (activeMenu !== 'ai' || !selectedText.trim()) return
-    const controller = new AbortController()
+    if (activeMenu !== 'ai' || !selectedText.trim() || menuPos === null) return
+    const ctrl = new AbortController()
+    setController(ctrl)
+    setError(null)
     window.electronAPI
-      .rewriteSelection(selectedText, controller.signal)
+      .rewriteSelection(selectedText, ctrl.signal)
       .then((res) => {
         setSuggestions(res)
         clearInterval(loaderRef.current)
         loaderRef.current = null
       })
-      .catch(() => {})
-    return () => controller.abort()
-  }, [activeMenu, selectedText])
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          setError(true)
+          clearInterval(loaderRef.current)
+          loaderRef.current = null
+          setSuggestions([])
+        }
+      })
+    return () => ctrl.abort()
+  }, [activeMenu, selectedText, retryCount, menuPos])
+
+  useEffect(() => {
+    if (activeMenu === 'ai' && menuPos !== null) return
+    controller?.abort()
+  }, [activeMenu, menuPos, controller])
 
   useEffect(() => {
     const hide = (e) => {
@@ -277,6 +294,11 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                   {result}
                 </div>
               ))}
+              {error && (
+                <div className="retry">
+                  <button onClick={() => setRetryCount((c) => c + 1)}>Retry</button>
+                </div>
+              )}
             </div>
           )}
         </div>

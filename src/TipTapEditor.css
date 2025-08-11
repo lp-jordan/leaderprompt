@@ -98,6 +98,21 @@
   background: #555;
 }
 
+.ai-rescript-panel .retry {
+  text-align: right;
+  padding: 4px 8px;
+  font-size: 0.85em;
+}
+
+.ai-rescript-panel .retry button {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
 .fade-in {
   animation: fade-in 0.15s ease-out;
 }
