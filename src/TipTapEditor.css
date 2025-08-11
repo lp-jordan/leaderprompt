@@ -27,8 +27,7 @@
 }
 
 .context-menu.format {
-  flex-direction: column;
-  min-width: 120px;
+  flex-direction: row;
 }
 
 .context-menu button {
