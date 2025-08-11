@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import './TipTapEditor.css'
@@ -10,6 +10,7 @@ const AI_SUGGESTIONS = [
 ]
 
 function TipTapEditor({ initialHtml = '', onUpdate }) {
+  const containerRef = useRef(null)
   const editor = useEditor({
     extensions: [StarterKit],
     content: initialHtml,
@@ -36,7 +37,10 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
 
   const handleContextMenu = (e) => {
     e.preventDefault()
-    openMenu({ x: e.clientX, y: e.clientY })
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (rect) {
+      openMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+    }
   }
 
   useEffect(() => {
@@ -45,7 +49,13 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
       const sel = editor.state.selection
       if (!sel.empty) {
         const start = editor.view.coordsAtPos(sel.from)
-        openMenu({ x: start.left, y: start.top - 40 })
+        const rect = containerRef.current?.getBoundingClientRect()
+        if (rect) {
+          openMenu({
+            x: start.left - rect.left,
+            y: start.top - rect.top - 40,
+          })
+        }
       }
     }
     editor.on('selectionUpdate', selectionHandler)
@@ -74,7 +84,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   }
 
   return (
-    <div className="tiptap-editor" onContextMenu={handleContextMenu}>
+    <div ref={containerRef} className="tiptap-editor" onContextMenu={handleContextMenu}>
       <EditorContent editor={editor} />
       {menuPos && editor && (
         <div
