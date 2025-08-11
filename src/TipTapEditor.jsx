@@ -4,12 +4,6 @@ import StarterKit from '@tiptap/starter-kit'
 import { TextStyle, Color } from '@tiptap/extension-text-style'
 import './TipTapEditor.css'
 
-const AI_SUGGESTIONS = [
-  'Lorem ipsum dolor sit amet',
-  'Consectetur adipiscing elit',
-  'Sed do eiusmod tempor incididunt',
-]
-
 function TipTapEditor({ initialHtml = '', onUpdate }) {
   const containerRef = useRef(null)
   const editor = useEditor({
@@ -26,6 +20,8 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const colorInputRef = useRef(null)
   const selectionRef = useRef(null)
   const [isColorPickerOpen, setColorPickerOpen] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
+  const [suggestions, setSuggestions] = useState([])
 
   const openMenu = (pos) => {
     setMenuPos(pos)
@@ -86,6 +82,27 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     editor.on('selectionUpdate', selectionHandler)
     return () => editor.off('selectionUpdate', selectionHandler)
   }, [editor])
+
+  useEffect(() => {
+    if (!editor || activeMenu !== 'ai') return
+    const sel = editor.state.selection
+    const text = sel.empty
+      ? ''
+      : editor.state.doc.textBetween(sel.from, sel.to, ' ')
+    if (text !== selectedText) setSelectedText(text)
+    const frames = ['▹▹▹', '▸▹▹', '▹▸▹', '▹▹▸']
+    let i = 0
+    setSuggestions([frames[0], frames[1], frames[2]])
+    const id = setInterval(() => {
+      i = (i + 1) % frames.length
+      setSuggestions([
+        frames[i],
+        frames[(i + 1) % frames.length],
+        frames[(i + 2) % frames.length],
+      ])
+    }, 150)
+    return () => clearInterval(id)
+  }, [activeMenu, editor, selectedText])
 
   useEffect(() => {
     const hide = (e) => {
@@ -231,7 +248,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           {activeMenu === 'ai' && (
             <div className="ai-rescript-panel fade-in">
               <button className="back-btn" onClick={goBack}>←</button>
-              {AI_SUGGESTIONS.map((s, i) => (
+              {suggestions.map((s, i) => (
                 <div
                   key={i}
                   className="ai-line"
