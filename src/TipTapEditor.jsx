@@ -124,7 +124,13 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   }, [activeMenu, editor, selectedText, retryCount, menuPos])
 
   useEffect(() => {
-    if (!window.electronAPI?.rewriteSelection) return
+    if (
+      !window.electronAPI?.rewriteSelection ||
+      !window.electronAPI?.abortRewrite
+    ) {
+      console.error('electronAPI unavailable')
+      return
+    }
     if (activeMenu !== 'ai' || !selectedText.trim() || menuPos === null) return
     setErrorMessage(null)
     const { id, promise } = window.electronAPI.rewriteSelection(selectedText)
@@ -156,12 +162,24 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         clearInterval(loaderRef.current)
         loaderRef.current = null
       })
-    return () => window.electronAPI.abortRewrite(id)
+    return () => {
+      if (!window.electronAPI?.abortRewrite) {
+        console.error('electronAPI unavailable')
+        return
+      }
+      window.electronAPI.abortRewrite(id)
+    }
   }, [activeMenu, selectedText, retryCount, menuPos])
 
   useEffect(() => {
     if (activeMenu === 'ai' && menuPos !== null) return
-    if (rewriteId) window.electronAPI.abortRewrite(rewriteId)
+    if (rewriteId) {
+      if (!window.electronAPI?.abortRewrite) {
+        console.error('electronAPI unavailable')
+        return
+      }
+      window.electronAPI.abortRewrite(rewriteId)
+    }
   }, [activeMenu, menuPos, rewriteId])
 
   useEffect(() => {
