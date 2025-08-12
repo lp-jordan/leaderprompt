@@ -123,27 +123,30 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     }
   }, [activeMenu, editor, selectedText, retryCount, menuPos])
 
-    useEffect(() => {
-      if (!window.electronAPI?.rewriteSelection) return
-      if (activeMenu !== 'ai' || !selectedText.trim() || menuPos === null) return
-      const ctrl = new AbortController()
-      setController(ctrl)
-      setErrorMessage(null)
-      window.electronAPI
-        .rewriteSelection(selectedText, ctrl.signal)
-        .then((res) => {
-          if (res?.error) {
-            setErrorMessage(res.error)
-            setSuggestions([res.error])
-            toast.error(res.error)
-          } else if (!Array.isArray(res) || res.length !== 3) {
-            const msg = 'No suggestions available'
-            setErrorMessage(msg)
-            setSuggestions([msg])
-          } else {
-            setErrorMessage(null)
-            setSuggestions(res)
-          }
+  useEffect(() => {
+    if (!window.electronAPI?.rewriteSelection) return
+    if (activeMenu !== 'ai' || !selectedText.trim() || menuPos === null) return
+    const ctrl = new AbortController()
+    setController(ctrl)
+    setError(null)
+    window.electronAPI
+      .rewriteSelection(selectedText, ctrl.signal)
+      .then((res) => {
+        if (res?.error === 'Rate limit exceeded') {
+          setError(true)
+          setSuggestions(['Rate limit exceeded'])
+        } else if (!Array.isArray(res) || res.length !== 3) {
+          setError(true)
+          setSuggestions(['No suggestions available'])
+        } else {
+          setSuggestions(res)
+        }
+        clearInterval(loaderRef.current)
+        loaderRef.current = null
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          setError(true)
           clearInterval(loaderRef.current)
           loaderRef.current = null
         })
