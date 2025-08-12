@@ -975,12 +975,13 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     }
   });
 
-  ipcMain.handle('rewrite-selection', async (event, id, text) => {
+  ipcMain.handle('rewrite-selection', async (event, id, text, modifier) => {
     const controller = new AbortController();
     rewriteControllers.set(id, controller);
     try {
       if (!text) return [];
       const truncated = text.slice(0, 1000);
+      const style = typeof modifier === 'string' ? modifier.trim() : '';
       log(`Rewrite selection request length: ${text.length}`);
       const apiKey = OPENAI_API_KEY;
       if (!apiKey) {
@@ -997,10 +998,10 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
           model: OPENAI_MODEL,
           response_format: { type: 'json_object' },
           messages: [
-            {
-              role: 'system',
-              content: REWRITE_PROMPT,
-            },
+            { role: 'system', content: REWRITE_PROMPT },
+            ...(style
+              ? [{ role: 'system', content: `Rewrite the text to sound ${style}.` }]
+              : []),
             { role: 'user', content: truncated },
           ],
         }),

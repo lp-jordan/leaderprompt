@@ -27,6 +27,8 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [errorMessage, setErrorMessage] = useState(null)
   const loaderRef = useRef(null)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [modifier, setModifier] = useState('')
+  const [isModifierInputVisible, setModifierInputVisible] = useState(false)
 
   const openMenu = (pos) => {
     setMenuPos(pos)
@@ -109,7 +111,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     }
   }
 
-  const runRewrite = (textArg) => {
+  const runRewrite = (textArg, modifierArg = modifier) => {
     if (
       !editor ||
       !window.electronAPI?.rewriteSelection ||
@@ -148,7 +150,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     }, 150)
 
     setErrorMessage(null)
-    const { id, promise } = window.electronAPI.rewriteSelection(text)
+    const { id, promise } = window.electronAPI.rewriteSelection(text, modifierArg)
     rewriteIdRef.current = id
     promise
       .then((res) => {
@@ -354,6 +356,23 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           {activeMenu === 'ai' && (
             <div className="ai-rescript-panel fade-in">
               <button className="back-btn" onClick={goBack}>←</button>
+              {!isModifierInputVisible && (
+                <button
+                  className="modifier-btn"
+                  onClick={() => setModifierInputVisible(true)}
+                >
+                  Add style
+                </button>
+              )}
+              {isModifierInputVisible && (
+                <input
+                  className="modifier-input"
+                  type="text"
+                  placeholder="e.g. formal, playful"
+                  value={modifier}
+                  onChange={(e) => setModifier(e.target.value)}
+                />
+              )}
               {suggestions.map((result, i) => (
                 <div
                   key={i}
