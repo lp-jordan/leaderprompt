@@ -50,6 +50,20 @@ let isAlwaysOnTop = false;
 let currentScriptHtml = '';
 const rewriteControllers = new Map();
 
+const logDir = path.join(app.getPath('home'), 'leaderprompt', 'logs');
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+const logFilePath = path.join(
+  logDir,
+  `leaderprompt-${new Date().toISOString().replace(/[:.]/g, '-')}.log`,
+);
+const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+
+function writeLogFile(level, args) {
+  logStream.write(
+    `${new Date().toISOString()} [${level}] ${args.join(' ')}\n`,
+  );
+}
+
 function sendLog(msg) {
   if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
     devConsoleWindow.webContents.send('log-message', msg)
@@ -58,21 +72,33 @@ function sendLog(msg) {
   }
 }
 
-const log = (...args) => {
-  const msg = args.join(' ')
-  console.log(...args)
-  sendLog(msg)
-}
-const error = (...args) => {
-  const msg = args.join(' ')
-  console.error(...args)
-  sendLog(`[ERROR] ${msg}`)
-}
-const warn = (...args) => {
-  const msg = args.join(' ')
-  console.warn(...args)
-  sendLog(`[WARN] ${msg}`)
-}
+const originalConsole = {
+  log: console.log,
+  error: console.error,
+  warn: console.warn,
+};
+
+console.log = (...args) => {
+  originalConsole.log(...args);
+  writeLogFile('LOG', args);
+  sendLog(args.join(' '));
+};
+
+console.error = (...args) => {
+  originalConsole.error(...args);
+  writeLogFile('ERROR', args);
+  sendLog(`[ERROR] ${args.join(' ')}`);
+};
+
+console.warn = (...args) => {
+  originalConsole.warn(...args);
+  writeLogFile('WARN', args);
+  sendLog(`[WARN] ${args.join(' ')}`);
+};
+
+const log = (...args) => console.log(...args);
+const error = (...args) => console.error(...args);
+const warn = (...args) => console.warn(...args);
 
 function sendUpdateStatus(data) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -84,8 +110,18 @@ function startViteServer() {
   if (viteProcess || app.isPackaged) return;
   viteProcess = spawn('npm', ['run', 'dev'], {
     cwd: path.resolve(__dirname, '..'),
-    stdio: 'inherit',
     shell: true,
+    stdio: ['inherit', 'pipe', 'pipe'],
+  });
+  viteProcess.stdout.on('data', (data) => {
+    const msg = data.toString();
+    process.stdout.write(msg);
+    logStream.write(`${new Date().toISOString()} [VITE] ${msg}`);
+  });
+  viteProcess.stderr.on('data', (data) => {
+    const msg = data.toString();
+    process.stderr.write(msg);
+    logStream.write(`${new Date().toISOString()} [VITE-ERR] ${msg}`);
   });
   log('Vite dev server started');
 }
@@ -1089,14 +1125,17 @@ app.on('window-all-closed', () => {
 app.on('quit', () => {
   log('App quitting');
   stopViteServer();
+  logStream.end();
 });
 
 process.on('exit', () => {
   log('Process exiting');
   stopViteServer();
+  logStream.end();
 });
 process.on('SIGINT', () => {
   log('Received SIGINT');
   stopViteServer();
+  logStream.end();
   process.exit(0);
 });
