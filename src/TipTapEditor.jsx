@@ -131,7 +131,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     window.electronAPI
       .rewriteSelection(selectedText, ctrl.signal)
       .then((res) => {
-        if (!Array.isArray(res) || res.length === 0) {
+        if (!Array.isArray(res) || res.length !== 3) {
           setError(true)
           setSuggestions(['No suggestions available'])
         } else {
