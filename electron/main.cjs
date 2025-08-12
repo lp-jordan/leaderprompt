@@ -11,6 +11,19 @@ const { spawn } = require('child_process');
 // string with a real key for production deployments.
 const OPENAI_API_KEY = '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';
 
+// Model and prompt configuration for AI rewrites
+// GPT-5 is not yet available; use the latest production-ready GPT-4.1 model
+const OPENAI_MODEL = 'gpt-4.1';
+const REWRITE_PROMPT = `You are an expert copy writer and orater.
+Rewrite the following text in three different ways, each preserving the original meaning but offering distinct improvements in:
+1. Impact (stronger, more engaging wording)
+2. Clarity (simpler, more direct wording)
+3. Altered tone (different emotional feel, e.g., more tense or more humorous, contextually driven).
+
+Keep each rewrite similar in length to the original. 
+Do not add or remove information. 
+Do not change proper nouns.`;
+
 // Toggle automatic update behavior with an environment variable. All update
 // logic remains in place so it can be re-enabled easily.
 const ENABLE_AUTO_UPDATES = process.env.ENABLE_AUTO_UPDATES === 'true';
@@ -471,12 +484,11 @@ app.whenReady().then(async () => {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: OPENAI_MODEL,
           messages: [
             {
               role: 'system',
-              content:
-                'Provide three alternative rewrites of the user text. Return each option as a short sentence.',
+              content: REWRITE_PROMPT,
             },
             { role: 'user', content: truncated },
           ],
@@ -961,12 +973,11 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: OPENAI_MODEL,
           messages: [
             {
               role: 'system',
-              content:
-                'Provide three alternative rewrites of the user text. Return each option as a short sentence.',
+              content: REWRITE_PROMPT,
             },
             { role: 'user', content: truncated },
           ],
