@@ -19,6 +19,38 @@ function ScriptViewer({
   const [loaded, setLoaded] = useState(false);
   const saveTimeout = useRef(null);
   const scriptHtmlRef = useRef(null);
+  const onSendRef = useRef(onSend);
+  const onCloseRef = useRef(onClose);
+  const onPrompterOpenRef = useRef(onPrompterOpen);
+  const onPrompterCloseRef = useRef(onPrompterClose);
+  const onCloseViewerRef = useRef(onCloseViewer);
+  const projectNameRef = useRef(projectName);
+  const scriptNameRef = useRef(scriptName);
+
+  useEffect(() => {
+    onSendRef.current = onSend;
+  }, [onSend]);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    onPrompterOpenRef.current = onPrompterOpen;
+  }, [onPrompterOpen]);
+
+  useEffect(() => {
+    onPrompterCloseRef.current = onPrompterClose;
+  }, [onPrompterClose]);
+
+  useEffect(() => {
+    onCloseViewerRef.current = onCloseViewer;
+  }, [onCloseViewer]);
+
+  useEffect(() => {
+    projectNameRef.current = projectName;
+    scriptNameRef.current = scriptName;
+  }, [projectName, scriptName]);
 
 useEffect(() => {
   let cancelled = false;
@@ -120,12 +152,17 @@ useEffect(() => {
       return;
     }
     window.electronAPI.openPrompter(scriptHtmlRef.current || '');
-    onPrompterOpen?.(projectName, scriptName);
-  }, [projectName, scriptName, onPrompterOpen]);
+    onPrompterOpenRef.current?.(
+      projectNameRef.current,
+      scriptNameRef.current,
+    );
+  }, []);
 
-  useEffect(() => {
-    onSend?.(loaded && scriptHtml?.trim() ? () => handleSend() : null);
-  }, [onSend, handleSend, loaded, scriptHtml]);
+    useEffect(() => {
+      onSendRef.current?.(
+        loaded && scriptHtml?.trim() ? handleSend : null,
+      );
+    }, [loaded, scriptHtml, scriptName]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!window.electronAPI?.onPrompterClosed) {
@@ -145,37 +182,41 @@ useEffect(() => {
       clearTimeout(saveTimeout.current);
       saveTimeout.current = null;
     }
-    if (projectName && scriptName && scriptHtmlRef.current) {
+    const project = projectNameRef.current;
+    const script = scriptNameRef.current;
+    if (project && script && scriptHtmlRef.current) {
       if (!window.electronAPI?.saveScript) {
         console.error('electronAPI unavailable');
       } else {
-        window.electronAPI.saveScript(projectName, scriptName, scriptHtmlRef.current);
+        window.electronAPI.saveScript(
+          project,
+          script,
+          scriptHtmlRef.current,
+        );
       }
     }
     setScriptHtml(null);
     scriptHtmlRef.current = null;
     setLoaded(false);
-    onPrompterClose?.();
+    onPrompterCloseRef.current?.();
     if (!window.electronAPI?.sendUpdatedScript) {
       console.error('electronAPI unavailable');
     } else {
       window.electronAPI.sendUpdatedScript('');
     }
-    onCloseViewer?.();
-  }, [projectName, scriptName, onPrompterClose, onCloseViewer]);
+    onCloseViewerRef.current?.();
+  }, []);
 
-  // Run cleanup only on unmount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => () => handleClose(), []);
+    // Run cleanup only on unmount
+    useEffect(() => () => handleClose(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     onLoadedChange?.(loaded);
   }, [loaded, onLoadedChange]);
 
-  useEffect(() => {
-    onClose?.(loaded && scriptName ? () => handleClose() : null);
-  }, [onClose, handleClose, loaded, scriptName]);
-
+    useEffect(() => {
+      onCloseRef.current?.(loaded && scriptName ? handleClose : null);
+    }, [loaded, scriptName]); // eslint-disable-line react-hooks/exhaustive-deps
   // Ensure the viewer properly cleans up when no script is selected
   const prevSelection = useRef({ projectName: null, scriptName: null });
 
