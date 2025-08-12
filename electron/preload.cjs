@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 console.log('[PRELOAD] Preload script loaded ✅');
 
-contextBridge.exposeInMainWorld('electronAPI', {
+const api = {
   // Prompter controls
   openPrompter: (html) => ipcRenderer.send('open-prompter', html),
   onScriptLoaded: (callback) => {
@@ -49,9 +49,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('save-script', { projectName, scriptName, html }),
   deleteScript: (projectName, scriptName) =>
     ipcRenderer.invoke('delete-script', projectName, scriptName),
-
-  rewriteSelection: (text, signal) =>
-    ipcRenderer.invoke('rewrite-selection', text, { signal }),
 
   onLogMessage: (callback) => {
     const handler = (_, msg) => callback(msg)
@@ -111,4 +108,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('update-downloaded', handler)
     return () => ipcRenderer.removeListener('update-downloaded', handler)
   },
-});
+};
+
+if (process.env.OPENAI_API_KEY) {
+  api.rewriteSelection = (text, signal) =>
+    ipcRenderer.invoke('rewrite-selection', text, { signal })
+}
+
+contextBridge.exposeInMainWorld('electronAPI', api);

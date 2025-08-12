@@ -7,9 +7,8 @@ const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
 
-// Hard-coded OpenAI API key used by the rewrite feature. Replace the placeholder
-// string with a real key for production deployments.
-const OPENAI_API_KEY = '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';
+let OPENAI_API_KEY;
+let ENABLE_REWRITES = false;
 
 // Model and prompt configuration for AI rewrites
 const OPENAI_MODEL = 'gpt-4o';
@@ -112,6 +111,39 @@ function stopViteServer() {
 const getUserDataPath = () => path.join(app.getPath('home'), 'leaderprompt');
 const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
 const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json');
+
+function loadOpenAIKey() {
+  let key = process.env.OPENAI_API_KEY;
+
+  if (!key) {
+    try {
+      const envPath = path.join(__dirname, '..', '.env');
+      if (fs.existsSync(envPath)) {
+        const match = fs
+          .readFileSync(envPath, 'utf8')
+          .match(/^OPENAI_API_KEY=(.*)$/m);
+        if (match) key = match[1].trim();
+      }
+    } catch (err) {
+      error('Failed to read .env file:', err);
+    }
+  }
+
+  if (!key) {
+    try {
+      const cfgPath = path.join(getUserDataPath(), 'config.json');
+      if (fs.existsSync(cfgPath)) {
+        const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        if (cfg.OPENAI_API_KEY) key = cfg.OPENAI_API_KEY;
+      }
+    } catch (err) {
+      error('Failed to read config file:', err);
+    }
+  }
+
+  if (key) process.env.OPENAI_API_KEY = key;
+  return key;
+}
 
 function sanitizeFilename(name) {
   if (!name || typeof name !== 'string') return null;
@@ -373,6 +405,11 @@ async function createPrompterWindow() {
 
 // --- Electron App Lifecycle ---
 app.whenReady().then(async () => {
+  OPENAI_API_KEY = loadOpenAIKey();
+  ENABLE_REWRITES = !!OPENAI_API_KEY;
+  if (!ENABLE_REWRITES) {
+    error('OpenAI API key not set. Rewrite features disabled.');
+  }
   log('App ready');
   startViteServer();
   if (!app.isPackaged) {
@@ -473,48 +510,50 @@ app.whenReady().then(async () => {
     log(`Prompter bounds set: ${JSON.stringify(bounds)}`);
   });
 
-  ipcMain.handle('rewrite-selection', async (_, text) => {
-    try {
-      if (!text) return [];
-      const truncated = text.slice(0, 1000);
-      log(`Rewrite selection request length: ${text.length}`);
-      const apiKey = OPENAI_API_KEY;
-      if (!apiKey) {
-        log('OpenAI API key not set');
-        return { error: 'Missing OpenAI API key' };
-      }
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          messages: [
-            {
-              role: 'system',
-              content: REWRITE_PROMPT,
-            },
-            { role: 'user', content: truncated },
-          ],
-          n: 3,
-        }),
-      });
-      if (!res.ok) {
-        error('Rewrite selection request failed:', res.statusText);
+  if (ENABLE_REWRITES) {
+    ipcMain.handle('rewrite-selection', async (_, text) => {
+      try {
+        if (!text) return [];
+        const truncated = text.slice(0, 1000);
+        log(`Rewrite selection request length: ${text.length}`);
+        const apiKey = OPENAI_API_KEY;
+        if (!apiKey) {
+          log('OpenAI API key not set');
+          return { error: 'Missing OpenAI API key' };
+        }
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: OPENAI_MODEL,
+            messages: [
+              {
+                role: 'system',
+                content: REWRITE_PROMPT,
+              },
+              { role: 'user', content: truncated },
+            ],
+            n: 3,
+          }),
+        });
+        if (!res.ok) {
+          error('Rewrite selection request failed:', res.statusText);
+          return { error: 'Request failed' };
+        }
+        const data = await res.json();
+        if (!data.choices) return { error: 'No suggestions' };
+        return data.choices
+          .map((c) => c.message?.content?.trim())
+          .filter(Boolean);
+      } catch (err) {
+        error('Rewrite selection failed:', err);
         return { error: 'Request failed' };
       }
-      const data = await res.json();
-      if (!data.choices) return { error: 'No suggestions' };
-      return data.choices
-        .map((c) => c.message?.content?.trim())
-        .filter(Boolean);
-    } catch (err) {
-      error('Rewrite selection failed:', err);
-      return { error: 'Request failed' };
-    }
-  });
+    });
+  }
 
   ipcMain.handle('get-all-projects-with-scripts', async () => {
     log('Fetching all projects with scripts');
@@ -962,53 +1001,55 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     }
   });
 
-  ipcMain.handle('rewrite-selection', async (event, text) => {
-    try {
-      if (!text) return [];
-      const truncated = text.slice(0, 1000);
-      log(`Rewrite selection request length: ${text.length}`);
-      const apiKey = OPENAI_API_KEY;
-      if (!apiKey) {
-        log('OpenAI API key not set');
-        return { error: 'Missing OpenAI API key' };
-      }
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          messages: [
-            {
-              role: 'system',
-              content: REWRITE_PROMPT,
-            },
-            { role: 'user', content: truncated },
-          ],
-          n: 3,
-        }),
-        signal: event.signal,
-      });
-      if (!res.ok) {
-        error('Rewrite selection request failed:', res.statusText);
+  if (ENABLE_REWRITES) {
+    ipcMain.handle('rewrite-selection', async (event, text) => {
+      try {
+        if (!text) return [];
+        const truncated = text.slice(0, 1000);
+        log(`Rewrite selection request length: ${text.length}`);
+        const apiKey = OPENAI_API_KEY;
+        if (!apiKey) {
+          log('OpenAI API key not set');
+          return { error: 'Missing OpenAI API key' };
+        }
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: OPENAI_MODEL,
+            messages: [
+              {
+                role: 'system',
+                content: REWRITE_PROMPT,
+              },
+              { role: 'user', content: truncated },
+            ],
+            n: 3,
+          }),
+          signal: event.signal,
+        });
+        if (!res.ok) {
+          error('Rewrite selection request failed:', res.statusText);
+          return { error: 'Request failed' };
+        }
+        const data = await res.json();
+        if (!data.choices) return { error: 'No suggestions' };
+        return data.choices
+          .map((c) => c.message?.content?.trim())
+          .filter(Boolean);
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          log('Rewrite selection aborted');
+          return [];
+        }
+        error('Rewrite selection failed:', err);
         return { error: 'Request failed' };
       }
-      const data = await res.json();
-      if (!data.choices) return { error: 'No suggestions' };
-      return data.choices
-        .map((c) => c.message?.content?.trim())
-        .filter(Boolean);
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        log('Rewrite selection aborted');
-        return [];
-      }
-      error('Rewrite selection failed:', err);
-      return { error: 'Request failed' };
-    }
-  });
+    });
+  }
 
   ipcMain.handle('check-for-updates', () => {
     if (!ENABLE_AUTO_UPDATES) {
