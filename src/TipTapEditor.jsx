@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { TextStyle, Color } from '@tiptap/extension-text-style'
+import { toast } from 'react-hot-toast'
 import './TipTapEditor.css'
 
 function TipTapEditor({ initialHtml = '', onUpdate }) {
@@ -23,7 +24,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [selectedText, setSelectedText] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [controller, setController] = useState(null)
-  const [error, setError] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
   const [retryCount, setRetryCount] = useState(0)
   const loaderRef = useRef(null)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
@@ -148,11 +149,19 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           setError(true)
           clearInterval(loaderRef.current)
           loaderRef.current = null
-          setSuggestions(['No suggestions available'])
-        }
-      })
-    return () => ctrl.abort()
-  }, [activeMenu, selectedText, retryCount, menuPos])
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') {
+            const msg = err?.message || 'No suggestions available'
+            setErrorMessage(msg)
+            toast.error(msg)
+            clearInterval(loaderRef.current)
+            loaderRef.current = null
+            setSuggestions([msg])
+          }
+        })
+      return () => ctrl.abort()
+    }, [activeMenu, selectedText, retryCount, menuPos])
 
   useEffect(() => {
     if (activeMenu === 'ai' && menuPos !== null) return
@@ -321,12 +330,12 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                 <div
                   key={i}
                   className="ai-line"
-                  onClick={!error ? () => replaceSelection(result) : undefined}
+                  onClick={!errorMessage ? () => replaceSelection(result) : undefined}
                 >
                   {result}
                 </div>
               ))}
-              {error && (
+              {errorMessage && (
                 <div className="retry">
                   <button onClick={() => setRetryCount((c) => c + 1)}>Retry</button>
                 </div>
