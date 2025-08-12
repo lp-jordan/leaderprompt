@@ -3,6 +3,7 @@ const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
@@ -50,8 +51,8 @@ let isAlwaysOnTop = false;
 let currentScriptHtml = '';
 const rewriteControllers = new Map();
 
-const logDir = path.join(app.getPath('home'), 'leaderprompt', 'logs');
-if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+const logDir = path.join(os.homedir(), 'leaderprompt', 'logs');
+fs.mkdirSync(logDir, { recursive: true });
 const logFilePath = path.join(
   logDir,
   `leaderprompt-${new Date().toISOString().replace(/[:.]/g, '-')}.log`,
