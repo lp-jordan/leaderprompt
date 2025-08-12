@@ -149,10 +149,10 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           setError(true)
           clearInterval(loaderRef.current)
           loaderRef.current = null
-        })
+        }})
         .catch((err) => {
           if (err.name !== 'AbortError') {
-            const msg = err?.message || 'No suggestions available'
+            const msg = (err && err.message) ? err.message : 'No suggestions available'
             setErrorMessage(msg)
             toast.error(msg)
             clearInterval(loaderRef.current)
