@@ -116,9 +116,9 @@ const api = {
   },
 };
 
-api.rewriteSelection = (text) => {
+api.rewriteSelection = (text, modifier) => {
   const id = randomUUID();
-  const promise = ipcRenderer.invoke('rewrite-selection', id, text);
+  const promise = ipcRenderer.invoke('rewrite-selection', id, text, modifier);
   return { id, promise };
 };
 

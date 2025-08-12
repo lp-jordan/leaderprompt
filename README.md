@@ -31,7 +31,10 @@ windows. This avoids reload loops while Vite is starting.
 
 LeaderPrompt can suggest alternative phrasings for selected text using OpenAI's
 API. The feature looks for an API key at startup and disables itself if none is
-available.
+available. The rewrite panel also supports an optional style modifier: click
+**Add style** to reveal a text field where you can describe the desired tone
+(for example, "formal" or "playful"). The modifier is sent with rewrite
+requests to the model.
 
 ### Local development
 

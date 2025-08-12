@@ -90,6 +90,29 @@
   background: #555;
 }
 
+.ai-rescript-panel .modifier-btn {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  color: #89c4ff;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+
+.ai-rescript-panel .modifier-btn:hover {
+  color: #cde2ff;
+}
+
+.ai-rescript-panel .modifier-input {
+  margin: 4px 8px;
+  padding: 4px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #222;
+  color: #e0e0e0;
+}
+
 .ai-line {
   padding: 6px 8px;
   cursor: pointer;
