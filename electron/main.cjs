@@ -979,49 +979,63 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
         log('OpenAI API key not set');
         return { error: 'Missing OpenAI API key' };
       }
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: REWRITE_PROMPT,
-            },
-            { role: 'user', content: truncated },
-          ],
-        }),
-        signal: event.signal,
-      });
-      if (!res.ok) {
-        error('Rewrite selection request failed:', res.statusText);
-        return { error: 'Request failed' };
-      }
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content?.trim();
-      if (!content) return { error: 'No suggestions' };
-      try {
-        const parsed = JSON.parse(content);
-        const suggestions = Array.isArray(parsed)
-          ? parsed
-          : parsed.suggestions;
-        if (
-          !Array.isArray(suggestions) ||
-          suggestions.length !== 3 ||
-          !suggestions.every((s) => typeof s === 'string')
-        ) {
-          throw new Error('Expected array of 3 strings');
+      const maxRetries = 3;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: OPENAI_MODEL,
+            response_format: { type: 'json_object' },
+            messages: [
+              {
+                role: 'system',
+                content: REWRITE_PROMPT,
+              },
+              { role: 'user', content: truncated },
+            ],
+          }),
+          signal: event.signal,
+        });
+        if (res.status === 429) {
+          const delay = 500 * 2 ** attempt;
+          warn(`Rewrite selection rate limited (429). Retry in ${delay}ms`);
+          if (attempt === maxRetries - 1) {
+            warn('Rewrite selection rate limit exceeded; giving up');
+            return { error: 'Rate limit exceeded' };
+          }
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
         }
-        return suggestions;
-      } catch (err) {
-        error('Failed to parse suggestions:', err);
-        return { error: 'Invalid response format' };
+        if (!res.ok) {
+          error('Rewrite selection request failed:', res.statusText);
+          return { error: 'Request failed' };
+        }
+        const data = await res.json();
+        const content = data.choices?.[0]?.message?.content?.trim();
+        if (!content) return { error: 'No suggestions' };
+        try {
+          const parsed = JSON.parse(content);
+          const suggestions = Array.isArray(parsed)
+            ? parsed
+            : parsed.suggestions;
+          if (
+            !Array.isArray(suggestions) ||
+            suggestions.length !== 3 ||
+            !suggestions.every((s) => typeof s === 'string')
+          ) {
+            throw new Error('Expected array of 3 strings');
+          }
+          return suggestions;
+        } catch (err) {
+          error('Failed to parse suggestions:', err);
+          return { error: 'Invalid response format' };
+        }
       }
+      return { error: 'Request failed' };
     } catch (err) {
       if (err.name === 'AbortError') {
         log('Rewrite selection aborted');

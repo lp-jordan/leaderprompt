@@ -131,7 +131,10 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     window.electronAPI
       .rewriteSelection(selectedText, ctrl.signal)
       .then((res) => {
-        if (!Array.isArray(res) || res.length !== 3) {
+        if (res?.error === 'Rate limit exceeded') {
+          setError(true)
+          setSuggestions(['Rate limit exceeded'])
+        } else if (!Array.isArray(res) || res.length !== 3) {
           setError(true)
           setSuggestions(['No suggestions available'])
         } else {
