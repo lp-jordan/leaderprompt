@@ -1,7 +1,12 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const { randomUUID } = require('crypto');
-
 console.log('[PRELOAD] Preload script loaded ✅');
+
+const randomUUID = () => {
+  if (window?.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
 
 const api = {
   // Prompter controls
