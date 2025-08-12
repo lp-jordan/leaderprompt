@@ -12,7 +12,7 @@ const { spawn } = require('child_process');
 const OPENAI_API_KEY = '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';
 
 // Model and prompt configuration for AI rewrites
-const OPENAI_MODEL = 'gpt-4o'; // Use an available model
+const OPENAI_MODEL = 'gpt-4o';
 
 const REWRITE_PROMPT = `You are an expert copywriter and orator.
 
@@ -28,7 +28,7 @@ Requirements:
 - Do not change proper nouns.
 - Label each version clearly as "Impact:", "Clarity:", and "Altered Tone:".`;
 
-export { OPENAI_MODEL, REWRITE_PROMPT };
+module.exports = { OPENAI_MODEL, REWRITE_PROMPT };
 
 // Toggle automatic update behavior with an environment variable. All update
 // logic remains in place so it can be re-enabled easily.
