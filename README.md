@@ -76,3 +76,25 @@ published to GitHub so the app can receive updates through `electron-updater`.
 Packaged apps use icons from the `build/icons` directory. Provide
 `icon.ico` for Windows and `icon.icns` for macOS in that folder before
 running `npm run package`.
+
+## API Key Management
+
+LeaderPrompt requires an OpenAI API key for rewrite features. The app reads the
+key from the `OPENAI_API_KEY` environment variable at runtime.
+
+### Local Development
+
+Store the key in `~/.config/leaderprompt/openai_api_key` and start the app with:
+
+```bash
+npm start
+```
+
+The bootstrap script loads the key from that file and launches the Electron
+process with the environment variable set, keeping the key outside the project.
+
+### CI/CD and Packaging
+
+CI pipelines should supply `OPENAI_API_KEY` from a centrally managed secret
+store. The included GitHub Actions workflow uses a repository secret named
+`OPENAI_API_KEY`. Rotate this secret centrally without modifying the codebase.

@@ -7,6 +7,9 @@ const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
 
+// OpenAI API key is provided at runtime via the OPENAI_API_KEY environment
+// variable. The key should never be committed to source control.
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 let OPENAI_API_KEY;
 let ENABLE_REWRITES = false;
 
