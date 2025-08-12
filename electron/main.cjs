@@ -511,51 +511,6 @@ app.whenReady().then(async () => {
     log(`Prompter bounds set: ${JSON.stringify(bounds)}`);
   });
 
-  if (ENABLE_REWRITES) {
-    ipcMain.handle('rewrite-selection', async (_, text) => {
-      try {
-        if (!text) return [];
-        const truncated = text.slice(0, 1000);
-        log(`Rewrite selection request length: ${text.length}`);
-        const apiKey = OPENAI_API_KEY;
-        if (!apiKey) {
-          log('OpenAI API key not set');
-          return { error: 'Missing OpenAI API key' };
-        }
-        const res = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: OPENAI_MODEL,
-            messages: [
-              {
-                role: 'system',
-                content: REWRITE_PROMPT,
-              },
-              { role: 'user', content: truncated },
-            ],
-            n: 3,
-          }),
-        });
-        if (!res.ok) {
-          error('Rewrite selection request failed:', res.statusText);
-          return { error: 'Request failed' };
-        }
-        const data = await res.json();
-        if (!data.choices) return { error: 'No suggestions' };
-        return data.choices
-          .map((c) => c.message?.content?.trim())
-          .filter(Boolean);
-      } catch (err) {
-        error('Rewrite selection failed:', err);
-        return { error: 'Request failed' };
-      }
-    });
-  }
-
   ipcMain.handle('get-all-projects-with-scripts', async () => {
     log('Fetching all projects with scripts');
     try {
