@@ -14,19 +14,17 @@ let OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 // Model and prompt configuration for AI rewrites
 const OPENAI_MODEL = 'gpt-4o';
 
-const REWRITE_PROMPT = `You are an expert copywriter and orator.
+const REWRITE_PROMPT = `You punch up lines for spoken delivery.
 
-Rewrite the provided text in three distinct ways, each preserving the original meaning but offering:
+Given the input text, produce three alternative phrasings suitable for a teleprompter reader.
+Constraints:
+- Preserve meaning, tense, and point of view.
+- Keep proper nouns and numbers exactly as written.
+- Keep roughly the same length (+/− 15%).
+- Natural spoken cadence; avoid jargon and filler.
+- No preambles, no labels, no explanations.
 
-1. **Impact** – Stronger, more engaging wording.
-2. **Clarity** – Simpler, more direct wording.
-3. **Altered Tone** – A different emotional feel (e.g., more tense, humorous, or dramatic, as fits the context).
-
-Requirements:
-- Keep each rewrite roughly the same length as the original.
-- Do not add or remove information.
-- Do not change proper nouns.
-- Label each version clearly as "Impact:", "Clarity:", and "Altered Tone:".`;
+Return ONLY valid JSON: an array of three strings.`;
 
 module.exports = { OPENAI_MODEL, REWRITE_PROMPT };
 
@@ -988,6 +986,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
         },
         body: JSON.stringify({
           model: OPENAI_MODEL,
+          response_format: { type: 'json_object' },
           messages: [
             {
               role: 'system',
@@ -995,7 +994,6 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
             },
             { role: 'user', content: truncated },
           ],
-          n: 3,
         }),
         signal: event.signal,
       });
@@ -1004,10 +1002,19 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
         return { error: 'Request failed' };
       }
       const data = await res.json();
-      if (!data.choices) return { error: 'No suggestions' };
-      return data.choices
-        .map((c) => c.message?.content?.trim())
-        .filter(Boolean);
+      const content = data.choices?.[0]?.message?.content?.trim();
+      if (!content) return { error: 'No suggestions' };
+      let suggestions;
+      try {
+        suggestions = JSON.parse(content);
+        if (!Array.isArray(suggestions) || suggestions.length !== 3) {
+          throw new Error('Expected array of 3 strings');
+        }
+      } catch (err) {
+        error('Failed to parse suggestions:', err);
+        return { error: 'Invalid response format' };
+      }
+      return suggestions;
     } catch (err) {
       if (err.name === 'AbortError') {
         log('Rewrite selection aborted');
