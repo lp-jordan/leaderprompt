@@ -355,15 +355,26 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
           )}
           {activeMenu === 'ai' && (
             <div className="ai-rescript-panel fade-in">
-              <button className="back-btn" onClick={goBack}>←</button>
-              {!isModifierInputVisible && (
-                <button
-                  className="modifier-btn"
-                  onClick={() => setModifierInputVisible(true)}
-                >
-                  Add style
-                </button>
-              )}
+              <div className="ai-header">
+                <button className="back-btn" onClick={goBack}>←</button>
+                <div className="ai-header-right">
+                  {!isModifierInputVisible && (
+                    <button
+                      className="modifier-btn"
+                      onClick={() => setModifierInputVisible(true)}
+                    >
+                      Add style
+                    </button>
+                  )}
+                  <button
+                    className="rerun-btn"
+                    onClick={() => runRewrite(selectedText)}
+                    title="Run again"
+                  >
+                    ↻
+                  </button>
+                </div>
+              </div>
               {isModifierInputVisible && (
                 <input
                   className="modifier-input"

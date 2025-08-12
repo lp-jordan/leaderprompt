@@ -34,7 +34,8 @@ API. The feature looks for an API key at startup and disables itself if none is
 available. The rewrite panel also supports an optional style modifier: click
 **Add style** to reveal a text field where you can describe the desired tone
 (for example, "formal" or "playful"). The modifier is sent with rewrite
-requests to the model.
+requests to the model. Use the ↻ button to re-run a request if you want a fresh
+set of suggestions.
 
 ### Local development
 
