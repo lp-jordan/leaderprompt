@@ -3,7 +3,6 @@ const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
-const os = require('os');
 const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
@@ -51,20 +50,6 @@ let isAlwaysOnTop = false;
 let currentScriptHtml = '';
 const rewriteControllers = new Map();
 
-const logDir = path.join(os.homedir(), 'leaderprompt', 'logs');
-fs.mkdirSync(logDir, { recursive: true });
-const logFilePath = path.join(
-  logDir,
-  `leaderprompt-${new Date().toISOString().replace(/[:.]/g, '-')}.log`,
-);
-const logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
-
-function writeLogFile(level, args) {
-  logStream.write(
-    `${new Date().toISOString()} [${level}] ${args.join(' ')}\n`,
-  );
-}
-
 function sendLog(msg) {
   if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
     devConsoleWindow.webContents.send('log-message', msg)
@@ -73,33 +58,18 @@ function sendLog(msg) {
   }
 }
 
-const originalConsole = {
-  log: console.log,
-  error: console.error,
-  warn: console.warn,
-};
-
-console.log = (...args) => {
-  originalConsole.log(...args);
-  writeLogFile('LOG', args);
+const log = (...args) => {
+  console.log(...args);
   sendLog(args.join(' '));
 };
-
-console.error = (...args) => {
-  originalConsole.error(...args);
-  writeLogFile('ERROR', args);
+const error = (...args) => {
+  console.error(...args);
   sendLog(`[ERROR] ${args.join(' ')}`);
 };
-
-console.warn = (...args) => {
-  originalConsole.warn(...args);
-  writeLogFile('WARN', args);
+const warn = (...args) => {
+  console.warn(...args);
   sendLog(`[WARN] ${args.join(' ')}`);
 };
-
-const log = (...args) => console.log(...args);
-const error = (...args) => console.error(...args);
-const warn = (...args) => console.warn(...args);
 
 function sendUpdateStatus(data) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -117,12 +87,10 @@ function startViteServer() {
   viteProcess.stdout.on('data', (data) => {
     const msg = data.toString();
     process.stdout.write(msg);
-    logStream.write(`${new Date().toISOString()} [VITE] ${msg}`);
   });
   viteProcess.stderr.on('data', (data) => {
     const msg = data.toString();
     process.stderr.write(msg);
-    logStream.write(`${new Date().toISOString()} [VITE-ERR] ${msg}`);
   });
   log('Vite dev server started');
 }
@@ -1116,17 +1084,14 @@ app.on('window-all-closed', () => {
 app.on('quit', () => {
   log('App quitting');
   stopViteServer();
-  logStream.end();
 });
 
 process.on('exit', () => {
   log('Process exiting');
   stopViteServer();
-  logStream.end();
 });
 process.on('SIGINT', () => {
   log('Received SIGINT');
   stopViteServer();
-  logStream.end();
   process.exit(0);
 });
