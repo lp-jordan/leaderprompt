@@ -27,6 +27,38 @@ When running the Electron app in development, the main process now waits for the
 Vite dev server at `http://localhost:5173` to respond before creating any
 windows. This avoids reload loops while Vite is starting.
 
+## OpenAI Rewrite Feature
+
+LeaderPrompt can suggest alternative phrasings for selected text using OpenAI's
+API. The feature looks for an API key at startup and disables itself if none is
+available.
+
+### Local development
+
+Create a `.env` file in the project root containing:
+
+```
+OPENAI_API_KEY=sk-your-key
+```
+
+Restart the development server after adding the file.
+
+### Packaged builds
+
+Set the `OPENAI_API_KEY` environment variable before launching the application:
+
+```
+OPENAI_API_KEY=sk-your-key LeaderPrompt.app
+```
+
+Alternatively, create `~/leaderprompt/config.json` with:
+
+```
+{ "OPENAI_API_KEY": "sk-your-key" }
+```
+
+If the key is missing, the app logs an error and rewrite options are hidden.
+
 ## Script Persistence
 
 Edits made in the script editor are automatically written back to the underlying
