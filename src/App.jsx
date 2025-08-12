@@ -28,20 +28,23 @@ function App() {
     setSelectedScript(scriptName);
   };
 
-  const handlePrompterOpen = (projectName, scriptName) => {
-    setLoadedProject(projectName);
-    setLoadedScript(scriptName);
-  };
+  const handlePrompterOpen = useCallback(
+    (projectName, scriptName) => {
+      setLoadedProject(projectName);
+      setLoadedScript(scriptName);
+    },
+    [setLoadedProject, setLoadedScript],
+  );
 
-  const handlePrompterClose = () => {
+  const handlePrompterClose = useCallback(() => {
     setLoadedProject(null);
     setLoadedScript(null);
-  };
+  }, [setLoadedProject, setLoadedScript]);
 
-  const handleViewerClose = () => {
+  const handleViewerClose = useCallback(() => {
     setSelectedProject(null);
     setSelectedScript(null);
-  };
+  }, [setSelectedProject, setSelectedScript]);
 
   const updateCloseCallback = useCallback((cb) => {
     setCloseCallback(() => cb);
