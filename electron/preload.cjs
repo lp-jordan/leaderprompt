@@ -110,9 +110,7 @@ const api = {
   },
 };
 
-if (process.env.OPENAI_API_KEY) {
-  api.rewriteSelection = (text, signal) =>
-    ipcRenderer.invoke('rewrite-selection', text, { signal })
-}
+api.rewriteSelection = (text, signal) =>
+  ipcRenderer.invoke('rewrite-selection', text, { signal })
 
 contextBridge.exposeInMainWorld('electronAPI', api);
