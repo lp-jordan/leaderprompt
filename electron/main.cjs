@@ -68,6 +68,11 @@ const error = (...args) => {
   console.error(...args)
   sendLog(`[ERROR] ${msg}`)
 }
+const warn = (...args) => {
+  const msg = args.join(' ')
+  console.warn(...args)
+  sendLog(`[WARN] ${msg}`)
+}
 
 function sendUpdateStatus(data) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -879,7 +884,16 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
   ipcMain.handle('get-scripts-for-project', (_, projectName) => {
     log(`Fetching scripts for project: ${projectName}`);
     const folderPath = path.join(getProjectsPath(), projectName);
-    return fs.readdirSync(folderPath).filter((f) => f.endsWith('.docx'));
+    try {
+      if (!fs.existsSync(folderPath)) {
+        warn('Project folder not found:', folderPath);
+        return [];
+      }
+      return fs.readdirSync(folderPath).filter((f) => f.endsWith('.docx'));
+    } catch (err) {
+      warn('Failed to read project folder', folderPath, err);
+      return [];
+    }
   });
 
   ipcMain.handle('load-script', async (_, projectName, scriptName) => {
