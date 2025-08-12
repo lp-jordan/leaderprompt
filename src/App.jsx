@@ -1,5 +1,5 @@
 import './App.css';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
@@ -43,6 +43,14 @@ function App() {
     setSelectedScript(null);
   };
 
+  const updateCloseCallback = useCallback((cb) => {
+    setCloseCallback(() => cb);
+  }, [setCloseCallback]);
+
+  const updateSendCallback = useCallback((cb) => {
+    setSendCallback(() => cb);
+  }, [setSendCallback]);
+
   return (
     <div className="main-layout">
       <div className={`left-panel ${showFileManager ? '' : 'collapsed'}`}>
@@ -74,12 +82,8 @@ function App() {
           onPrompterClose={handlePrompterClose}
           onCloseViewer={handleViewerClose}
           onLoadedChange={setViewerLoaded}
-          onClose={(cb) => {
-            setCloseCallback(() => cb);
-          }}
-          onSend={(cb) => {
-            setSendCallback(() => cb);
-          }}
+          onClose={updateCloseCallback}
+          onSend={updateSendCallback}
         />
 
         {(closeCallback || sendCallback) && (
