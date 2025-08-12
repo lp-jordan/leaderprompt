@@ -48,6 +48,7 @@ const pendingLogs = [];
 let viteProcess;
 let isAlwaysOnTop = false;
 let currentScriptHtml = '';
+const rewriteControllers = new Map();
 
 function sendLog(msg) {
   if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
@@ -969,7 +970,9 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     }
   });
 
-  ipcMain.handle('rewrite-selection', async (event, text, { signal }) => {
+  ipcMain.handle('rewrite-selection', async (event, id, text) => {
+    const controller = new AbortController();
+    rewriteControllers.set(id, controller);
     try {
       if (!text) return [];
       const truncated = text.slice(0, 1000);
@@ -998,7 +1001,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
               { role: 'user', content: truncated },
             ],
           }),
-          signal,
+          signal: controller.signal,
         });
         if (res.status === 429) {
           const delay = 500 * 2 ** attempt;
@@ -1043,6 +1046,16 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
       }
       error('Rewrite selection failed:', err);
       return { error: 'Request failed' };
+    } finally {
+      rewriteControllers.delete(id);
+    }
+  });
+
+  ipcMain.on('rewrite-selection-abort', (event, id) => {
+    const ctrl = rewriteControllers.get(id);
+    if (ctrl) {
+      ctrl.abort();
+      rewriteControllers.delete(id);
     }
   });
 

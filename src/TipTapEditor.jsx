@@ -23,7 +23,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [isColorPickerOpen, setColorPickerOpen] = useState(false)
   const [selectedText, setSelectedText] = useState('')
   const [suggestions, setSuggestions] = useState([])
-  const [controller, setController] = useState(null)
+  const [rewriteId, setRewriteId] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [retryCount, setRetryCount] = useState(0)
   const loaderRef = useRef(null)
@@ -126,11 +126,10 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   useEffect(() => {
     if (!window.electronAPI?.rewriteSelection) return
     if (activeMenu !== 'ai' || !selectedText.trim() || menuPos === null) return
-    const ctrl = new AbortController()
-    setController(ctrl)
     setErrorMessage(null)
-    window.electronAPI
-      .rewriteSelection(selectedText, ctrl.signal)
+    const { id, promise } = window.electronAPI.rewriteSelection(selectedText)
+    setRewriteId(id)
+    promise
       .then((res) => {
         if (res?.error === 'Rate limit exceeded') {
           const msg = 'Rate limit exceeded'
@@ -157,13 +156,13 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         clearInterval(loaderRef.current)
         loaderRef.current = null
       })
-    return () => ctrl.abort()
+    return () => window.electronAPI.abortRewrite(id)
   }, [activeMenu, selectedText, retryCount, menuPos])
 
   useEffect(() => {
     if (activeMenu === 'ai' && menuPos !== null) return
-    controller?.abort()
-  }, [activeMenu, menuPos, controller])
+    if (rewriteId) window.electronAPI.abortRewrite(rewriteId)
+  }, [activeMenu, menuPos, rewriteId])
 
   useEffect(() => {
     const hide = (e) => {
