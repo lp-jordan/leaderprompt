@@ -3,6 +3,19 @@ import { toast } from 'react-hot-toast'
 
 function Updater() {
   useEffect(() => {
+    if (
+      !window.electronAPI?.checkForUpdates ||
+      !window.electronAPI?.onUpdateChecking ||
+      !window.electronAPI?.onUpdateAvailable ||
+      !window.electronAPI?.onUpdateNotAvailable ||
+      !window.electronAPI?.onUpdateError ||
+      !window.electronAPI?.onUpdateProgress ||
+      !window.electronAPI?.onUpdateDownloaded ||
+      !window.electronAPI?.restartAndInstall
+    ) {
+      console.error('electronAPI unavailable')
+      return
+    }
     window.electronAPI.checkForUpdates()
 
     const cleanChecking = window.electronAPI.onUpdateChecking(() => {
@@ -35,7 +48,7 @@ function Updater() {
       toast((t) => (
         <span>
           Update ready.
-          <button onClick={() => { window.electronAPI.restartAndInstall(); toast.dismiss(t.id) }}>Restart</button>
+          <button onClick={() => { if (!window.electronAPI?.restartAndInstall) { console.error('electronAPI unavailable'); return } window.electronAPI.restartAndInstall(); toast.dismiss(t.id) }}>Restart</button>
         </span>
       ), { duration: Infinity })
     })

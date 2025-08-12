@@ -34,7 +34,13 @@ createRoot(document.getElementById('root')).render(
       </Routes>
       <button
         className="dev-console-button"
-        onClick={() => window.electronAPI.openDevConsole()}
+        onClick={() => {
+          if (!window.electronAPI?.openDevConsole) {
+            console.error('electronAPI unavailable')
+            return
+          }
+          window.electronAPI.openDevConsole()
+        }}
       >
         <DevIcon />
       </button>

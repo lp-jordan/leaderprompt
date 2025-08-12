@@ -51,6 +51,10 @@ function Prompter() {
 
   const handleEdit = (html) => {
     setContent(html)
+    if (!window.electronAPI?.sendUpdatedScript) {
+      console.error('electronAPI unavailable')
+      return
+    }
     window.electronAPI.sendUpdatedScript(html)
   }
 
@@ -135,6 +139,13 @@ function Prompter() {
     e.preventDefault()
     const startX = e.screenX
     const startY = e.screenY
+    if (
+      !window.electronAPI?.getPrompterBounds ||
+      !window.electronAPI?.setPrompterBounds
+    ) {
+      console.error('electronAPI unavailable')
+      return
+    }
     const bounds = await window.electronAPI.getPrompterBounds()
 
     const onMove = (ev) => {
@@ -153,6 +164,10 @@ function Prompter() {
         newBounds.y = bounds.y + dy
       }
 
+      if (!window.electronAPI?.setPrompterBounds) {
+        console.error('electronAPI unavailable')
+        return
+      }
       window.electronAPI.setPrompterBounds(newBounds)
     }
 
@@ -172,6 +187,15 @@ function Prompter() {
     }
     const handleUpdated = (html) => {
       setContent(html)
+    }
+
+    if (
+      !window.electronAPI?.onScriptLoaded ||
+      !window.electronAPI?.onScriptUpdated ||
+      !window.electronAPI?.getCurrentScript
+    ) {
+      console.error('electronAPI unavailable')
+      return
     }
 
     const cleanupLoaded = window.electronAPI.onScriptLoaded(handleLoaded)
@@ -261,6 +285,10 @@ function Prompter() {
   useEffect(() => {
     if (!mountedRef.current) {
       mountedRef.current = true
+      if (!window.electronAPI?.prompterReady) {
+        console.error('electronAPI unavailable')
+        return
+      }
       window.electronAPI.prompterReady()
     }
   }, [])
@@ -285,7 +313,13 @@ function Prompter() {
         <div className={`main-settings ${mainSettingsOpen ? 'open' : ''}`}>
         <button
           className="stop-button"
-          onClick={() => window.electronAPI.closePrompter()}
+          onClick={() => {
+            if (!window.electronAPI?.closePrompter) {
+              console.error('electronAPI unavailable')
+              return
+            }
+            window.electronAPI.closePrompter()
+          }}
         >
           Stop Prompting
         </button>

@@ -8,6 +8,10 @@ function DevConsole() {
     const handler = (msg) => {
       setLogs((prev) => [...prev, msg])
     }
+    if (!window.electronAPI?.onLogMessage) {
+      console.error('electronAPI unavailable')
+      return
+    }
     const cleanup = window.electronAPI.onLogMessage(handler)
     return () => {
       cleanup?.()

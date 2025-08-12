@@ -95,6 +95,10 @@ const FileManager = forwardRef(function FileManager({
   }, []);
 
   const loadProjects = async () => {
+    if (!window.electronAPI?.getAllProjectsWithScripts) {
+      console.error('electronAPI unavailable');
+      return;
+    }
     const result = await window.electronAPI.getAllProjectsWithScripts();
     if (result) {
       setProjects(result);
@@ -113,6 +117,10 @@ const FileManager = forwardRef(function FileManager({
   const handleNewProject = async () => {
     if (!newProjectName.trim()) return;
 
+    if (!window.electronAPI?.createNewProject) {
+      console.error('electronAPI unavailable');
+      return;
+    }
     const created = await window.electronAPI.createNewProject(newProjectName.trim());
     if (created) {
       setNewProjectName('');
@@ -126,6 +134,10 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleImportClick = async (projectName) => {
+    if (!window.electronAPI?.selectFiles || !window.electronAPI?.importScriptsToProject) {
+      console.error('electronAPI unavailable');
+      return;
+    }
     const filePaths = await window.electronAPI.selectFiles();
     if (!filePaths) return;
 
@@ -136,6 +148,10 @@ const FileManager = forwardRef(function FileManager({
 
   const handleNewScript = async () => {
     const projectName = 'Quick Scripts';
+    if (!window.electronAPI?.createNewScript) {
+      console.error('electronAPI unavailable');
+      return;
+    }
     const result = await window.electronAPI.createNewScript(projectName, 'New Script');
     if (result && result.success) {
       await loadProjects();
@@ -170,6 +186,12 @@ const FileManager = forwardRef(function FileManager({
 
   const confirmRenameProject = async (oldName) => {
     if (!renameValue.trim()) return;
+    if (!window.electronAPI?.renameProject) {
+      console.error('electronAPI unavailable');
+      toast.error('Failed to rename project');
+      cancelRename();
+      return;
+    }
     const success = await window.electronAPI.renameProject(
       oldName,
       renameValue.trim(),
@@ -189,6 +211,12 @@ const FileManager = forwardRef(function FileManager({
     let newName = renameValue.trim();
     if (!newName.toLowerCase().endsWith('.docx')) {
       newName += '.docx';
+    }
+    if (!window.electronAPI?.renameScript) {
+      console.error('electronAPI unavailable');
+      toast.error('Failed to rename script');
+      cancelRename();
+      return;
     }
     const success = await window.electronAPI.renameScript(
       projectName,
@@ -214,6 +242,11 @@ const FileManager = forwardRef(function FileManager({
     openConfirm(
       `Delete project "${projectName}"? This will remove all its scripts.`,
       async () => {
+        if (!window.electronAPI?.deleteProject) {
+          console.error('electronAPI unavailable');
+          toast.error('Failed to delete project');
+          return;
+        }
         const deleted = await window.electronAPI.deleteProject(projectName);
         if (!deleted) {
           console.error('Failed to delete project');
@@ -230,6 +263,11 @@ const FileManager = forwardRef(function FileManager({
     openConfirm(
       `Delete script "${scriptName}" from "${projectName}"?`,
       async () => {
+        if (!window.electronAPI?.deleteScript) {
+          console.error('electronAPI unavailable');
+          toast.error('Failed to delete script');
+          return;
+        }
         const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
         if (!deleted) {
           console.error('Failed to delete script');
@@ -312,6 +350,10 @@ const FileManager = forwardRef(function FileManager({
     setRootDrag(false);
     const paths = Array.from(e.dataTransfer.files || []).map((f) => f.path);
     if (paths.length) {
+      if (!window.electronAPI?.importFoldersAsProjects) {
+        console.error('electronAPI unavailable');
+        return;
+      }
       await window.electronAPI.importFoldersAsProjects(paths);
       await loadProjects();
       toast.success('Projects imported');
@@ -324,6 +366,10 @@ const FileManager = forwardRef(function FileManager({
     const external = e.dataTransfer.files && e.dataTransfer.files.length;
     if (external && !dragInfo) {
       const filePaths = Array.from(e.dataTransfer.files).map((f) => f.path);
+      if (!window.electronAPI?.importScriptsToProject) {
+        console.error('electronAPI unavailable');
+        return;
+      }
       await window.electronAPI.importScriptsToProject(filePaths, projectName);
       await loadProjects();
       toast.success('Scripts imported');
@@ -347,6 +393,10 @@ const FileManager = forwardRef(function FileManager({
       );
       setDragInfo(null);
       if (newOrder) {
+        if (!window.electronAPI?.reorderScripts) {
+          console.error('electronAPI unavailable');
+          return;
+        }
         await window.electronAPI.reorderScripts(projectName, newOrder);
       }
     } else {
@@ -364,6 +414,10 @@ const FileManager = forwardRef(function FileManager({
       if (index < 0 || index > destOrder.length) destOrder.push(scriptName);
       else destOrder.splice(index, 0, scriptName);
       setDragInfo(null);
+      if (!window.electronAPI?.moveScript || !window.electronAPI?.reorderScripts) {
+        console.error('electronAPI unavailable');
+        return;
+      }
       await window.electronAPI.moveScript(
         sourceProject,
         projectName,

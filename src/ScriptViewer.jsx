@@ -24,6 +24,13 @@ useEffect(() => {
   let cancelled = false;
   if (projectName && scriptName) {
     setLoaded(false);
+    if (!window.electronAPI?.loadScript) {
+      console.error('electronAPI unavailable');
+      toast.error('Failed to load script');
+      return () => {
+        cancelled = true;
+      };
+    }
     window.electronAPI
       .loadScript(projectName, scriptName)
       .then((html) => {
@@ -41,7 +48,11 @@ useEffect(() => {
     setScriptHtml(null);
     scriptHtmlRef.current = null;
     setLoaded(false);
-    window.electronAPI.sendUpdatedScript('');
+    if (!window.electronAPI?.sendUpdatedScript) {
+      console.error('electronAPI unavailable');
+    } else {
+      window.electronAPI.sendUpdatedScript('');
+    }
   }
   return () => {
     cancelled = true;
@@ -56,16 +67,28 @@ useEffect(() => {
         clearTimeout(saveTimeout.current);
       }
       saveTimeout.current = setTimeout(() => {
+        if (!window.electronAPI?.saveScript) {
+          console.error('electronAPI unavailable');
+          return;
+        }
         window.electronAPI.saveScript(projectName, scriptName, html);
         saveTimeout.current = null;
       }, 300);
     }
     if (projectName === loadedProject && scriptName === loadedScript) {
+      if (!window.electronAPI?.sendUpdatedScript) {
+        console.error('electronAPI unavailable');
+        return;
+      }
       window.electronAPI.sendUpdatedScript(html);
     }
   };
 
   useEffect(() => {
+    if (!window.electronAPI?.onScriptUpdated || !window.electronAPI?.saveScript) {
+      console.error('electronAPI unavailable');
+      return;
+    }
     const cleanup = window.electronAPI.onScriptUpdated((html) => {
       if (html !== scriptHtmlRef.current) {
         setScriptHtml(html);
@@ -75,6 +98,10 @@ useEffect(() => {
             clearTimeout(saveTimeout.current);
           }
           saveTimeout.current = setTimeout(() => {
+            if (!window.electronAPI?.saveScript) {
+              console.error('electronAPI unavailable');
+              return;
+            }
             window.electronAPI.saveScript(projectName, scriptName, html);
             saveTimeout.current = null;
           }, 300);
@@ -88,6 +115,10 @@ useEffect(() => {
 
 
   const handleSend = useCallback(() => {
+    if (!window.electronAPI?.openPrompter) {
+      console.error('electronAPI unavailable');
+      return;
+    }
     window.electronAPI.openPrompter(scriptHtmlRef.current || '');
     onPrompterOpen?.(projectName, scriptName);
   }, [projectName, scriptName, onPrompterOpen]);
@@ -97,6 +128,10 @@ useEffect(() => {
   }, [onSend, handleSend, loaded, scriptHtml]);
 
   useEffect(() => {
+    if (!window.electronAPI?.onPrompterClosed) {
+      console.error('electronAPI unavailable');
+      return;
+    }
     const cleanup = window.electronAPI.onPrompterClosed(() => {
       onPrompterClose?.();
     });
@@ -111,13 +146,21 @@ useEffect(() => {
       saveTimeout.current = null;
     }
     if (projectName && scriptName && scriptHtmlRef.current) {
-      window.electronAPI.saveScript(projectName, scriptName, scriptHtmlRef.current);
+      if (!window.electronAPI?.saveScript) {
+        console.error('electronAPI unavailable');
+      } else {
+        window.electronAPI.saveScript(projectName, scriptName, scriptHtmlRef.current);
+      }
     }
     setScriptHtml(null);
     scriptHtmlRef.current = null;
     setLoaded(false);
     onPrompterClose?.();
-    window.electronAPI.sendUpdatedScript('');
+    if (!window.electronAPI?.sendUpdatedScript) {
+      console.error('electronAPI unavailable');
+    } else {
+      window.electronAPI.sendUpdatedScript('');
+    }
     onCloseViewer?.();
   }, [projectName, scriptName, onPrompterClose, onCloseViewer]);
 
