@@ -969,7 +969,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     }
   });
 
-  ipcMain.handle('rewrite-selection', async (event, text) => {
+  ipcMain.handle('rewrite-selection', async (event, text, { signal }) => {
     try {
       if (!text) return [];
       const truncated = text.slice(0, 1000);
@@ -998,7 +998,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
               { role: 'user', content: truncated },
             ],
           }),
-          signal: event.signal,
+          signal,
         });
         if (res.status === 429) {
           const delay = 500 * 2 ** attempt;
