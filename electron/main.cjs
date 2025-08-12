@@ -10,7 +10,6 @@ const { spawn } = require('child_process');
 // OpenAI API key is provided at runtime via the OPENAI_API_KEY environment
 // variable. The key should never be committed to source control.
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-let ENABLE_REWRITES = false;
 
 // Model and prompt configuration for AI rewrites
 const OPENAI_MODEL = 'gpt-4o';
