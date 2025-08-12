@@ -128,15 +128,12 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     if (activeMenu !== 'ai' || !selectedText.trim() || menuPos === null) return
     const ctrl = new AbortController()
     setController(ctrl)
-    setError(null)
     window.electronAPI
       .rewriteSelection(selectedText, ctrl.signal)
       .then((res) => {
         if (res?.error === 'Rate limit exceeded') {
-          setError(true)
           setSuggestions(['Rate limit exceeded'])
         } else if (!Array.isArray(res) || res.length !== 3) {
-          setError(true)
           setSuggestions(['No suggestions available'])
         } else {
           setSuggestions(res)
@@ -145,21 +142,18 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         loaderRef.current = null
       })
       .catch((err) => {
-        if (err.name !== 'AbortError') {
-          setError(true)
+        if (err.name === 'AbortError') {
           clearInterval(loaderRef.current)
           loaderRef.current = null
-        }})
-        .catch((err) => {
-          if (err.name !== 'AbortError') {
-            const msg = (err && err.message) ? err.message : 'No suggestions available'
-            setErrorMessage(msg)
-            toast.error(msg)
-            clearInterval(loaderRef.current)
-            loaderRef.current = null
-            setSuggestions([msg])
-          }
-        })
+          return
+        }
+        const msg = (err && err.message) ? err.message : 'No suggestions available'
+        setErrorMessage(msg)
+        toast.error(msg)
+        clearInterval(loaderRef.current)
+        loaderRef.current = null
+        setSuggestions([msg])
+      })
       return () => ctrl.abort()
     }, [activeMenu, selectedText, retryCount, menuPos])
 
