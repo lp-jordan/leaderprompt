@@ -12,16 +12,23 @@ const { spawn } = require('child_process');
 const OPENAI_API_KEY = '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';
 
 // Model and prompt configuration for AI rewrites
-const OPENAI_MODEL = 'gpt-5';
-const REWRITE_PROMPT = `You are an expert copy writer and orater.
-Rewrite the following text in three different ways, each preserving the original meaning but offering distinct improvements in:
-1. Impact (stronger, more engaging wording)
-2. Clarity (simpler, more direct wording)
-3. Altered tone (different emotional feel, e.g., more tense or more humorous, contextually driven).
+const OPENAI_MODEL = 'gpt-4o'; // Use an available model
 
-Keep each rewrite similar in length to the original. 
-Do not add or remove information. 
-Do not change proper nouns.`;
+const REWRITE_PROMPT = `You are an expert copywriter and orator.
+
+Rewrite the provided text in three distinct ways, each preserving the original meaning but offering:
+
+1. **Impact** – Stronger, more engaging wording.
+2. **Clarity** – Simpler, more direct wording.
+3. **Altered Tone** – A different emotional feel (e.g., more tense, humorous, or dramatic, as fits the context).
+
+Requirements:
+- Keep each rewrite roughly the same length as the original.
+- Do not add or remove information.
+- Do not change proper nouns.
+- Label each version clearly as "Impact:", "Clarity:", and "Altered Tone:".`;
+
+export { OPENAI_MODEL, REWRITE_PROMPT };
 
 // Toggle automatic update behavior with an environment variable. All update
 // logic remains in place so it can be re-enabled easily.
