@@ -24,7 +24,8 @@ Constraints:
 - Natural spoken cadence; avoid jargon and filler.
 - No preambles, no labels, no explanations.
 
-Return ONLY valid JSON: an array of three strings.`;
+Return ONLY valid JSON with this shape:
+{"suggestions": ["string1", "string2", "string3"]}`;
 
 module.exports = { OPENAI_MODEL, REWRITE_PROMPT };
 
@@ -1004,17 +1005,23 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
       const data = await res.json();
       const content = data.choices?.[0]?.message?.content?.trim();
       if (!content) return { error: 'No suggestions' };
-      let suggestions;
       try {
-        suggestions = JSON.parse(content);
-        if (!Array.isArray(suggestions) || suggestions.length !== 3) {
+        const parsed = JSON.parse(content);
+        const suggestions = Array.isArray(parsed)
+          ? parsed
+          : parsed.suggestions;
+        if (
+          !Array.isArray(suggestions) ||
+          suggestions.length !== 3 ||
+          !suggestions.every((s) => typeof s === 'string')
+        ) {
           throw new Error('Expected array of 3 strings');
         }
+        return suggestions;
       } catch (err) {
         error('Failed to parse suggestions:', err);
         return { error: 'Invalid response format' };
       }
-      return suggestions;
     } catch (err) {
       if (err.name === 'AbortError') {
         log('Rewrite selection aborted');
