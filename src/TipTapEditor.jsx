@@ -23,9 +23,8 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   const [isColorPickerOpen, setColorPickerOpen] = useState(false)
   const [selectedText, setSelectedText] = useState('')
   const [suggestions, setSuggestions] = useState([])
-  const [rewriteId, setRewriteId] = useState(null)
+  const rewriteIdRef = useRef(null)
   const [errorMessage, setErrorMessage] = useState(null)
-  const [retryCount, setRetryCount] = useState(0)
   const loaderRef = useRef(null)
   const [isOnline, setIsOnline] = useState(navigator.onLine)
 
@@ -99,13 +98,43 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     return () => editor.off('selectionUpdate', selectionHandler)
   }, [editor])
 
-  useEffect(() => {
-    if (!editor || activeMenu !== 'ai' || menuPos === null) return
-    const sel = editor.state.selection
-    const text = sel.empty
-      ? ''
-      : editor.state.doc.textBetween(sel.from, sel.to, ' ')
-    if (text !== selectedText) setSelectedText(text)
+  const cancelRewrite = () => {
+    if (loaderRef.current) {
+      clearInterval(loaderRef.current)
+      loaderRef.current = null
+    }
+    if (rewriteIdRef.current && window.electronAPI?.abortRewrite) {
+      window.electronAPI.abortRewrite(rewriteIdRef.current)
+      rewriteIdRef.current = null
+    }
+  }
+
+  const runRewrite = (textArg) => {
+    if (
+      !editor ||
+      !window.electronAPI?.rewriteSelection ||
+      !window.electronAPI?.abortRewrite
+    ) {
+      console.error('electronAPI unavailable')
+      return
+    }
+    const text =
+      textArg ??
+      (() => {
+        const sel = editor.state.selection
+        return sel.empty
+          ? ''
+          : editor.state.doc.textBetween(sel.from, sel.to, ' ')
+      })()
+    if (!text.trim()) {
+      const msg = 'No suggestions available'
+      setErrorMessage(msg)
+      setSuggestions([msg])
+      return
+    }
+
+    cancelRewrite()
+    setSelectedText(text)
     const frames = ['▹▹▹', '▸▹▹', '▹▸▹', '▹▹▸']
     let i = 0
     setSuggestions([frames[0], frames[1], frames[2]])
@@ -117,24 +146,10 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         frames[(i + 2) % frames.length],
       ])
     }, 150)
-    return () => {
-      clearInterval(loaderRef.current)
-      loaderRef.current = null
-    }
-  }, [activeMenu, editor, selectedText, retryCount, menuPos])
 
-  useEffect(() => {
-    if (
-      !window.electronAPI?.rewriteSelection ||
-      !window.electronAPI?.abortRewrite
-    ) {
-      console.error('electronAPI unavailable')
-      return
-    }
-    if (activeMenu !== 'ai' || !selectedText.trim() || menuPos === null) return
     setErrorMessage(null)
-    const { id, promise } = window.electronAPI.rewriteSelection(selectedText)
-    setRewriteId(id)
+    const { id, promise } = window.electronAPI.rewriteSelection(text)
+    rewriteIdRef.current = id
     promise
       .then((res) => {
         if (res?.error === 'Rate limit exceeded') {
@@ -162,25 +177,24 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
         clearInterval(loaderRef.current)
         loaderRef.current = null
       })
-    return () => {
-      if (!window.electronAPI?.abortRewrite) {
-        console.error('electronAPI unavailable')
-        return
-      }
-      window.electronAPI.abortRewrite(id)
-    }
-  }, [activeMenu, selectedText, retryCount, menuPos])
+  }
+
+  const handleAiClick = () => {
+    navigateTo('ai')
+    const sel = editor.state.selection
+    const text = sel.empty
+      ? ''
+      : editor.state.doc.textBetween(sel.from, sel.to, ' ')
+    runRewrite(text)
+  }
 
   useEffect(() => {
-    if (activeMenu === 'ai' && menuPos !== null) return
-    if (rewriteId) {
-      if (!window.electronAPI?.abortRewrite) {
-        console.error('electronAPI unavailable')
-        return
-      }
-      window.electronAPI.abortRewrite(rewriteId)
+    if (activeMenu === 'ai' && menuPos !== null) {
+      return cancelRewrite
     }
-  }, [activeMenu, menuPos, rewriteId])
+    cancelRewrite()
+    return undefined
+  }, [activeMenu, menuPos])
 
   useEffect(() => {
     const hide = (e) => {
@@ -227,7 +241,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
                 <button onClick={goBack}>x</button>
                 <button onClick={() => navigateTo('format')}>A</button>
                 <button
-                  onClick={() => navigateTo('ai')}
+                  onClick={handleAiClick}
                   disabled={!isOnline}
                   title={isOnline ? '' : 'No internet connection'}
                 >
@@ -351,7 +365,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
               ))}
               {errorMessage && (
                 <div className="retry">
-                  <button onClick={() => setRetryCount((c) => c + 1)}>Retry</button>
+                  <button onClick={() => runRewrite(selectedText)}>Retry</button>
                 </div>
               )}
             </div>
