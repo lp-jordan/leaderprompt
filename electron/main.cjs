@@ -7,9 +7,9 @@ const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
 
-// Hard-coded OpenAI API key used by the rewrite feature. Replace the placeholder
-// string with a real key for production deployments.
-const OPENAI_API_KEY = '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';
+// OpenAI API key is provided at runtime via the OPENAI_API_KEY environment
+// variable. The key should never be committed to source control.
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 
 // Model and prompt configuration for AI rewrites
 const OPENAI_MODEL = 'gpt-4o';
