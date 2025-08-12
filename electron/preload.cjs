@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const { randomUUID } = require('crypto');
 
 console.log('[PRELOAD] Preload script loaded ✅');
 
@@ -110,7 +111,12 @@ const api = {
   },
 };
 
-api.rewriteSelection = (text, signal) =>
-  ipcRenderer.invoke('rewrite-selection', text, { signal })
+api.rewriteSelection = (text) => {
+  const id = randomUUID();
+  const promise = ipcRenderer.invoke('rewrite-selection', id, text);
+  return { id, promise };
+};
+
+api.abortRewrite = (id) => ipcRenderer.send('rewrite-selection-abort', id);
 
 contextBridge.exposeInMainWorld('electronAPI', api);
