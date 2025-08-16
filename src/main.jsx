@@ -8,6 +8,7 @@ import App from './App.jsx'
 import Prompter from './Prompter.jsx'
 import DevConsole from './DevConsole.jsx'
 import Updater from './Updater.jsx'
+import ReadPage from './ReadPage.jsx'
 
 export function DevIcon() {
   return (
@@ -28,9 +29,10 @@ createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HashRouter>
       <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/prompter" element={<Prompter />} />
-        <Route path="/dev-console" element={<DevConsole />} />
+          <Route path="/" element={<App />} />
+          <Route path="/read" element={<ReadPage />} />
+          <Route path="/prompter" element={<Prompter />} />
+          <Route path="/dev-console" element={<DevConsole />} />
       </Routes>
       <button
         className="dev-console-button"
