@@ -64,6 +64,9 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
   }
 
   const handleContextMenu = (e) => {
+    if (!editor) return
+    const sel = editor.state.selection
+    if (sel.empty) return
     e.preventDefault()
     const rect = containerRef.current?.getBoundingClientRect()
     if (rect) {
@@ -81,24 +84,7 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
     }
   }, [])
 
-  useEffect(() => {
-    if (!editor) return
-    const selectionHandler = () => {
-      const sel = editor.state.selection
-      if (!sel.empty) {
-        const start = editor.view.coordsAtPos(sel.from)
-        const rect = containerRef.current?.getBoundingClientRect()
-        if (rect) {
-          openMenu({
-            x: start.left - rect.left,
-            y: start.top - rect.top - 40,
-          })
-        }
-      }
-    }
-    editor.on('selectionUpdate', selectionHandler)
-    return () => editor.off('selectionUpdate', selectionHandler)
-  }, [editor])
+  // Context menu now opens only via right click; no automatic menu on selection.
 
   const cancelRewrite = () => {
     if (loaderRef.current) {
