@@ -365,6 +365,16 @@ body {
   padding: var(--space-1) 0;
   min-width: 120px;
   z-index: 10;
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.menu.open {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
 
 .menu li button {

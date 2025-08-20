@@ -24,15 +24,13 @@ function ActionMenu({ actions }) {
       <button className="menu-toggle" onClick={() => setOpen(!open)}>
         ☰
       </button>
-      {open && (
-        <ul className="menu">
-          {actions.map(({ label, onClick }, idx) => (
-            <li key={idx}>
-              <button onClick={() => handleAction(onClick)}>{label}</button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className={`menu${open ? ' open' : ''}`}>
+        {actions.map(({ label, onClick }, idx) => (
+          <li key={idx}>
+            <button onClick={() => handleAction(onClick)}>{label}</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
