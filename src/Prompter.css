@@ -200,6 +200,7 @@
   background: transparent;
   border-radius: 0;
   box-shadow: none;
+  overflow: visible;
 }
 
 .stop-button {
