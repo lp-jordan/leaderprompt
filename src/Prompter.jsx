@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import TipTapEditor from './TipTapEditor.jsx'
 import './Prompter.css'
 import './utils/disableLinks.css'
@@ -51,6 +51,9 @@ function Prompter() {
   const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
   const containerRef = useRef(null)
   const editorRef = useRef(null)
+  const editorContainerRef = useRef(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const updateTimeoutRef = useRef(null)
 
   const handleEditorReady = (editor) => {
     editorRef.current = editor
@@ -59,14 +62,58 @@ function Prompter() {
     }
   }
 
-  const handleEdit = (html) => {
-    setContent(html)
-    if (!window.electronAPI?.sendUpdatedScript) {
-      console.error('electronAPI unavailable')
-      return
+  const handleEdit = useCallback((html) => {
+    if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current)
+    updateTimeoutRef.current = setTimeout(() => {
+      setContent(html)
+      if (!window.electronAPI?.sendUpdatedScript) {
+        console.error('electronAPI unavailable')
+        return
+      }
+      window.electronAPI.sendUpdatedScript(html)
+    }, 50)
+  }, [])
+
+  const flushEdit = useCallback(() => {
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current)
+      updateTimeoutRef.current = null
     }
-    window.electronAPI.sendUpdatedScript(html)
+    const html = editorRef.current?.getHTML()
+    if (html !== undefined) {
+      setContent(html)
+      if (!window.electronAPI?.sendUpdatedScript) {
+        console.error('electronAPI unavailable')
+        return
+      }
+      window.electronAPI.sendUpdatedScript(html)
+    }
+  }, [])
+
+  const enterEdit = () => {
+    setIsEditing(true)
+    setTimeout(() => {
+      editorRef.current?.commands.focus('end')
+    }, 0)
   }
+
+  useEffect(() => {
+    if (!isEditing) return
+    const handleOutside = (e) => {
+      if (editorContainerRef.current?.contains(e.target)) return
+      flushEdit()
+      editorRef.current?.chain().setTextSelection({ from: 0, to: 0 }).run()
+      editorRef.current?.commands.blur()
+      setIsEditing(false)
+    }
+    const timeout = setTimeout(() => {
+      document.addEventListener('mousedown', handleOutside)
+    }, 50)
+    return () => {
+      clearTimeout(timeout)
+      document.removeEventListener('mousedown', handleOutside)
+    }
+  }, [isEditing, flushEdit])
 
   const resetDefaults = () => {
     setAutoscroll(DEFAULT_SETTINGS.autoscroll)
@@ -508,15 +555,27 @@ function Prompter() {
           overflowY: notecardMode ? 'hidden' : 'scroll',
         }}
       >
+        {!isEditing && (
+          <div
+            key="render"
+            className="script-output disable-links"
+            onClick={enterEdit}
+            dangerouslySetInnerHTML={{
+              __html: notecardMode ? slides[currentSlide] || '' : content,
+            }}
+            style={{ userSelect: 'none' }}
+          />
+        )}
         <div
-          className="script-output disable-links"
-          dangerouslySetInnerHTML={{
-            __html: notecardMode ? slides[currentSlide] || '' : content,
+          key="editor"
+          ref={editorContainerRef}
+          className="editor-layer"
+          style={{
+            padding: `2rem ${margin}px`,
+            position: isEditing ? 'relative' : 'absolute',
+            left: isEditing ? 0 : '-10000px',
+            top: 0,
           }}
-        />
-        <div
-          className="editor-overlay"
-          style={{ padding: `2rem ${margin}px` }}
         >
           <TipTapEditor
             initialHtml={content}
