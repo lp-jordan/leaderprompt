@@ -8,17 +8,26 @@ import './utils/disableLinks.css'
 
 function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
   const containerRef = useRef(null)
-  const editor = useEditor({
-    extensions: [StarterKit, TextStyle, Color],
-    content: initialHtml,
-    onUpdate: ({ editor }) => {
-      onUpdate?.(editor.getHTML())
+  const editor = useEditor(
+    {
+      extensions: [StarterKit, TextStyle, Color],
+      content: initialHtml,
+      onUpdate: ({ editor }) => {
+        onUpdate?.(editor.getHTML())
+      },
     },
-  })
+    [],
+  )
 
   useEffect(() => {
     if (editor) onReady?.(editor)
   }, [editor, onReady])
+
+  useEffect(() => {
+    if (editor && editor.getHTML() !== initialHtml) {
+      editor.commands.setContent(initialHtml, false)
+    }
+  }, [editor, initialHtml])
 
   const [menuPos, setMenuPos] = useState(null)
   const [activeMenu, setActiveMenu] = useState('root')
