@@ -18,6 +18,7 @@ function ScriptViewer({
 }) {
   const [scriptHtml, setScriptHtml] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
   const saveTimeout = useRef(null);
   const scriptHtmlRef = useRef(null);
   const onSendRef = useRef(onSend);
@@ -52,6 +53,16 @@ function ScriptViewer({
     projectNameRef.current = projectName;
     scriptNameRef.current = scriptName;
   }, [projectName, scriptName]);
+
+  useEffect(() => {
+    let timeout;
+    if (loaded) {
+      setShowEditor(true);
+    } else {
+      timeout = setTimeout(() => setShowEditor(false), 200);
+    }
+    return () => clearTimeout(timeout);
+  }, [loaded]);
 
 useEffect(() => {
   let cancelled = false;
@@ -235,7 +246,7 @@ useEffect(() => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectName, scriptName]);
 
-  const showContent = loaded;
+  const viewerClass = `script-viewer-content disable-links${loaded ? ' visible' : ''}`;
 
   return (
     <div className="script-viewer">
@@ -251,8 +262,8 @@ useEffect(() => {
           </div>
         </div>
       )}
-      <div className="script-viewer-content disable-links">
-        {showContent && (
+      <div className={viewerClass}>
+        {showEditor && (
           <TipTapEditor initialHtml={scriptHtml || ''} onUpdate={handleEdit} />
         )}
       </div>
