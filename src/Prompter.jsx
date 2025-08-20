@@ -571,7 +571,7 @@ function Prompter() {
           ref={editorContainerRef}
           className="editor-layer"
           style={{
-            padding: `2rem ${margin}px`,
+            padding: 0,
             position: isEditing ? 'relative' : 'absolute',
             left: isEditing ? 0 : '-10000px',
             top: 0,
@@ -581,6 +581,11 @@ function Prompter() {
             initialHtml={content}
             onUpdate={handleEdit}
             onReady={handleEditorReady}
+            style={{
+              fontSize: `${fontSize}rem`,
+              lineHeight,
+              textAlign,
+            }}
           />
         </div>
       </div>

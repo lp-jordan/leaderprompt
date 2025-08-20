@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast'
 import './TipTapEditor.css'
 import './utils/disableLinks.css'
 
-function TipTapEditor({ initialHtml = '', onUpdate, onReady }) {
+function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
   const containerRef = useRef(null)
   const editor = useEditor({
     extensions: [StarterKit, TextStyle, Color],
@@ -220,7 +220,12 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady }) {
   }
 
   return (
-    <div ref={containerRef} className="tiptap-editor" onContextMenu={handleContextMenu}>
+    <div
+      ref={containerRef}
+      className="tiptap-editor"
+      onContextMenu={handleContextMenu}
+      style={style}
+    >
       <EditorContent editor={editor} className="disable-links" />
       {menuPos && editor && (
         <div
