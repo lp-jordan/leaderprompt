@@ -862,23 +862,37 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     const destDir = path.join(getProjectsPath(), projectName);
     try {
       await fs.promises.mkdir(destDir, { recursive: true });
-      const entries = await fs.promises.readdir(folder, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.docx')) continue;
-        const src = path.join(folder, entry.name);
-        try {
-          const result = await mammoth.convertToHtml({ path: src });
-          const html = result.value || '';
-          let safeName = sanitizeFilename(entry.name);
-          if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
-          const dest = path.join(destDir, safeName);
-          const buffer = await htmlToDocx(html);
-          await fs.promises.writeFile(dest, buffer);
-          log(`Imported script: ${safeName} → ${dest}`);
-        } catch (err) {
-          error(`Failed to import file ${src}:`, err);
+      // Recursively walk the folder to import all .docx files while
+      // preserving their relative subfolder structure within the project.
+      const walk = async (dir) => {
+        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const src = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            await walk(src);
+            continue;
+          }
+          if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.docx')) continue;
+          try {
+            const result = await mammoth.convertToHtml({ path: src });
+            const html = result.value || '';
+            const relative = path.relative(folder, src);
+            const safeRelative = relative
+              .split(path.sep)
+              .map((segment) => sanitizeFilename(segment) || 'untitled')
+              .join(path.sep);
+            let dest = path.join(destDir, safeRelative);
+            if (!dest.toLowerCase().endsWith('.docx')) dest += '.docx';
+            await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+            const buffer = await htmlToDocx(html);
+            await fs.promises.writeFile(dest, buffer);
+            log(`Imported script: ${safeRelative} → ${dest}`);
+          } catch (err) {
+            error(`Failed to import file ${src}:`, err);
+          }
         }
-      }
+      };
+      await walk(folder);
       updateProjectMetadata(projectName);
     } catch (err) {
       error('Failed to import folder', folder, err);
