@@ -122,6 +122,8 @@ function stopViteServer() {
 const getUserDataPath = () => path.join(app.getPath('home'), 'leaderprompt');
 const getProjectsPath = () => path.join(getUserDataPath(), 'projects');
 const getProjectMetadataPath = () => path.join(getUserDataPath(), 'projects.json');
+const getProjectSettingsPath = (project) =>
+  path.join(getProjectsPath(), project, 'settings.json');
 
 function loadOpenAIKey() {
   let key = process.env.OPENAI_API_KEY;
@@ -315,6 +317,36 @@ function updateProjectMetadata(projectName) {
     metadata.projects.push({ name: projectName, added: Date.now() });
     fs.writeFileSync(getProjectMetadataPath(), JSON.stringify(metadata, null, 2));
     log(`Metadata updated with new project: ${projectName}`);
+  }
+}
+
+function readProjectSettings(projectName) {
+  const settingsPath = getProjectSettingsPath(projectName);
+  try {
+    const raw = fs.readFileSync(settingsPath, 'utf-8');
+    return JSON.parse(raw);
+  } catch (err) {
+    error('Failed to read or parse project settings:', err);
+    const fallback = {};
+    try {
+      fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+      fs.writeFileSync(settingsPath, JSON.stringify(fallback, null, 2));
+    } catch (writeErr) {
+      error('Failed to recreate settings.json:', writeErr);
+    }
+    return fallback;
+  }
+}
+
+function writeProjectSettings(projectName, settings) {
+  const settingsPath = getProjectSettingsPath(projectName);
+  try {
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    return true;
+  } catch (err) {
+    error('Failed to write project settings:', err);
+    return false;
   }
 }
 
@@ -839,6 +871,11 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     const metadata = getProjectMetadata();
     return metadata.projects.map((p) => p.name);
   });
+
+  ipcMain.handle('get-project-settings', (_, project) => readProjectSettings(project));
+  ipcMain.handle('save-project-settings', (_, project, settings) =>
+    writeProjectSettings(project, settings)
+  );
 
   ipcMain.handle('get-scripts-for-project', (_, projectName) => {
     log(`Fetching scripts for project: ${projectName}`);
