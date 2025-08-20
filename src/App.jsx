@@ -1,5 +1,6 @@
 import './App.css';
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
@@ -14,6 +15,7 @@ function App() {
   const [closeCallback, setCloseCallback] = useState(null);
   const [viewerLoaded, setViewerLoaded] = useState(false);
   const [showFileManager, setShowFileManager] = useState(() => window.innerWidth >= 1000);
+  const [leftDrag, setLeftDrag] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -54,9 +56,66 @@ function App() {
     setSendCallback(() => cb);
   }, [setSendCallback]);
 
+  const handleLeftDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleLeftDragEnter = (e) => {
+    if (e.target.closest?.('.file-manager')) return;
+    setLeftDrag(true);
+  };
+
+  const handleLeftDragLeave = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setLeftDrag(false);
+  };
+
+  const handleLeftDrop = async (e) => {
+    e.preventDefault();
+    if (e.target.closest?.('.file-manager')) return;
+    setLeftDrag(false);
+    const fileItems = Array.from(e.dataTransfer.files || []);
+    const allPaths = fileItems.map((f) => f.path).filter(Boolean);
+    let folderPaths = [];
+    if (window.electronAPI?.filterDirectories) {
+      folderPaths = await window.electronAPI.filterDirectories(allPaths);
+    }
+    const filePaths = allPaths
+      .filter((p) => !folderPaths.includes(p))
+      .filter((p) => p?.toLowerCase().endsWith('.docx'));
+    if (folderPaths.length) {
+      if (!window.electronAPI?.importFoldersAsProjects) {
+        console.error('electronAPI unavailable');
+        return;
+      }
+      await window.electronAPI.importFoldersAsProjects(folderPaths);
+      if (fileManagerRef.current?.reload) await fileManagerRef.current.reload();
+      toast.success('Projects imported');
+    } else if (fileItems.length) {
+      const projectName = 'Quick Scripts';
+      if (!window.electronAPI?.importScriptsToProject) {
+        console.error('electronAPI unavailable');
+        toast.error('Unable to import scripts');
+        return;
+      }
+      if (!filePaths.length) {
+        toast.error('Only .docx files can be imported');
+        return;
+      }
+      await window.electronAPI.importScriptsToProject(filePaths, projectName);
+      if (fileManagerRef.current?.reload) await fileManagerRef.current.reload();
+      toast.success('Scripts imported');
+    }
+  };
+
   return (
     <div className="main-layout">
-      <div className={`left-panel ${showFileManager ? '' : 'collapsed'}`}>
+      <div
+        className={`left-panel ${showFileManager ? '' : 'collapsed'}${leftDrag ? ' drop-target' : ''}`}
+        onDragOver={handleLeftDragOver}
+        onDragEnter={handleLeftDragEnter}
+        onDragLeave={handleLeftDragLeave}
+        onDrop={handleLeftDrop}
+      >
         {showFileManager && (
           <FileManager
             ref={fileManagerRef}

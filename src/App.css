@@ -29,6 +29,9 @@ body {
   overflow-x: visible;
   transition: transform 0.3s ease;
 }
+.left-panel.drop-target {
+  border: 2px dashed var(--accent-color);
+}
 .left-panel.collapsed {
   transform: translateX(-100%);
 }
