@@ -463,10 +463,7 @@ const FileManager = forwardRef(function FileManager({
         onDrop={handleRootDrop}
       >
         {projects.map((project) => (
-          <div
-            className={`project-group${collapsed[project.name] ? ' collapsed' : ''}`}
-            key={project.name}
-          >
+          <div className="project-group" key={project.name}>
             <div
               className={`project-header${hoverProject === project.name ? ' drop-target' : ''}`}
               onDragOver={handleDragOver}
@@ -538,7 +535,7 @@ const FileManager = forwardRef(function FileManager({
                 </>
               )}
             </div>
-            <ul>
+            <ul className={collapsed[project.name] ? 'collapsed' : ''}>
               {project.scripts
                 .slice()
                 .sort((a, b) => {
