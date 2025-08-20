@@ -349,19 +349,16 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleRootDragEnter = (e) => {
-    if (e.target === e.currentTarget) {
-      const folders = getDroppedFolders(e.dataTransfer);
-      if (folders.length) setRootDrag(true);
-    }
+    const folders = getDroppedFolders(e.dataTransfer);
+    if (folders.length) setRootDrag(true);
   };
 
   const handleRootDragLeave = (e) => {
-    if (e.target === e.currentTarget) setRootDrag(false);
+    if (!e.currentTarget.contains(e.relatedTarget)) setRootDrag(false);
   };
 
   const handleRootDrop = async (e) => {
     e.preventDefault();
-    if (e.target !== e.currentTarget) return;
     setRootDrag(false);
     const folderPaths = getDroppedFolders(e.dataTransfer);
     const fileItems = Array.from(e.dataTransfer.files || []);
