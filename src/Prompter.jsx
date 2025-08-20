@@ -26,6 +26,7 @@ const DEFAULT_SETTINGS = {
 
 function Prompter() {
   const [content, setContent] = useState('')
+  const [projectName, setProjectName] = useState(null)
   const [autoscroll, setAutoscroll] = useState(DEFAULT_SETTINGS.autoscroll)
   const [speed, setSpeed] = useState(DEFAULT_SETTINGS.speed)
   const [margin, setMargin] = useState(DEFAULT_SETTINGS.margin)
@@ -72,56 +73,83 @@ function Prompter() {
     setTextAlign(DEFAULT_SETTINGS.textAlign)
     setNotecardMode(DEFAULT_SETTINGS.notecardMode)
     setTransparentMode(DEFAULT_SETTINGS.transparentMode)
-    localStorage.removeItem('prompterSettings')
+    if (projectName) {
+      if (window.electronAPI?.saveProjectSettings) {
+        window.electronAPI.saveProjectSettings(projectName, {})
+      } else {
+        localStorage.removeItem(`prompterSettings-${projectName}`)
+      }
+    }
   }
 
   useEffect(() => {
-    const saved = localStorage.getItem('prompterSettings')
-    if (!saved) return
-    try {
-      const settings = JSON.parse(saved)
-      if (settings.autoscroll !== undefined)
-        setAutoscroll(settings.autoscroll)
-      if (settings.speed !== undefined) setSpeed(settings.speed)
-      if (settings.margin !== undefined) setMargin(settings.margin)
-      if (settings.fontSize !== undefined) setFontSize(settings.fontSize)
-      if (settings.mirrorX !== undefined) setMirrorX(settings.mirrorX)
-      if (settings.mirrorY !== undefined) setMirrorY(settings.mirrorY)
-      if (settings.shadowStrength !== undefined)
-        setShadowStrength(settings.shadowStrength)
-      if (settings.strokeWidth !== undefined)
-        setStrokeWidth(settings.strokeWidth)
-      if (settings.lineHeight !== undefined)
-        setLineHeight(settings.lineHeight)
-      if (settings.textAlign !== undefined) setTextAlign(settings.textAlign)
-      if (settings.notecardMode !== undefined)
-        setNotecardMode(settings.notecardMode)
-      if (settings.transparentMode !== undefined)
-        setTransparentMode(settings.transparentMode)
-    } catch (err) {
-      console.error('Failed to parse prompter settings', err)
+    if (!projectName) return
+    let cancelled = false
+    const load = async () => {
+      try {
+        let settings
+        if (window.electronAPI?.getProjectSettings) {
+          settings = await window.electronAPI.getProjectSettings(projectName)
+        } else {
+          const saved = localStorage.getItem(`prompterSettings-${projectName}`)
+          if (saved) settings = JSON.parse(saved)
+        }
+        if (settings && !cancelled) {
+          if (settings.autoscroll !== undefined)
+            setAutoscroll(settings.autoscroll)
+          if (settings.speed !== undefined) setSpeed(settings.speed)
+          if (settings.margin !== undefined) setMargin(settings.margin)
+          if (settings.fontSize !== undefined) setFontSize(settings.fontSize)
+          if (settings.mirrorX !== undefined) setMirrorX(settings.mirrorX)
+          if (settings.mirrorY !== undefined) setMirrorY(settings.mirrorY)
+          if (settings.shadowStrength !== undefined)
+            setShadowStrength(settings.shadowStrength)
+          if (settings.strokeWidth !== undefined)
+            setStrokeWidth(settings.strokeWidth)
+          if (settings.lineHeight !== undefined)
+            setLineHeight(settings.lineHeight)
+          if (settings.textAlign !== undefined) setTextAlign(settings.textAlign)
+          if (settings.notecardMode !== undefined)
+            setNotecardMode(settings.notecardMode)
+          if (settings.transparentMode !== undefined)
+            setTransparentMode(settings.transparentMode)
+        }
+      } catch (err) {
+        console.error('Failed to load prompter settings', err)
+      }
     }
-  }, [])
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [projectName])
 
   useEffect(() => {
-    localStorage.setItem(
-      'prompterSettings',
-      JSON.stringify({
-        autoscroll,
-        speed,
-        margin,
-        fontSize,
-        mirrorX,
-        mirrorY,
-        shadowStrength,
-        strokeWidth,
-        lineHeight,
-        textAlign,
-        notecardMode,
-        transparentMode,
-      }),
-    )
+    if (!projectName) return
+    const settings = {
+      autoscroll,
+      speed,
+      margin,
+      fontSize,
+      mirrorX,
+      mirrorY,
+      shadowStrength,
+      strokeWidth,
+      lineHeight,
+      textAlign,
+      notecardMode,
+      transparentMode,
+    }
+    if (window.electronAPI?.saveProjectSettings) {
+      window.electronAPI.saveProjectSettings(projectName, settings)
+    } else {
+      localStorage.setItem(
+        `prompterSettings-${projectName}`,
+        JSON.stringify(settings),
+      )
+    }
   }, [
+    projectName,
     autoscroll,
     speed,
     margin,
@@ -183,8 +211,14 @@ function Prompter() {
 
   // Initial script loading on mount only
   useEffect(() => {
-    const handleLoaded = (html) => {
-      setContent(html)
+    const handleLoaded = (data) => {
+      if (!data) return
+      if (typeof data === 'string') {
+        setContent(data)
+        return
+      }
+      setContent(data.html || '')
+      setProjectName(data.project || null)
     }
     const handleUpdated = (html) => {
       setContent(html)
@@ -201,8 +235,14 @@ function Prompter() {
 
     const cleanupLoaded = window.electronAPI.onScriptLoaded(handleLoaded)
     const cleanupUpdated = window.electronAPI.onScriptUpdated(handleUpdated)
-    window.electronAPI.getCurrentScript().then((html) => {
-      if (html) setContent(html)
+    window.electronAPI.getCurrentScript().then((data) => {
+      if (!data) return
+      if (typeof data === 'string') {
+        setContent(data)
+        return
+      }
+      setContent(data.html || '')
+      setProjectName(data.project || null)
     })
 
     return () => {

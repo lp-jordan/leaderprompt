@@ -48,6 +48,7 @@ const pendingLogs = [];
 let viteProcess;
 let isAlwaysOnTop = false;
 let currentScriptHtml = '';
+let currentProjectName = '';
 const rewriteControllers = new Map();
 
 function sendLog(msg) {
@@ -476,17 +477,21 @@ app.whenReady().then(async () => {
       devConsoleWindow.focus();
     }
   });
-  ipcMain.on('open-prompter', async (_, html) => {
+  ipcMain.on('open-prompter', async (_, html, project) => {
     log('Received request to open prompter');
 
     currentScriptHtml = html;
+    currentProjectName = project;
 
     const showWindow = () => {
       if (prompterWindow && !prompterWindow.isDestroyed()) {
         prompterWindow.show();
         prompterWindow.focus();
         prompterWindow.setAlwaysOnTop(isAlwaysOnTop);
-        prompterWindow.webContents.send('load-script', currentScriptHtml);
+        prompterWindow.webContents.send('load-script', {
+          html: currentScriptHtml,
+          project: currentProjectName,
+        });
         log('Prompter window shown');
       }
     };
@@ -536,7 +541,10 @@ app.whenReady().then(async () => {
     log('Prompter window minimized');
   });
 
-  ipcMain.handle('get-current-script', () => currentScriptHtml);
+  ipcMain.handle('get-current-script', () => ({
+    html: currentScriptHtml,
+    project: currentProjectName,
+  }));
 
   ipcMain.handle('get-prompter-bounds', () => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {

@@ -152,7 +152,10 @@ useEffect(() => {
       console.error('electronAPI unavailable');
       return;
     }
-    window.electronAPI.openPrompter(scriptHtmlRef.current || '');
+    window.electronAPI.openPrompter(
+      scriptHtmlRef.current || '',
+      projectNameRef.current,
+    );
     onPrompterOpenRef.current?.(
       projectNameRef.current,
       scriptNameRef.current,
