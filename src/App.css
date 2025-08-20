@@ -27,9 +27,10 @@ body {
   padding: calc(var(--space-4) + var(--space-1));
   overflow-y: auto;
   overflow-x: visible;
+  transition: transform 0.3s ease;
 }
 .left-panel.collapsed {
-  display: none;
+  transform: translateX(-100%);
 }
 
 .right-panel {
