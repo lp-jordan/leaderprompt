@@ -1,0 +1,6 @@
+.disable-links a {
+  pointer-events: none;
+  cursor: default;
+  color: inherit;
+  text-decoration: none;
+}

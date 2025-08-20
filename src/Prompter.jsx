@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import TipTapEditor from './TipTapEditor.jsx'
 import './Prompter.css'
+import './utils/disableLinks.css'
 
 const MARGIN_MIN = 0
 const MARGIN_MAX = 600
@@ -448,7 +449,7 @@ function Prompter() {
         }}
       >
         <div
-          className="script-output"
+          className="script-output disable-links"
           dangerouslySetInnerHTML={{
             __html: notecardMode ? slides[currentSlide] || '' : content,
           }}

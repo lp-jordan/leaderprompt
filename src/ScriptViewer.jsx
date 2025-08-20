@@ -2,6 +2,7 @@ import './ScriptViewer.css';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import TipTapEditor from './TipTapEditor.jsx';
 import { toast } from 'react-hot-toast';
+import './utils/disableLinks.css';
 
 function ScriptViewer({
   projectName,
@@ -247,7 +248,7 @@ useEffect(() => {
           </div>
         </div>
       )}
-      <div className="script-viewer-content">
+      <div className="script-viewer-content disable-links">
         {showContent && (
           <TipTapEditor initialHtml={scriptHtml || ''} onUpdate={handleEdit} />
         )}
