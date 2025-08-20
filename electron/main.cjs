@@ -828,12 +828,44 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
     return;
   }
 
-  for (const file of filePaths) {
-    if (!file || typeof file !== 'string') {
-      error('Skipped invalid file path:', file);
+  const gatherDocx = async (dir) => {
+    let collected = [];
+    let entries;
+    try {
+      entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    } catch {
+      return collected;
+    }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        collected = collected.concat(await gatherDocx(full));
+      } else if (entry.isFile() && full.toLowerCase().endsWith('.docx')) {
+        collected.push(full);
+      }
+    }
+    return collected;
+  };
+
+  let expanded = [];
+  for (const p of filePaths) {
+    if (!p || typeof p !== 'string') continue;
+    let stat;
+    try {
+      stat = await fs.promises.lstat(p);
+    } catch {
       continue;
     }
+    if (stat.isDirectory()) {
+      expanded = expanded.concat(await gatherDocx(p));
+    } else if (stat.isFile() && p.toLowerCase().endsWith('.docx')) {
+      expanded.push(p);
+    }
+  }
 
+  expanded = Array.from(new Set(expanded));
+
+  for (const file of expanded) {
     try {
       const result = await mammoth.convertToHtml({ path: file });
       const html = result.value || '';
@@ -857,6 +889,21 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
   }
 
   updateProjectMetadata(projectName);
+});
+
+ipcMain.handle('filter-directories', async (_, paths) => {
+  const dirs = [];
+  if (!Array.isArray(paths)) return dirs;
+  for (const p of paths) {
+    if (!p || typeof p !== 'string') continue;
+    try {
+      const stat = await fs.promises.lstat(p);
+      if (stat.isDirectory()) dirs.push(p);
+    } catch {
+      // ignore
+    }
+  }
+  return dirs;
 });
 
 ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
