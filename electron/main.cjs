@@ -315,11 +315,24 @@ function getProjectMetadata() {
 
 function updateProjectMetadata(projectName) {
   const metadata = getProjectMetadata();
-  if (!metadata.projects.some((p) => p.name === projectName)) {
-    metadata.projects.push({ name: projectName, added: Date.now() });
-    fs.writeFileSync(getProjectMetadataPath(), JSON.stringify(metadata, null, 2));
-    log(`Metadata updated with new project: ${projectName}`);
+  let finalName = projectName;
+
+  if (metadata.projects.some((p) => p.name === finalName)) {
+    let counter = 1;
+    const base = finalName;
+    while (metadata.projects.some((p) => p.name === `${base}-${counter}`)) {
+      counter++;
+    }
+    finalName = `${base}-${counter}`;
   }
+
+  if (!metadata.projects.some((p) => p.name === finalName)) {
+    metadata.projects.push({ name: finalName, added: Date.now() });
+    fs.writeFileSync(getProjectMetadataPath(), JSON.stringify(metadata, null, 2));
+    log(`Metadata updated with new project: ${finalName}`);
+  }
+
+  return finalName;
 }
 
 function readProjectSettings(projectName) {
@@ -857,9 +870,32 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
       stats = null;
     }
     if (!stats || !stats.isDirectory()) continue;
-    const projectName = sanitizeFilename(path.basename(folder));
-    if (!projectName) continue;
-    const destDir = path.join(getProjectsPath(), projectName);
+    const baseName = sanitizeFilename(path.basename(folder));
+    if (!baseName) continue;
+
+    const metadata = getProjectMetadata();
+    let projectName = baseName;
+    let destDir = path.join(getProjectsPath(), projectName);
+    if (
+      fs.existsSync(destDir) ||
+      metadata.projects.some((p) => p.name === projectName)
+    ) {
+      let counter = 1;
+      while (
+        fs.existsSync(path.join(getProjectsPath(), `${baseName}-${counter}`)) ||
+        metadata.projects.some((p) => p.name === `${baseName}-${counter}`)
+      ) {
+        counter++;
+      }
+      projectName = `${baseName}-${counter}`;
+      destDir = path.join(getProjectsPath(), projectName);
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Project Exists',
+        message: `Project "${baseName}" already exists. Imported as "${projectName}".`,
+      });
+    }
+
     try {
       await fs.promises.mkdir(destDir, { recursive: true });
       const entries = await fs.promises.readdir(folder, { withFileTypes: true });
@@ -871,7 +907,18 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
           const html = result.value || '';
           let safeName = sanitizeFilename(entry.name);
           if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
-          const dest = path.join(destDir, safeName);
+          let dest = path.join(destDir, safeName);
+          if (fs.existsSync(dest)) {
+            const { name, ext } = path.parse(safeName);
+            let i = 1;
+            let candidate = `${name}-${i}${ext}`;
+            while (fs.existsSync(path.join(destDir, candidate))) {
+              i++;
+              candidate = `${name}-${i}${ext}`;
+            }
+            dest = path.join(destDir, candidate);
+            safeName = candidate;
+          }
           const buffer = await htmlToDocx(html);
           await fs.promises.writeFile(dest, buffer);
           log(`Imported script: ${safeName} → ${dest}`);
@@ -879,7 +926,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
           error(`Failed to import file ${src}:`, err);
         }
       }
-      updateProjectMetadata(projectName);
+      projectName = updateProjectMetadata(projectName);
     } catch (err) {
       error('Failed to import folder', folder, err);
     }
