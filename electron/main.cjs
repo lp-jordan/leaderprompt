@@ -865,6 +865,7 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
 
   expanded = Array.from(new Set(expanded));
 
+  let importedCount = 0;
   for (const file of expanded) {
     try {
       const result = await mammoth.convertToHtml({ path: file });
@@ -883,12 +884,13 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
       const buffer = await htmlToDocx(html);
       await fs.promises.writeFile(dest, buffer);
       log(`Imported script: ${safeName} → ${dest}`);
+      importedCount++;
     } catch (err) {
       error(`Failed to import file ${file}:`, err);
     }
   }
-
   updateProjectMetadata(projectName);
+  return importedCount;
 });
 
 ipcMain.handle('filter-directories', async (_, paths) => {
