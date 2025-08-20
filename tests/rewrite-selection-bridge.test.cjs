@@ -32,13 +32,14 @@ function loadPreload() {
   return exposed;
 }
 
-test('rewriteSelection forwards modifier', () => {
+test('rewriteSelection forwards modifier and context', () => {
   const api = loadPreload();
-  api.rewriteSelection('hello', 'formal');
+  api.rewriteSelection('hello', 'formal', 'ctx');
   const args = loadPreload.invokeArgs;
   assert.strictEqual(args[0], 'rewrite-selection');
   assert.strictEqual(args[2], 'hello');
   assert.strictEqual(args[3], 'formal');
+  assert.strictEqual(args[4], 'ctx');
   assert.strictEqual(typeof args[1], 'string');
   delete global.window;
 });
