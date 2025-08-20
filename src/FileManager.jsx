@@ -347,20 +347,17 @@ const FileManager = forwardRef(function FileManager({
     return await window.electronAPI.filterDirectories(paths);
   };
 
-  const handleRootDragEnter = async (e) => {
-    if (e.target === e.currentTarget) {
-      const folders = await getDroppedFolders(e.dataTransfer);
-      if (folders.length) setRootDrag(true);
-    }
+  const handleRootDragEnter = (e) => {
+    const folders = getDroppedFolders(e.dataTransfer);
+    if (folders.length) setRootDrag(true);
   };
 
   const handleRootDragLeave = (e) => {
-    if (e.target === e.currentTarget) setRootDrag(false);
+    if (!e.currentTarget.contains(e.relatedTarget)) setRootDrag(false);
   };
 
   const handleRootDrop = async (e) => {
     e.preventDefault();
-    if (e.target !== e.currentTarget) return;
     setRootDrag(false);
     const fileItems = Array.from(e.dataTransfer.files || []);
     const allPaths = fileItems.map((f) => f.path).filter(Boolean);
