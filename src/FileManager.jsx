@@ -358,6 +358,7 @@ const FileManager = forwardRef(function FileManager({
 
   const handleRootDrop = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     setRootDrag(false);
     const fileItems = Array.from(e.dataTransfer.files || []);
     const allPaths = fileItems.map((f) => f.path).filter(Boolean);
