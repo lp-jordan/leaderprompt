@@ -10,21 +10,6 @@ import DevConsole from './DevConsole.jsx'
 import Updater from './Updater.jsx'
 import ReadPage from './ReadPage.jsx'
 
-export function DevIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden="true"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M8 12l3 3-3 3M13 15h3" />
-    </svg>
-  )
-}
-
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HashRouter>
@@ -34,18 +19,6 @@ createRoot(document.getElementById('root')).render(
           <Route path="/prompter" element={<Prompter />} />
           <Route path="/dev-console" element={<DevConsole />} />
       </Routes>
-      <button
-        className="dev-console-button"
-        onClick={() => {
-          if (!window.electronAPI?.openDevConsole) {
-            console.error('electronAPI unavailable')
-            return
-          }
-          window.electronAPI.openDevConsole()
-        }}
-      >
-        <DevIcon />
-      </button>
       <Updater />
       <Toaster position="top-right" />
     </HashRouter>
