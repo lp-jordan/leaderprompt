@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast'
 import './TipTapEditor.css'
 import './utils/disableLinks.css'
 
-function TipTapEditor({ initialHtml = '', onUpdate }) {
+function TipTapEditor({ initialHtml = '', onUpdate, onReady }) {
   const containerRef = useRef(null)
   const editor = useEditor({
     extensions: [StarterKit, TextStyle, Color],
@@ -15,6 +15,10 @@ function TipTapEditor({ initialHtml = '', onUpdate }) {
       onUpdate?.(editor.getHTML())
     },
   })
+
+  useEffect(() => {
+    if (editor) onReady?.(editor)
+  }, [editor, onReady])
 
   const [menuPos, setMenuPos] = useState(null)
   const [activeMenu, setActiveMenu] = useState('root')

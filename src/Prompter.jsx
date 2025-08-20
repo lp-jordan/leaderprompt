@@ -50,6 +50,14 @@ function Prompter() {
   // all settings are now accessible from a single panel
   const [mainSettingsOpen, setMainSettingsOpen] = useState(false)
   const containerRef = useRef(null)
+  const editorRef = useRef(null)
+
+  const handleEditorReady = (editor) => {
+    editorRef.current = editor
+    if (containerRef.current) {
+      editor.view.dom.scrollTop = containerRef.current.scrollTop
+    }
+  }
 
   const handleEdit = (html) => {
     setContent(html)
@@ -81,6 +89,19 @@ function Prompter() {
       }
     }
   }
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const syncScroll = () => {
+      const editor = editorRef.current
+      if (editor) {
+        editor.view.dom.scrollTop = container.scrollTop
+      }
+    }
+    container.addEventListener('scroll', syncScroll)
+    return () => container.removeEventListener('scroll', syncScroll)
+  }, [])
 
   useEffect(() => {
     if (!projectName) return
@@ -497,7 +518,11 @@ function Prompter() {
           className="editor-overlay"
           style={{ padding: `2rem ${margin}px` }}
         >
-          <TipTapEditor initialHtml={content} onUpdate={handleEdit} />
+          <TipTapEditor
+            initialHtml={content}
+            onUpdate={handleEdit}
+            onReady={handleEditorReady}
+          />
         </div>
       </div>
       {notecardMode && slides.length > 1 && (
