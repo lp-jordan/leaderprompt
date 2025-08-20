@@ -102,3 +102,18 @@ process with the environment variable set, keeping the key outside the project.
 CI pipelines should supply `OPENAI_API_KEY` from a centrally managed secret
 store. The included GitHub Actions workflow uses a repository secret named
 `OPENAI_API_KEY`. Rotate this secret centrally without modifying the codebase.
+
+## Disabling Link Interactions
+
+Components that render arbitrary HTML should prevent links from navigating
+away from the app. Import `src/utils/disableLinks.css` and apply the
+`disable-links` class to the container:
+
+```jsx
+import './utils/disableLinks.css'
+
+<div className='disable-links' dangerouslySetInnerHTML={{ __html: html }} />
+```
+
+`TipTapEditor`, `Prompter`, and `ScriptViewer` already include this
+style. New components that render raw HTML should follow the same pattern.
