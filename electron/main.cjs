@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, globalShortcut } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const path = require('path');
@@ -381,6 +381,7 @@ function createDevConsoleWindow() {
   devConsoleWindow = new BrowserWindow({
     width: 800,
     height: 400,
+    show: false,
     webPreferences: {
       preload: path.resolve(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -464,6 +465,23 @@ app.whenReady().then(async () => {
   setupAutoUpdates();
   createAppMenu();
 
+  globalShortcut.register('CommandOrControl+Shift+D', () => {
+    if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
+      if (devConsoleWindow.isVisible()) {
+        devConsoleWindow.hide();
+      } else {
+        devConsoleWindow.show();
+        devConsoleWindow.focus();
+      }
+    } else {
+      createDevConsoleWindow();
+      if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
+        devConsoleWindow.show();
+        devConsoleWindow.focus();
+      }
+    }
+  });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();
@@ -471,13 +489,6 @@ app.whenReady().then(async () => {
   });
 
   // --- IPC Handlers ---
-  ipcMain.on('open-dev-console', () => {
-    createDevConsoleWindow();
-    if (devConsoleWindow && !devConsoleWindow.isDestroyed()) {
-      devConsoleWindow.show();
-      devConsoleWindow.focus();
-    }
-  });
   ipcMain.on('open-prompter', async (_, html, project) => {
     log('Received request to open prompter');
 
@@ -1146,6 +1157,10 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
 app.on('window-all-closed', () => {
   log('All windows closed');
   if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
 });
 
 app.on('quit', () => {
