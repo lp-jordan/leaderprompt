@@ -16,11 +16,12 @@ const OPENAI_MODEL = 'gpt-4o';
 
 const REWRITE_PROMPT = `You punch up lines for spoken delivery.
 
-Given the input text, produce three alternative phrasings suitable for a teleprompter reader.
+Given a text selection, produce three alternative phrasings suitable for a teleprompter reader.
+If a line beginning with "Context:" follows the selection, use it to keep suggestions natural in the surrounding sentence but rewrite only the selection itself.
 Constraints:
 - Preserve meaning, tense, and point of view.
 - Keep proper nouns and numbers exactly as written.
-- Keep roughly the same length (+/− 15%).
+- Keep roughly the same length (+/− 15%). If the selection is one or two words, each suggestion must contain the same number of words as the selection.
 - Natural spoken cadence; avoid jargon and filler.
 - No preambles, no labels, no explanations.
 
@@ -1020,12 +1021,19 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     }
   });
 
-  ipcMain.handle('rewrite-selection', async (event, id, text, modifier) => {
-    const controller = new AbortController();
-    rewriteControllers.set(id, controller);
-    try {
-      if (!text) return [];
+  ipcMain.handle(
+    'rewrite-selection',
+    async (event, id, text, modifier, context) => {
+      const controller = new AbortController();
+      rewriteControllers.set(id, controller);
+      try {
+        if (!text) return [];
       const truncated = text.slice(0, 1000);
+      const ctx = typeof context === 'string' ? context.trim() : '';
+      const contextTruncated = ctx ? ctx.slice(0, 1000) : '';
+      const userContent = contextTruncated
+        ? `${truncated}\nContext: ${contextTruncated}`
+        : truncated;
       const style = typeof modifier === 'string' ? modifier.trim() : '';
       log(`Rewrite selection request length: ${text.length}`);
       const apiKey = OPENAI_API_KEY;
@@ -1047,7 +1055,7 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
             ...(style
               ? [{ role: 'system', content: `Rewrite the text to sound ${style}.` }]
               : []),
-            { role: 'user', content: truncated },
+            { role: 'user', content: userContent },
           ],
         }),
         signal: controller.signal,
@@ -1075,7 +1083,20 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
         ) {
           throw new Error('Expected array of 3 strings');
         }
-        return suggestions;
+        const selectionWordCount = truncated
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean).length;
+        const normalized =
+          selectionWordCount <= 2
+            ? suggestions.map((s) =>
+                s
+                  .split(/\s+/)
+                  .slice(0, selectionWordCount)
+                  .join(' '),
+              )
+            : suggestions;
+        return normalized;
       } catch (err) {
         error('Failed to parse suggestions:', err);
         return { error: 'Invalid response format' };

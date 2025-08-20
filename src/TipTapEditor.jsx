@@ -111,19 +111,33 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
       console.error('electronAPI unavailable')
       return
     }
+    const sel = editor.state.selection
     const text =
       textArg ??
-      (() => {
-        const sel = editor.state.selection
-        return sel.empty
-          ? ''
-          : editor.state.doc.textBetween(sel.from, sel.to, ' ')
-      })()
+      (sel.empty
+        ? ''
+        : editor.state.doc.textBetween(sel.from, sel.to, ' '))
     if (!text.trim()) {
       const msg = 'No suggestions available'
       setErrorMessage(msg)
       setSuggestions([msg])
       return
+    }
+
+    let context
+    const wordCount = text.trim().split(/\s+/).filter(Boolean).length
+    if (wordCount <= 2) {
+      const beforeWords = editor.state.doc
+        .textBetween(0, sel.from, ' ')
+        .trim()
+        .split(/\s+/)
+      const afterWords = editor.state.doc
+        .textBetween(sel.to, editor.state.doc.content.size, ' ')
+        .trim()
+        .split(/\s+/)
+      const before = beforeWords.slice(-10).join(' ')
+      const after = afterWords.slice(0, 10).join(' ')
+      context = `${before} ${text} ${after}`.trim()
     }
 
     cancelRewrite()
@@ -141,7 +155,11 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
     }, 150)
 
     setErrorMessage(null)
-    const { id, promise } = window.electronAPI.rewriteSelection(text, modifierArg)
+    const { id, promise } = window.electronAPI.rewriteSelection(
+      text,
+      modifierArg,
+      context,
+    )
     rewriteIdRef.current = id
     promise
       .then((res) => {
