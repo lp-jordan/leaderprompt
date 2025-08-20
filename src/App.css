@@ -229,15 +229,16 @@ body {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 1000px;
+  max-height: none;
   opacity: 1;
-  overflow: hidden;
+  overflow: visible;
   transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
 .project-group ul.collapsed {
   max-height: 0;
   opacity: 0;
+  overflow: hidden;
 }
 
 .project-group li {
