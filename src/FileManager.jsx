@@ -332,6 +332,7 @@ const FileManager = forwardRef(function FileManager({
 
   const handleRootDragOver = (e) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
   };
 
   const getDroppedFolders = (dataTransfer) => {
@@ -382,7 +383,52 @@ const FileManager = forwardRef(function FileManager({
     e.stopPropagation();
     const external = e.dataTransfer.files && e.dataTransfer.files.length;
     if (external && !dragInfo) {
-      const filePaths = Array.from(e.dataTransfer.files).map((f) => f.path);
+      let filePaths = Array.from(e.dataTransfer.files || [])
+        .map((f) => f.path)
+        .filter((p) => p?.toLowerCase().endsWith('.docx'));
+
+      const folderPaths = getDroppedFolders(e.dataTransfer);
+      if (folderPaths.length) {
+        const items = Array.from(e.dataTransfer.items || []);
+        const collected = [];
+        const traverse = async (entry) => {
+          if (entry.isFile) {
+            await new Promise((resolve) =>
+              entry.file((file) => {
+                if (file.path && file.path.toLowerCase().endsWith('.docx')) {
+                  collected.push(file.path);
+                }
+                resolve();
+              })
+            );
+          } else if (entry.isDirectory) {
+            const reader = entry.createReader();
+            await new Promise((resolve) => {
+              const readEntries = () => {
+                reader.readEntries(async (entries) => {
+                  if (!entries.length) {
+                    resolve();
+                    return;
+                  }
+                  for (const ent of entries) {
+                    await traverse(ent);
+                  }
+                  readEntries();
+                });
+              };
+              readEntries();
+            });
+          }
+        };
+
+        for (const item of items) {
+          const entry = item.webkitGetAsEntry?.();
+          if (entry?.isDirectory) await traverse(entry);
+        }
+        filePaths = Array.from(new Set([...filePaths, ...collected]));
+      }
+
+      if (!filePaths.length) return;
       if (!window.electronAPI?.importScriptsToProject) {
         console.error('electronAPI unavailable');
         return;
