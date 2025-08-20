@@ -12,9 +12,14 @@
 
 .tiptap-editor .ProseMirror {
   outline: none;
-  background: #2a2a2a;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  line-height: inherit;
+  text-align: inherit;
+  white-space: pre-wrap;
+  word-break: normal;
 }
 
 /* Context menu base */
