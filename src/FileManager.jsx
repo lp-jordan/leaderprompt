@@ -253,6 +253,9 @@ const FileManager = forwardRef(function FileManager({
           toast.error('Failed to delete project');
         } else {
           toast.success('Project deleted');
+          if (currentProject === projectName) {
+            onScriptSelect(null, null);
+          }
         }
         await loadProjects();
       },
@@ -274,6 +277,12 @@ const FileManager = forwardRef(function FileManager({
           toast.error('Failed to delete script');
         } else {
           toast.success('Script deleted');
+          if (
+            currentProject === projectName &&
+            currentScript === scriptName
+          ) {
+            onScriptSelect(null, null);
+          }
         }
         await loadProjects();
       },
