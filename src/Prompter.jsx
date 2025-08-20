@@ -90,10 +90,18 @@ function Prompter() {
     }
   }, [])
 
-  const enterEdit = () => {
+  const enterEdit = (e) => {
+    const { clientX, clientY } = e
     setIsEditing(true)
     setTimeout(() => {
-      editorRef.current?.commands.focus('end')
+      const editor = editorRef.current
+      if (!editor) return
+      const pos = editor.view.posAtCoords({ left: clientX, top: clientY })
+      if (pos) {
+        editor.chain().focus().setTextSelection(pos.pos).run()
+      } else {
+        editor.commands.focus('end')
+      }
     }, 0)
   }
 
