@@ -21,7 +21,7 @@ If a line beginning with "Context:" follows the selection, use it to keep sugges
 Constraints:
 - Preserve meaning, tense, and point of view.
 - Keep proper nouns and numbers exactly as written.
-- Keep roughly the same length (+/− 15%).
+- Keep roughly the same length (+/− 15%). If the selection is one or two words, each suggestion must contain the same number of words as the selection.
 - Natural spoken cadence; avoid jargon and filler.
 - No preambles, no labels, no explanations.
 
@@ -1083,7 +1083,20 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
         ) {
           throw new Error('Expected array of 3 strings');
         }
-        return suggestions;
+        const selectionWordCount = truncated
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean).length;
+        const normalized =
+          selectionWordCount <= 2
+            ? suggestions.map((s) =>
+                s
+                  .split(/\s+/)
+                  .slice(0, selectionWordCount)
+                  .join(' '),
+              )
+            : suggestions;
+        return normalized;
       } catch (err) {
         error('Failed to parse suggestions:', err);
         return { error: 'Invalid response format' };
