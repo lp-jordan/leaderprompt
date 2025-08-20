@@ -121,7 +121,7 @@
   height: 100vh;
   width: 220px;
   transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -152,6 +152,12 @@
   cursor: pointer;
   padding: var(--space-2);
   border-radius: 0 4px 4px 0;
+  transform: translateX(0);
+  transition: transform 0.3s ease-in-out;
+}
+
+.main-settings-toggle.open {
+  transform: translateX(220px);
 }
 
 .toggle-btn {
