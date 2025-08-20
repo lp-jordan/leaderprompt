@@ -363,18 +363,33 @@ const FileManager = forwardRef(function FileManager({
     e.preventDefault();
     if (e.target !== e.currentTarget) return;
     setRootDrag(false);
-    let paths = getDroppedFolders(e.dataTransfer);
-    if (!paths.length) {
-      paths = Array.from(e.dataTransfer.files || []).map((f) => f.path);
-    }
-    if (paths.length) {
+    const folderPaths = getDroppedFolders(e.dataTransfer);
+    const fileItems = Array.from(e.dataTransfer.files || []);
+    const filePaths = fileItems
+      .map((f) => f.path)
+      .filter((p) => p?.toLowerCase().endsWith('.docx'));
+    if (folderPaths.length) {
       if (!window.electronAPI?.importFoldersAsProjects) {
         console.error('electronAPI unavailable');
         return;
       }
-      await window.electronAPI.importFoldersAsProjects(paths);
+      await window.electronAPI.importFoldersAsProjects(folderPaths);
       await loadProjects();
       toast.success('Projects imported');
+    } else if (fileItems.length) {
+      const projectName = 'Quick Scripts';
+      if (!window.electronAPI?.importScriptsToProject) {
+        console.error('electronAPI unavailable');
+        toast.error('Unable to import scripts');
+        return;
+      }
+      if (!filePaths.length) {
+        toast.error('Only .docx files can be imported');
+        return;
+      }
+      await window.electronAPI.importScriptsToProject(filePaths, projectName);
+      await loadProjects();
+      toast.success('Scripts imported');
     }
   };
 
