@@ -334,9 +334,23 @@ const FileManager = forwardRef(function FileManager({
     e.preventDefault();
   };
 
+  const getDroppedFolders = (dataTransfer) => {
+    const items = Array.from(dataTransfer.items || []);
+    const dirs = [];
+    for (const item of items) {
+      const entry = item.webkitGetAsEntry?.();
+      if (entry?.isDirectory) {
+        const file = item.getAsFile();
+        if (file?.path) dirs.push(file.path);
+      }
+    }
+    return dirs;
+  };
+
   const handleRootDragEnter = (e) => {
-    if (e.target === e.currentTarget && e.dataTransfer.files?.length) {
-      setRootDrag(true);
+    if (e.target === e.currentTarget) {
+      const folders = getDroppedFolders(e.dataTransfer);
+      if (folders.length) setRootDrag(true);
     }
   };
 
@@ -348,7 +362,10 @@ const FileManager = forwardRef(function FileManager({
     e.preventDefault();
     if (e.target !== e.currentTarget) return;
     setRootDrag(false);
-    const paths = Array.from(e.dataTransfer.files || []).map((f) => f.path);
+    let paths = getDroppedFolders(e.dataTransfer);
+    if (!paths.length) {
+      paths = Array.from(e.dataTransfer.files || []).map((f) => f.path);
+    }
     if (paths.length) {
       if (!window.electronAPI?.importFoldersAsProjects) {
         console.error('electronAPI unavailable');
