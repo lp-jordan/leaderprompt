@@ -59,23 +59,6 @@ function Prompter() {
     }
   }
 
-  const verifySync = () => {
-    const editor = editorRef.current
-    const container = containerRef.current
-    if (!editor || !container) return
-    const editorHtml = editor.getHTML()
-    const outputEl = container.querySelector('.script-output')
-    if (!outputEl) return
-    const outputHtml = outputEl.innerHTML
-    if (editorHtml !== outputHtml) {
-      console.warn('Editor and script output out of sync; resetting')
-      setContent(editorHtml)
-      if (editor?.commands?.setContent) {
-        editor.commands.setContent(editorHtml, false)
-      }
-    }
-  }
-
   const handleEdit = (html) => {
     setContent(html)
     if (!window.electronAPI?.sendUpdatedScript) {
@@ -83,7 +66,6 @@ function Prompter() {
       return
     }
     window.electronAPI.sendUpdatedScript(html)
-    verifySync()
   }
 
   const resetDefaults = () => {
