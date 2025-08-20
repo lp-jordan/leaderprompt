@@ -345,8 +345,7 @@ function Prompter() {
       <div className="resize-handle bottom-left" onMouseDown={(e) => startResize(e, 'bottom-left')} />
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
         <button
-          className="main-settings-toggle"
-          style={{ left: mainSettingsOpen ? '220px' : '0' }}
+          className={`main-settings-toggle ${mainSettingsOpen ? 'open' : ''}`}
           onClick={() => setMainSettingsOpen(!mainSettingsOpen)}
         >
           {mainSettingsOpen ? '←' : '→'}
