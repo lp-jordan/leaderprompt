@@ -10,7 +10,8 @@ const randomUUID = () => {
 
 const api = {
   // Prompter controls
-  openPrompter: (html) => ipcRenderer.send('open-prompter', html),
+  openPrompter: (html, project) =>
+    ipcRenderer.send('open-prompter', html, project),
   onScriptLoaded: (callback) => {
     const handler = (_, data) => callback(data)
     ipcRenderer.on('load-script', handler)
@@ -38,6 +39,12 @@ const api = {
     ipcRenderer.invoke('reorder-scripts', projectName, order),
   moveScript: (projectName, newProjectName, scriptName, index) =>
     ipcRenderer.invoke('move-script', projectName, newProjectName, scriptName, index),
+
+  // Project settings
+  getProjectSettings: (projectName) =>
+    ipcRenderer.invoke('get-project-settings', projectName),
+  saveProjectSettings: (projectName, settings) =>
+    ipcRenderer.invoke('save-project-settings', projectName, settings),
 
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>
