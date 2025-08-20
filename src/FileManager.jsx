@@ -335,17 +335,16 @@ const FileManager = forwardRef(function FileManager({
     e.dataTransfer.dropEffect = 'copy';
   };
 
-  const getDroppedFolders = (dataTransfer) => {
-    const items = Array.from(dataTransfer.items || []);
-    const dirs = [];
-    for (const item of items) {
-      const entry = item.webkitGetAsEntry?.();
-      if (entry?.isDirectory) {
-        const file = item.getAsFile();
-        if (file?.path) dirs.push(file.path);
-      }
+  const getDroppedFolders = async (dataTransfer) => {
+    const paths = Array.from(dataTransfer.files || [])
+      .map((f) => f.path)
+      .filter(Boolean);
+    if (!paths.length) return [];
+    if (!window.electronAPI?.filterDirectories) {
+      console.error('electronAPI unavailable');
+      return [];
     }
-    return dirs;
+    return await window.electronAPI.filterDirectories(paths);
   };
 
   const handleRootDragEnter = (e) => {
@@ -360,10 +359,14 @@ const FileManager = forwardRef(function FileManager({
   const handleRootDrop = async (e) => {
     e.preventDefault();
     setRootDrag(false);
-    const folderPaths = getDroppedFolders(e.dataTransfer);
     const fileItems = Array.from(e.dataTransfer.files || []);
-    const filePaths = fileItems
-      .map((f) => f.path)
+    const allPaths = fileItems.map((f) => f.path).filter(Boolean);
+    let folderPaths = [];
+    if (window.electronAPI?.filterDirectories) {
+      folderPaths = await window.electronAPI.filterDirectories(allPaths);
+    }
+    const filePaths = allPaths
+      .filter((p) => !folderPaths.includes(p))
       .filter((p) => p?.toLowerCase().endsWith('.docx'));
     if (folderPaths.length) {
       if (!window.electronAPI?.importFoldersAsProjects) {
@@ -395,57 +398,22 @@ const FileManager = forwardRef(function FileManager({
     e.stopPropagation();
     const external = e.dataTransfer.files && e.dataTransfer.files.length;
     if (external && !dragInfo) {
-      let filePaths = Array.from(e.dataTransfer.files || [])
-        .map((f) => f.path)
-        .filter((p) => p?.toLowerCase().endsWith('.docx'));
-
-      const folderPaths = getDroppedFolders(e.dataTransfer);
-      if (folderPaths.length) {
-        const items = Array.from(e.dataTransfer.items || []);
-        const collected = [];
-        const traverse = async (entry) => {
-          if (entry.isFile) {
-            await new Promise((resolve) =>
-              entry.file((file) => {
-                if (file.path && file.path.toLowerCase().endsWith('.docx')) {
-                  collected.push(file.path);
-                }
-                resolve();
-              })
-            );
-          } else if (entry.isDirectory) {
-            const reader = entry.createReader();
-            await new Promise((resolve) => {
-              const readEntries = () => {
-                reader.readEntries(async (entries) => {
-                  if (!entries.length) {
-                    resolve();
-                    return;
-                  }
-                  for (const ent of entries) {
-                    await traverse(ent);
-                  }
-                  readEntries();
-                });
-              };
-              readEntries();
-            });
-          }
-        };
-
-        for (const item of items) {
-          const entry = item.webkitGetAsEntry?.();
-          if (entry?.isDirectory) await traverse(entry);
-        }
-        filePaths = Array.from(new Set([...filePaths, ...collected]));
+      const fileItems = Array.from(e.dataTransfer.files || []);
+      const allPaths = fileItems.map((f) => f.path).filter(Boolean);
+      let folderPaths = [];
+      if (window.electronAPI?.filterDirectories) {
+        folderPaths = await window.electronAPI.filterDirectories(allPaths);
       }
-
-      if (!filePaths.length) return;
+      const filePaths = allPaths
+        .filter((p) => !folderPaths.includes(p))
+        .filter((p) => p?.toLowerCase().endsWith('.docx'));
+      const pathsToImport = [...filePaths, ...folderPaths];
+      if (!pathsToImport.length) return;
       if (!window.electronAPI?.importScriptsToProject) {
         console.error('electronAPI unavailable');
         return;
       }
-      await window.electronAPI.importScriptsToProject(filePaths, projectName);
+      await window.electronAPI.importScriptsToProject(pathsToImport, projectName);
       await loadProjects();
       toast.success('Scripts imported');
       return;

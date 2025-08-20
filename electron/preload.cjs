@@ -51,6 +51,7 @@ const api = {
     ipcRenderer.invoke('import-scripts-to-project', filePaths, projectName),
   importFoldersAsProjects: (folderPaths) =>
     ipcRenderer.invoke('import-folders-as-projects', folderPaths),
+  filterDirectories: (paths) => ipcRenderer.invoke('filter-directories', paths),
   getScriptsForProject: (projectName) =>
     ipcRenderer.invoke('get-scripts-for-project', projectName),
   getAllProjectsWithScripts: () =>
