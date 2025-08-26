@@ -309,30 +309,37 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleDragStart = (projectName, index) => {
+    console.log('Drag start', { projectName, index });
     setDragInfo({ projectName, index });
   };
 
   const handleDragOver = (e) => {
+    console.log('Drag over');
     e.preventDefault();
   };
 
   const handleDragEnter = (index) => {
+    console.log('Drag enter', index);
     setHoverIndex(index);
   };
 
   const handleDragLeave = (index) => {
+    console.log('Drag leave', index);
     setHoverIndex((prev) => (prev === index ? null : prev));
   };
 
   const handleProjectDragEnter = (projectName) => {
+    console.log('Project drag enter', projectName);
     setHoverProject(projectName);
   };
 
   const handleProjectDragLeave = (projectName) => {
+    console.log('Project drag leave', projectName);
     setHoverProject((prev) => (prev === projectName ? null : prev));
   };
 
   const handleProjectDrop = (e, projectName) => {
+    console.log('Project drop', projectName);
     const proj = projects.find((p) => p.name === projectName);
     const index = proj ? proj.scripts.length : -1;
     handleDrop(e, projectName, index);
@@ -340,11 +347,13 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleRootDragOver = (e) => {
+    console.log('Root drag over');
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
   };
 
   const parseDataTransferItems = async (dataTransfer) => {
+    console.log('Parsing data transfer items');
     const items = Array.from(dataTransfer?.items || []);
     const folderPaths = [];
     let filePaths = [];
@@ -377,6 +386,7 @@ const FileManager = forwardRef(function FileManager({
       folderPaths.push(...dirs);
       filePaths = allPaths.filter((p) => !dirs.includes(p));
     }
+    console.log('Parsed items', { folderPaths, filePaths });
     return { folderPaths, filePaths };
   };
 
@@ -387,21 +397,25 @@ const FileManager = forwardRef(function FileManager({
 
   const handleRootDragEnter = (e) => {
     getDroppedFolders(e.dataTransfer).then((folders) => {
+      console.log('Root drag enter', folders);
       setRootDrag(folders.length > 0);
     });
   };
 
   const handleRootDragLeave = (e) => {
+    console.log('Root drag leave');
     if (!e.currentTarget.contains(e.relatedTarget)) setRootDrag(false);
   };
 
   const handleRootDrop = async (e) => {
+    console.log('Root drop');
     e.preventDefault();
     e.stopPropagation();
     setRootDrag(false);
     const { folderPaths, filePaths } = await parseDataTransferItems(
       e.dataTransfer,
     );
+    console.log('Root drop paths', { folderPaths, filePaths });
     const docxPaths = filePaths.filter((p) => p?.toLowerCase().endsWith('.docx'));
     if (folderPaths.length > 0) {
       if (!window.electronAPI?.importFoldersAsProjects) {
@@ -437,10 +451,12 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleDrop = async (e, projectName, index) => {
+    console.log('Drop', { projectName, index, dragInfo });
     e.preventDefault();
     e.stopPropagation();
     const external = e.dataTransfer.files && e.dataTransfer.files.length;
     if (external && !dragInfo) {
+      console.log('External drop detected');
       const fileItems = Array.from(e.dataTransfer.files || []);
       const allPaths = fileItems.map((f) => f.path).filter(Boolean);
       let folderPaths = [];
@@ -456,14 +472,19 @@ const FileManager = forwardRef(function FileManager({
         console.error('electronAPI unavailable');
         return;
       }
+      console.log('Importing scripts', pathsToImport, 'to', projectName);
       await window.electronAPI.importScriptsToProject(pathsToImport, projectName);
       await loadProjects();
       toast.success('Scripts imported');
       return;
     }
-    if (!dragInfo) return;
+    if (!dragInfo) {
+      console.log('No drag info');
+      return;
+    }
 
     if (dragInfo.projectName === projectName) {
+      console.log('Reordering within project');
       let newOrder = null;
       setProjects((prev) =>
         prev.map((p) => {
@@ -483,14 +504,17 @@ const FileManager = forwardRef(function FileManager({
           console.error('electronAPI unavailable');
           return;
         }
+        console.log('Saving new order', newOrder);
         await window.electronAPI.reorderScripts(projectName, newOrder);
       }
     } else {
+      console.log('Moving script to another project');
       const sourceProject = dragInfo.projectName;
       const sourceScripts =
         projects.find((p) => p.name === sourceProject)?.scripts || [];
       const scriptName = sourceScripts[dragInfo.index]?.name;
       if (!scriptName) {
+        console.log('No script name found');
         setDragInfo(null);
         return;
       }
@@ -504,15 +528,23 @@ const FileManager = forwardRef(function FileManager({
         console.error('electronAPI unavailable');
         return;
       }
+      console.log('Moving script', scriptName, 'from', sourceProject, 'to', projectName);
       await window.electronAPI.moveScript(
         sourceProject,
         projectName,
         scriptName,
         index,
       );
+      console.log('Saving destination order', destOrder);
       await window.electronAPI.reorderScripts(projectName, destOrder);
       await loadProjects();
     }
+  };
+
+  const handleDragEnd = () => {
+    console.log('Drag end');
+    setDragInfo(null);
+    setHoverIndex(null);
   };
 
   return (
@@ -653,10 +685,7 @@ const FileManager = forwardRef(function FileManager({
                       onDrop={(e) => handleDrop(e, project.name, index)}
                       onDragEnter={() => handleDragEnter(index)}
                       onDragLeave={() => handleDragLeave(index)}
-                      onDragEnd={() => {
-                        setDragInfo(null);
-                        setHoverIndex(null);
-                      }}
+                      onDragEnd={handleDragEnd}
                       className={`script-item${
                         isPrompting ? ' prompting' : ''
                       }${isLoaded ? ' loaded' : ''}${
