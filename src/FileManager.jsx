@@ -72,6 +72,7 @@ const FileManager = forwardRef(function FileManager({
   loadedScript,
   currentProject,
   currentScript,
+  onRootDragStateChange,
 }, ref) {
   const [projects, setProjects] = useState([]);
   const [newProjectName, setNewProjectName] = useState('');
@@ -427,13 +428,18 @@ const FileManager = forwardRef(function FileManager({
   const handleRootDragEnter = (e) => {
     getDroppedFolders(e.dataTransfer).then((folders) => {
       console.log('Root drag enter', folders);
-      setRootDrag(folders.length > 0);
+      const dragging = folders.length > 0;
+      setRootDrag(dragging);
+      onRootDragStateChange?.(dragging);
     });
   };
 
   const handleRootDragLeave = (e) => {
     console.log('Root drag leave');
-    if (!e.currentTarget.contains(e.relatedTarget)) setRootDrag(false);
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setRootDrag(false);
+      onRootDragStateChange?.(false);
+    }
   };
 
   const handleRootDrop = async (e) => {
@@ -441,6 +447,7 @@ const FileManager = forwardRef(function FileManager({
     e.preventDefault();
     e.stopPropagation();
     setRootDrag(false);
+    onRootDragStateChange?.(false);
     const { folders, files } = await parseDataTransferItems(e.dataTransfer);
     console.log('Root drop items', { folders, files });
     if (folders.length > 0) {
