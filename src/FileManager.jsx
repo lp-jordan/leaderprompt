@@ -7,7 +7,7 @@ import {
 } from 'react';
 import ConfirmModal from './ConfirmModal.jsx';
 import { toast } from 'react-hot-toast';
-import { parseDataTransferItems } from './utils/dragHelpers.js';
+import { parseDataTransferItems, buildDocxPayload } from './utils/dragHelpers.js';
 
 function PencilIcon() {
   return (

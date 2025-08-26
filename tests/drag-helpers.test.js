@@ -81,7 +81,6 @@ test('parseDataTransferItems returns folders and files', async () => {
     files.map((f) => f.name).sort(),
     ['inner.txt', 'loose.txt'],
   );
-
 });
 
 function makeFile(name) {
@@ -110,4 +109,3 @@ test('FileManager handleDrop uses buildDocxPayload', () => {
   const hasHelperCall = /buildDocxPayload\(/.test(source);
   assert.ok(hasHelperCall);
 });
-
