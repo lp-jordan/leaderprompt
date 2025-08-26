@@ -38,6 +38,7 @@
     "electron-dev": "electron electron/main.cjs",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "node --test",
     "preview": "vite preview",
     "start": "node scripts/bootstrap.mjs",
     "package": "node scripts/package.mjs"

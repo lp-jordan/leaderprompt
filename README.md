@@ -11,6 +11,16 @@ Currently, two official plugins are available:
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 
+## Testing
+
+Run the test suite with:
+
+```bash
+npm test
+```
+
+This uses Node's built-in test runner (`node --test`).
+
 ## Electron API
 
 The preload script exposes an `electronAPI` object on `window` for renderer processes. Alongside other helpers, you can listen for live script updates with:

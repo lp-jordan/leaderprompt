@@ -103,6 +103,7 @@ test('App handleLeftDrop uses buildDocxPayload', () => {
   assert.ok(hasHelperCall);
 });
 
+
 test('FileManager handleDrop uses buildDocxPayload', () => {
   const source = fs.readFileSync('./src/FileManager.jsx', 'utf8');
   const hasHelperCall = /buildDocxPayload\(/.test(source);
