@@ -1,3 +1,4 @@
+/* global global, setImmediate */
 import test from 'node:test'
 import assert from 'node:assert'
 import { JSDOM } from 'jsdom'

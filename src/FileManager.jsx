@@ -390,6 +390,11 @@ const FileManager = forwardRef(function FileManager({
     const items = Array.from(dataTransfer?.items || []);
     const folders = [];
     const files = [];
+    if (!items.length && dataTransfer?.files?.length) {
+      files.push(...Array.from(dataTransfer.files));
+      console.log('Parsed items', { folders, files });
+      return { folders, files };
+    }
     for (const item of items) {
       if (item.kind !== 'file') continue;
       let handle = null;
