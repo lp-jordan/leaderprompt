@@ -309,30 +309,37 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleDragStart = (projectName, index) => {
+    console.log('Drag start', { projectName, index });
     setDragInfo({ projectName, index });
   };
 
   const handleDragOver = (e) => {
+    console.log('Drag over');
     e.preventDefault();
   };
 
   const handleDragEnter = (index) => {
+    console.log('Drag enter', index);
     setHoverIndex(index);
   };
 
   const handleDragLeave = (index) => {
+    console.log('Drag leave', index);
     setHoverIndex((prev) => (prev === index ? null : prev));
   };
 
   const handleProjectDragEnter = (projectName) => {
+    console.log('Project drag enter', projectName);
     setHoverProject(projectName);
   };
 
   const handleProjectDragLeave = (projectName) => {
+    console.log('Project drag leave', projectName);
     setHoverProject((prev) => (prev === projectName ? null : prev));
   };
 
   const handleProjectDrop = (e, projectName) => {
+    console.log('Project drop', projectName);
     const proj = projects.find((p) => p.name === projectName);
     const index = proj ? proj.scripts.length : -1;
     handleDrop(e, projectName, index);
@@ -340,92 +347,145 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleRootDragOver = (e) => {
+    console.log('Root drag over');
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
   };
 
-  const parseDataTransferItems = async (dataTransfer) => {
-    const items = Array.from(dataTransfer?.items || []);
-    const folderPaths = [];
-    let filePaths = [];
-    for (const item of items) {
-      if (item.kind !== 'file') continue;
-      let entry = null;
-      if (item.webkitGetAsEntry) {
-        entry = item.webkitGetAsEntry();
-      } else if (item.getAsFileSystemHandle) {
-        try {
-          entry = await item.getAsFileSystemHandle();
-        } catch {
-          entry = null;
+  const readAllFiles = async (handle) => {
+    const files = [];
+    if (!handle) return files;
+    if (handle.kind === 'file' || handle.isFile) {
+      const file = handle.getFile
+        ? await handle.getFile()
+        : await new Promise((res, rej) => handle.file(res, rej));
+      files.push(file);
+    } else if (handle.kind === 'directory' || handle.isDirectory) {
+      if (handle.entries) {
+        for await (const [, child] of handle.entries()) {
+          files.push(...(await readAllFiles(child)));
+        }
+      } else if (handle.values) {
+        for await (const child of handle.values()) {
+          files.push(...(await readAllFiles(child)));
+        }
+      } else if (handle.createReader) {
+        const reader = handle.createReader();
+        const readEntries = () =>
+          new Promise((resolve) => reader.readEntries(resolve));
+        let entries = await readEntries();
+        while (entries.length) {
+          for (const entry of entries) {
+            files.push(...(await readAllFiles(entry)));
+          }
+          entries = await readEntries();
         }
       }
-      const file = item.getAsFile?.();
-      const path = file?.path;
-      if (!path) continue;
-      if (entry?.isDirectory) folderPaths.push(path);
-      else filePaths.push(path);
     }
-    if (!folderPaths.length && !filePaths.length && dataTransfer?.files?.length) {
-      const allPaths = Array.from(dataTransfer.files)
-        .map((f) => f.path)
-        .filter(Boolean);
-      let dirs = [];
-      if (window.electronAPI?.filterDirectories) {
-        dirs = await window.electronAPI.filterDirectories(allPaths);
+    return files;
+  };
+
+  const parseDataTransferItems = async (dataTransfer) => {
+    console.log('Parsing data transfer items');
+    const items = Array.from(dataTransfer?.items || []);
+    const folders = [];
+    const files = [];
+    for (const item of items) {
+      if (item.kind !== 'file') continue;
+      let handle = null;
+      if (item.getAsFileSystemHandle) {
+        try {
+          handle = await item.getAsFileSystemHandle();
+        } catch {
+          handle = null;
+        }
+      } else if (item.webkitGetAsEntry) {
+        handle = item.webkitGetAsEntry();
       }
-      folderPaths.push(...dirs);
-      filePaths = allPaths.filter((p) => !dirs.includes(p));
+      if (handle && (handle.kind === 'directory' || handle.isDirectory)) {
+        const dirFiles = await readAllFiles(handle);
+        folders.push({ name: handle.name, files: dirFiles });
+        files.push(...dirFiles);
+      } else {
+        const file = item.getAsFile
+          ? item.getAsFile()
+          : handle?.getFile
+            ? await handle.getFile()
+            : null;
+        if (file) files.push(file);
+      }
     }
-    return { folderPaths, filePaths };
+    console.log('Parsed items', { folders, files });
+    return { folders, files };
   };
 
   const getDroppedFolders = async (dataTransfer) => {
-    const { folderPaths } = await parseDataTransferItems(dataTransfer);
-    return folderPaths;
+    const { folders } = await parseDataTransferItems(dataTransfer);
+    return folders.map((f) => f.name);
   };
 
   const handleRootDragEnter = (e) => {
     getDroppedFolders(e.dataTransfer).then((folders) => {
+      console.log('Root drag enter', folders);
       setRootDrag(folders.length > 0);
     });
   };
 
   const handleRootDragLeave = (e) => {
+    console.log('Root drag leave');
     if (!e.currentTarget.contains(e.relatedTarget)) setRootDrag(false);
   };
 
   const handleRootDrop = async (e) => {
+    console.log('Root drop');
     e.preventDefault();
     e.stopPropagation();
     setRootDrag(false);
-    const { folderPaths, filePaths } = await parseDataTransferItems(
-      e.dataTransfer,
-    );
-    const docxPaths = filePaths.filter((p) => p?.toLowerCase().endsWith('.docx'));
-    if (folderPaths.length > 0) {
-      if (!window.electronAPI?.importFoldersAsProjects) {
+    const { folders, files } = await parseDataTransferItems(e.dataTransfer);
+    console.log('Root drop items', { folders, files });
+    if (folders.length > 0) {
+      if (!window.electronAPI?.importFoldersDataAsProjects) {
         console.error('electronAPI unavailable');
         toast.error('Unable to import folders');
         return;
       }
-      await window.electronAPI.importFoldersAsProjects(folderPaths);
+      const payload = await Promise.all(
+        folders.map(async (f) => ({
+          name: f.name,
+          files: await Promise.all(
+            f.files
+              .filter((file) => file.name.toLowerCase().endsWith('.docx'))
+              .map(async (file) => ({
+                name: file.name,
+                data: await file.arrayBuffer(),
+              })),
+          ),
+        })),
+      );
+      await window.electronAPI.importFoldersDataAsProjects(payload);
       await loadProjects();
       toast.success('Projects imported');
       return;
     }
     const projectName = 'Quick Scripts';
-    if (!window.electronAPI?.importScriptsToProject) {
+    if (!window.electronAPI?.importFilesToProject) {
       console.error('electronAPI unavailable');
       toast.error('Unable to import scripts');
       return;
     }
-    if (!docxPaths.length) {
-      if (filePaths.length) toast.error('Only .docx files can be imported');
+    const docxFiles = files.filter((f) => f.name.toLowerCase().endsWith('.docx'));
+    if (!docxFiles.length) {
+      if (files.length) toast.error('Only .docx files can be imported');
       return;
     }
-    const imported = await window.electronAPI.importScriptsToProject(
-      docxPaths,
+    const filePayload = await Promise.all(
+      docxFiles.map(async (file) => ({
+        name: file.name,
+        data: await file.arrayBuffer(),
+      })),
+    );
+    const imported = await window.electronAPI.importFilesToProject(
+      filePayload,
       projectName,
     );
     await loadProjects();
@@ -437,33 +497,49 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleDrop = async (e, projectName, index) => {
+    console.log('Drop', { projectName, index, dragInfo });
     e.preventDefault();
     e.stopPropagation();
     const external = e.dataTransfer.files && e.dataTransfer.files.length;
     if (external && !dragInfo) {
-      const fileItems = Array.from(e.dataTransfer.files || []);
-      const allPaths = fileItems.map((f) => f.path).filter(Boolean);
-      let folderPaths = [];
-      if (window.electronAPI?.filterDirectories) {
-        folderPaths = await window.electronAPI.filterDirectories(allPaths);
-      }
-      const filePaths = allPaths
-        .filter((p) => !folderPaths.includes(p))
-        .filter((p) => p?.toLowerCase().endsWith('.docx'));
-      const pathsToImport = [...filePaths, ...folderPaths];
-      if (!pathsToImport.length) return;
-      if (!window.electronAPI?.importScriptsToProject) {
+      console.log('External drop detected');
+      const { folders, files } = await parseDataTransferItems(e.dataTransfer);
+      const allFiles = [
+        ...files,
+        ...folders.flatMap((f) => f.files),
+      ];
+      const docxFiles = allFiles.filter((f) =>
+        f.name.toLowerCase().endsWith('.docx'),
+      );
+      if (!docxFiles.length) return;
+      if (!window.electronAPI?.importFilesToProject) {
         console.error('electronAPI unavailable');
         return;
       }
-      await window.electronAPI.importScriptsToProject(pathsToImport, projectName);
+      const payload = await Promise.all(
+        docxFiles.map(async (file) => ({
+          name: file.name,
+          data: await file.arrayBuffer(),
+        })),
+      );
+      console.log(
+        'Importing scripts via data',
+        payload.map((p) => p.name),
+        'to',
+        projectName,
+      );
+      await window.electronAPI.importFilesToProject(payload, projectName);
       await loadProjects();
       toast.success('Scripts imported');
       return;
     }
-    if (!dragInfo) return;
+    if (!dragInfo) {
+      console.log('No drag info');
+      return;
+    }
 
     if (dragInfo.projectName === projectName) {
+      console.log('Reordering within project');
       let newOrder = null;
       setProjects((prev) =>
         prev.map((p) => {
@@ -483,14 +559,17 @@ const FileManager = forwardRef(function FileManager({
           console.error('electronAPI unavailable');
           return;
         }
+        console.log('Saving new order', newOrder);
         await window.electronAPI.reorderScripts(projectName, newOrder);
       }
     } else {
+      console.log('Moving script to another project');
       const sourceProject = dragInfo.projectName;
       const sourceScripts =
         projects.find((p) => p.name === sourceProject)?.scripts || [];
       const scriptName = sourceScripts[dragInfo.index]?.name;
       if (!scriptName) {
+        console.log('No script name found');
         setDragInfo(null);
         return;
       }
@@ -504,15 +583,23 @@ const FileManager = forwardRef(function FileManager({
         console.error('electronAPI unavailable');
         return;
       }
+      console.log('Moving script', scriptName, 'from', sourceProject, 'to', projectName);
       await window.electronAPI.moveScript(
         sourceProject,
         projectName,
         scriptName,
         index,
       );
+      console.log('Saving destination order', destOrder);
       await window.electronAPI.reorderScripts(projectName, destOrder);
       await loadProjects();
     }
+  };
+
+  const handleDragEnd = () => {
+    console.log('Drag end');
+    setDragInfo(null);
+    setHoverIndex(null);
   };
 
   return (
@@ -653,10 +740,7 @@ const FileManager = forwardRef(function FileManager({
                       onDrop={(e) => handleDrop(e, project.name, index)}
                       onDragEnter={() => handleDragEnter(index)}
                       onDragLeave={() => handleDragLeave(index)}
-                      onDragEnd={() => {
-                        setDragInfo(null);
-                        setHoverIndex(null);
-                      }}
+                      onDragEnd={handleDragEnd}
                       className={`script-item${
                         isPrompting ? ' prompting' : ''
                       }${isLoaded ? ' loaded' : ''}${

@@ -49,8 +49,12 @@ const api = {
   // Script import/load controls
   importScriptsToProject: (filePaths, projectName) =>
     ipcRenderer.invoke('import-scripts-to-project', filePaths, projectName),
+  importFilesToProject: (files, projectName) =>
+    ipcRenderer.invoke('import-files-to-project', files, projectName),
   importFoldersAsProjects: (folderPaths) =>
     ipcRenderer.invoke('import-folders-as-projects', folderPaths),
+  importFoldersDataAsProjects: (folders) =>
+    ipcRenderer.invoke('import-folders-data-as-projects', folders),
   filterDirectories: (paths) => ipcRenderer.invoke('filter-directories', paths),
   getScriptsForProject: (projectName) =>
     ipcRenderer.invoke('get-scripts-for-project', projectName),
