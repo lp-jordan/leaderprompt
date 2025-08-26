@@ -42,6 +42,11 @@
   flex-direction: row;
 }
 
+.context-menu.suggestions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .context-menu button {
   background: transparent;
   border: none;
