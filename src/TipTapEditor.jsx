@@ -37,6 +37,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
   const [isColorPickerOpen, setColorPickerOpen] = useState(false)
   const [selectedText, setSelectedText] = useState('')
   const [suggestions, setSuggestions] = useState([])
+  const [spellSuggestions, setSpellSuggestions] = useState([])
   const rewriteIdRef = useRef(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const loaderRef = useRef(null)
@@ -48,6 +49,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
     setMenuPos(pos)
     setActiveMenu('root')
     setMenuHistory(['root'])
+    setSpellSuggestions([])
   }
 
   const navigateTo = (menu) => {
@@ -60,6 +62,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
       if (prev.length <= 1) {
         setMenuPos(null)
         setActiveMenu('root')
+        setSpellSuggestions([])
         return ['root']
       }
       const next = prev.slice(0, -1)
@@ -74,6 +77,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
       setMenuPos(null)
       setActiveMenu('root')
       setMenuHistory(['root'])
+      setSpellSuggestions([])
     }
   }
 
@@ -85,6 +89,19 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
     const rect = containerRef.current?.getBoundingClientRect()
     if (rect) {
       openMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top })
+    }
+    const text = editor.state.doc.textBetween(sel.from, sel.to, ' ')
+    if (
+      text &&
+      !/\s/.test(text) &&
+      window.electronAPI?.spellCheck
+    ) {
+      window.electronAPI.spellCheck(text).then((res) => {
+        if (Array.isArray(res)) setSpellSuggestions(res)
+        else setSpellSuggestions([])
+      })
+    } else {
+      setSpellSuggestions([])
     }
   }
 
@@ -244,6 +261,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
     setMenuPos(null)
     setActiveMenu('root')
     setMenuHistory(['root'])
+    setSpellSuggestions([])
   }
 
   return (
@@ -262,6 +280,15 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
         >
           {activeMenu === 'root' && (
             <>
+              {spellSuggestions.length > 0 && (
+                <div className="context-menu suggestions fade-in">
+                  {spellSuggestions.map((sug) => (
+                    <button key={sug} onClick={() => replaceSelection(sug)}>
+                      {sug}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="context-menu fade-in">
                 <button onClick={goBack}>x</button>
                 <button onClick={() => navigateTo('format')}>A</button>

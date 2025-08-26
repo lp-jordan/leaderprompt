@@ -136,4 +136,6 @@ api.rewriteSelection = (text, modifier, context) => {
 
 api.abortRewrite = (id) => ipcRenderer.send('rewrite-selection-abort', id);
 
+api.spellCheck = (word) => ipcRenderer.invoke('spell-check', word);
+
 contextBridge.exposeInMainWorld('electronAPI', api);

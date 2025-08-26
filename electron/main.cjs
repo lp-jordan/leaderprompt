@@ -6,6 +6,7 @@ const fs = require('fs');
 const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
+const SpellChecker = require('simple-spellchecker');
 
 // OpenAI API key is provided at runtime via the OPENAI_API_KEY environment
 // variable. The key should never be committed to source control.
@@ -72,6 +73,14 @@ const warn = (...args) => {
   console.warn(...args);
   sendLog(`[WARN] ${args.join(' ')}`);
 };
+
+let spellChecker;
+try {
+  spellChecker = SpellChecker.getDictionarySync('en-US');
+  log('Spell checker loaded');
+} catch (err) {
+  error('Failed to load spellchecker', err);
+}
 
 function sendUpdateStatus(data) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -583,6 +592,17 @@ app.whenReady().then(async () => {
       prompterWindow.setBounds(bounds);
     }
     log(`Prompter bounds set: ${JSON.stringify(bounds)}`);
+  });
+
+  ipcMain.handle('spell-check', (_, word) => {
+    try {
+      if (!spellChecker || !word) return [];
+      if (spellChecker.spellCheck(word)) return [];
+      return spellChecker.getSuggestions(word).slice(0, 5);
+    } catch (err) {
+      error('Spell check failed:', err);
+      return [];
+    }
   });
 
   ipcMain.handle('get-all-projects-with-scripts', async () => {
