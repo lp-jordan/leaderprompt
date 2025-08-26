@@ -202,6 +202,7 @@ function App() {
             loadedScript={loadedScript}
             currentProject={selectedProject}
             currentScript={selectedScript}
+            onRootDragStateChange={setLeftDrag}
           />
         )}
       </div>
