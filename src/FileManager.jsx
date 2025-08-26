@@ -352,47 +352,76 @@ const FileManager = forwardRef(function FileManager({
     e.dataTransfer.dropEffect = 'copy';
   };
 
+  const readAllFiles = async (handle) => {
+    const files = [];
+    if (!handle) return files;
+    if (handle.kind === 'file' || handle.isFile) {
+      const file = handle.getFile
+        ? await handle.getFile()
+        : await new Promise((res, rej) => handle.file(res, rej));
+      files.push(file);
+    } else if (handle.kind === 'directory' || handle.isDirectory) {
+      if (handle.entries) {
+        for await (const [, child] of handle.entries()) {
+          files.push(...(await readAllFiles(child)));
+        }
+      } else if (handle.values) {
+        for await (const child of handle.values()) {
+          files.push(...(await readAllFiles(child)));
+        }
+      } else if (handle.createReader) {
+        const reader = handle.createReader();
+        const readEntries = () =>
+          new Promise((resolve) => reader.readEntries(resolve));
+        let entries = await readEntries();
+        while (entries.length) {
+          for (const entry of entries) {
+            files.push(...(await readAllFiles(entry)));
+          }
+          entries = await readEntries();
+        }
+      }
+    }
+    return files;
+  };
+
   const parseDataTransferItems = async (dataTransfer) => {
     console.log('Parsing data transfer items');
     const items = Array.from(dataTransfer?.items || []);
-    const folderPaths = [];
-    let filePaths = [];
+    const folders = [];
+    const files = [];
     for (const item of items) {
       if (item.kind !== 'file') continue;
-      let entry = null;
-      if (item.webkitGetAsEntry) {
-        entry = item.webkitGetAsEntry();
-      } else if (item.getAsFileSystemHandle) {
+      let handle = null;
+      if (item.getAsFileSystemHandle) {
         try {
-          entry = await item.getAsFileSystemHandle();
+          handle = await item.getAsFileSystemHandle();
         } catch {
-          entry = null;
+          handle = null;
         }
+      } else if (item.webkitGetAsEntry) {
+        handle = item.webkitGetAsEntry();
       }
-      const file = item.getAsFile?.();
-      const path = file?.path;
-      if (!path) continue;
-      if (entry?.isDirectory) folderPaths.push(path);
-      else filePaths.push(path);
-    }
-    if (!folderPaths.length && !filePaths.length && dataTransfer?.files?.length) {
-      const allPaths = Array.from(dataTransfer.files)
-        .map((f) => f.path)
-        .filter(Boolean);
-      let dirs = [];
-      if (window.electronAPI?.filterDirectories) {
-        dirs = await window.electronAPI.filterDirectories(allPaths);
+      if (handle && (handle.kind === 'directory' || handle.isDirectory)) {
+        const dirFiles = await readAllFiles(handle);
+        folders.push({ name: handle.name, files: dirFiles });
+        files.push(...dirFiles);
+      } else {
+        const file = item.getAsFile
+          ? item.getAsFile()
+          : handle?.getFile
+            ? await handle.getFile()
+            : null;
+        if (file) files.push(file);
       }
-      folderPaths.push(...dirs);
-      filePaths = allPaths.filter((p) => !dirs.includes(p));
     }
-    console.log('Parsed items', { folderPaths, filePaths });
-    return { folderPaths, filePaths };
+    console.log('Parsed items', { folders, files });
+    return { folders, files };
   };
 
   const getDroppedFolders = async (dataTransfer) => {
-    const { folderPaths } = await parseDataTransferItems(dataTransfer);
-    return folderPaths;
+    const { folders } = await parseDataTransferItems(dataTransfer);
+    return folders.map((f) => f.name);
   };
 
   const handleRootDragEnter = (e) => {
@@ -412,34 +441,51 @@ const FileManager = forwardRef(function FileManager({
     e.preventDefault();
     e.stopPropagation();
     setRootDrag(false);
-    const { folderPaths, filePaths } = await parseDataTransferItems(
-      e.dataTransfer,
-    );
-    console.log('Root drop paths', { folderPaths, filePaths });
-    const docxPaths = filePaths.filter((p) => p?.toLowerCase().endsWith('.docx'));
-    if (folderPaths.length > 0) {
-      if (!window.electronAPI?.importFoldersAsProjects) {
+    const { folders, files } = await parseDataTransferItems(e.dataTransfer);
+    console.log('Root drop items', { folders, files });
+    if (folders.length > 0) {
+      if (!window.electronAPI?.importFoldersDataAsProjects) {
         console.error('electronAPI unavailable');
         toast.error('Unable to import folders');
         return;
       }
-      await window.electronAPI.importFoldersAsProjects(folderPaths);
+      const payload = await Promise.all(
+        folders.map(async (f) => ({
+          name: f.name,
+          files: await Promise.all(
+            f.files
+              .filter((file) => file.name.toLowerCase().endsWith('.docx'))
+              .map(async (file) => ({
+                name: file.name,
+                data: await file.arrayBuffer(),
+              })),
+          ),
+        })),
+      );
+      await window.electronAPI.importFoldersDataAsProjects(payload);
       await loadProjects();
       toast.success('Projects imported');
       return;
     }
     const projectName = 'Quick Scripts';
-    if (!window.electronAPI?.importScriptsToProject) {
+    if (!window.electronAPI?.importFilesToProject) {
       console.error('electronAPI unavailable');
       toast.error('Unable to import scripts');
       return;
     }
-    if (!docxPaths.length) {
-      if (filePaths.length) toast.error('Only .docx files can be imported');
+    const docxFiles = files.filter((f) => f.name.toLowerCase().endsWith('.docx'));
+    if (!docxFiles.length) {
+      if (files.length) toast.error('Only .docx files can be imported');
       return;
     }
-    const imported = await window.electronAPI.importScriptsToProject(
-      docxPaths,
+    const filePayload = await Promise.all(
+      docxFiles.map(async (file) => ({
+        name: file.name,
+        data: await file.arrayBuffer(),
+      })),
+    );
+    const imported = await window.electronAPI.importFilesToProject(
+      filePayload,
       projectName,
     );
     await loadProjects();
@@ -457,23 +503,32 @@ const FileManager = forwardRef(function FileManager({
     const external = e.dataTransfer.files && e.dataTransfer.files.length;
     if (external && !dragInfo) {
       console.log('External drop detected');
-      const fileItems = Array.from(e.dataTransfer.files || []);
-      const allPaths = fileItems.map((f) => f.path).filter(Boolean);
-      let folderPaths = [];
-      if (window.electronAPI?.filterDirectories) {
-        folderPaths = await window.electronAPI.filterDirectories(allPaths);
-      }
-      const filePaths = allPaths
-        .filter((p) => !folderPaths.includes(p))
-        .filter((p) => p?.toLowerCase().endsWith('.docx'));
-      const pathsToImport = [...filePaths, ...folderPaths];
-      if (!pathsToImport.length) return;
-      if (!window.electronAPI?.importScriptsToProject) {
+      const { folders, files } = await parseDataTransferItems(e.dataTransfer);
+      const allFiles = [
+        ...files,
+        ...folders.flatMap((f) => f.files),
+      ];
+      const docxFiles = allFiles.filter((f) =>
+        f.name.toLowerCase().endsWith('.docx'),
+      );
+      if (!docxFiles.length) return;
+      if (!window.electronAPI?.importFilesToProject) {
         console.error('electronAPI unavailable');
         return;
       }
-      console.log('Importing scripts', pathsToImport, 'to', projectName);
-      await window.electronAPI.importScriptsToProject(pathsToImport, projectName);
+      const payload = await Promise.all(
+        docxFiles.map(async (file) => ({
+          name: file.name,
+          data: await file.arrayBuffer(),
+        })),
+      );
+      console.log(
+        'Importing scripts via data',
+        payload.map((p) => p.name),
+        'to',
+        projectName,
+      );
+      await window.electronAPI.importFilesToProject(payload, projectName);
       await loadProjects();
       toast.success('Scripts imported');
       return;
