@@ -357,8 +357,9 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleRootDragEnter = (e) => {
-    const folders = getDroppedFolders(e.dataTransfer);
-    if (folders.length) setRootDrag(true);
+    getDroppedFolders(e.dataTransfer).then((folders) => {
+      setRootDrag(folders.length > 0);
+    });
   };
 
   const handleRootDragLeave = (e) => {
