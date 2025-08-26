@@ -5,6 +5,7 @@ import { TextStyle, Color } from '@tiptap/extension-text-style'
 import { toast } from 'react-hot-toast'
 import './TipTapEditor.css'
 import './utils/disableLinks.css'
+import { handleContextMenu as handleContextMenuUtil } from './utils/contextMenu.js'
 
 function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
   const containerRef = useRef(null)
@@ -81,29 +82,13 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
     }
   }
 
-  const handleContextMenu = (e) => {
-    if (!editor) return
-    const sel = editor.state.selection
-    if (sel.empty) return
-    e.preventDefault()
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (rect) {
-      openMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top })
-    }
-    const text = editor.state.doc.textBetween(sel.from, sel.to, ' ')
-    if (
-      text &&
-      !/\s/.test(text) &&
-      window.electronAPI?.spellCheck
-    ) {
-      window.electronAPI.spellCheck(text).then((res) => {
-        if (Array.isArray(res)) setSpellSuggestions(res)
-        else setSpellSuggestions([])
-      })
-    } else {
-      setSpellSuggestions([])
-    }
-  }
+  const handleContextMenu = (e) =>
+    handleContextMenuUtil(e, {
+      editor,
+      containerRef,
+      openMenu,
+      setSpellSuggestions,
+    })
 
   useEffect(() => {
     const updateOnline = () => setIsOnline(navigator.onLine)
