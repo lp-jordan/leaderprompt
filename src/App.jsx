@@ -91,9 +91,6 @@ function App() {
     if (e.target.closest?.('.file-manager')) return;
     setLeftDrag(false);
     const { folders, files } = await parseDataTransferItems(e.dataTransfer);
-    const docxFiles = files.filter((f) =>
-      f.name.toLowerCase().endsWith('.docx'),
-    );
     if (folders.length) {
       if (!window.electronAPI?.importFoldersDataAsProjects) {
         console.error('electronAPI unavailable');
@@ -102,37 +99,27 @@ function App() {
       const payload = await Promise.all(
         folders.map(async (f) => ({
           name: f.name,
-          files: await Promise.all(
-            f.files
-              .filter((file) => file.name.toLowerCase().endsWith('.docx'))
-              .map(async (file) => ({
-                name: file.name,
-                data: await file.arrayBuffer(),
-              })),
-          ),
+          files: await buildDocxPayload(f.files),
         })),
       );
       await window.electronAPI.importFoldersDataAsProjects(payload);
       if (fileManagerRef.current?.reload) await fileManagerRef.current.reload();
       toast.success('Projects imported');
-    } else if (docxFiles.length) {
+    } else {
+      const payload = await buildDocxPayload(files);
+      if (payload.length) {
       const projectName = 'Quick Scripts';
       if (!window.electronAPI?.importFilesToProject) {
         console.error('electronAPI unavailable');
         toast.error('Unable to import scripts');
         return;
       }
-      const payload = await Promise.all(
-        docxFiles.map(async (file) => ({
-          name: file.name,
-          data: await file.arrayBuffer(),
-        })),
-      );
       await window.electronAPI.importFilesToProject(payload, projectName);
       if (fileManagerRef.current?.reload) await fileManagerRef.current.reload();
       toast.success('Scripts imported');
-    } else if (files.length) {
-      toast.error('Only .docx files can be imported');
+      } else if (files.length) {
+        toast.error('Only .docx files can be imported');
+      }
     }
   };
 

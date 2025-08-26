@@ -8,7 +8,6 @@ import {
 import ConfirmModal from './ConfirmModal.jsx';
 import { toast } from 'react-hot-toast';
 import { parseDataTransferItems } from './utils/dragHelpers.js';
-// The old project ActionMenu has been replaced with inline buttons
 
 function PencilIcon() {
   return (
@@ -452,16 +451,12 @@ const FileManager = forwardRef(function FileManager({
         ...files,
         ...folders.flatMap((f) => f.files),
       ];
-      let docxFiles = allFiles.filter((f) =>
-        f.name.toLowerCase().endsWith('.docx'),
-      );
-      if (!docxFiles.length) {
+      let payload = await buildDocxPayload(allFiles);
+      if (!payload.length) {
         const fallback = Array.from(dataTransfer.files || []);
-        docxFiles = fallback.filter((f) =>
-          f.name.toLowerCase().endsWith('.docx'),
-        );
+        payload = await buildDocxPayload(fallback);
       }
-      if (!docxFiles.length) {
+      if (!payload.length) {
         toast.error('Only .docx files can be imported');
         return;
       }
@@ -469,12 +464,6 @@ const FileManager = forwardRef(function FileManager({
         console.error('electronAPI unavailable');
         return;
       }
-      const payload = await Promise.all(
-        docxFiles.map(async (file) => ({
-          name: file.name,
-          data: await file.arrayBuffer(),
-        })),
-      );
       console.log(
         'Importing scripts via data',
         payload.map((p) => p.name),
