@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import FileManager from './FileManager';
 import ScriptViewer from './ScriptViewer';
 import leaderLogo from './assets/LeaderPass-Logo-white.png';
-import { parseDataTransferItems } from './utils/dragHelpers.js';
+import { parseDataTransferItems, buildDocxPayload } from './utils/dragHelpers.js';
 
 function App() {
   const [selectedScript, setSelectedScript] = useState(null);

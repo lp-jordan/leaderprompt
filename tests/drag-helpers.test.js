@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { readAllFiles, parseDataTransferItems } from '../src/utils/dragHelpers.js';
+import fs from 'fs';
+import { readAllFiles, parseDataTransferItems, buildDocxPayload } from '../src/utils/dragHelpers.js';
 
 test('readAllFiles recursively collects files from directories', async () => {
   const fileAHandle = {
@@ -80,9 +81,7 @@ test('parseDataTransferItems returns folders and files', async () => {
     files.map((f) => f.name).sort(),
     ['inner.txt', 'loose.txt'],
   );
-=======
-import fs from 'fs';
-import { buildDocxPayload } from '../src/utils/dragHelpers.js';
+});
 
 function makeFile(name) {
   return {
@@ -108,3 +107,4 @@ test('FileManager handleDrop uses buildDocxPayload', () => {
   const source = fs.readFileSync('./src/FileManager.jsx', 'utf8');
   const hasHelperCall = /buildDocxPayload\(/.test(source);
   assert.ok(hasHelperCall);
+});
