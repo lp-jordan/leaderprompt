@@ -60,9 +60,47 @@ function App() {
     e.preventDefault();
   };
 
+  const parseDataTransferItems = async (dataTransfer) => {
+    const items = Array.from(dataTransfer?.items || []);
+    const folderPaths = [];
+    let filePaths = [];
+    for (const item of items) {
+      if (item.kind !== 'file') continue;
+      let entry = null;
+      if (item.webkitGetAsEntry) {
+        entry = item.webkitGetAsEntry();
+      } else if (item.getAsFileSystemHandle) {
+        try {
+          entry = await item.getAsFileSystemHandle();
+        } catch {
+          entry = null;
+        }
+      }
+      const file = item.getAsFile?.();
+      const path = file?.path;
+      if (!path) continue;
+      if (entry?.isDirectory) folderPaths.push(path);
+      else filePaths.push(path);
+    }
+    if (!folderPaths.length && !filePaths.length && dataTransfer?.files?.length) {
+      const allPaths = Array.from(dataTransfer.files)
+        .map((f) => f.path)
+        .filter(Boolean);
+      let dirs = [];
+      if (window.electronAPI?.filterDirectories) {
+        dirs = await window.electronAPI.filterDirectories(allPaths);
+      }
+      folderPaths.push(...dirs);
+      filePaths = allPaths.filter((p) => !dirs.includes(p));
+    }
+    return { folderPaths, filePaths };
+  };
+
   const handleLeftDragEnter = (e) => {
     if (e.target.closest?.('.file-manager')) return;
-    setLeftDrag(true);
+    parseDataTransferItems(e.dataTransfer).then(({ folderPaths }) => {
+      setLeftDrag(folderPaths.length > 0);
+    });
   };
 
   const handleLeftDragLeave = (e) => {
@@ -73,15 +111,10 @@ function App() {
     e.preventDefault();
     if (e.target.closest?.('.file-manager')) return;
     setLeftDrag(false);
-    const fileItems = Array.from(e.dataTransfer.files || []);
-    const allPaths = fileItems.map((f) => f.path).filter(Boolean);
-    let folderPaths = [];
-    if (window.electronAPI?.filterDirectories) {
-      folderPaths = await window.electronAPI.filterDirectories(allPaths);
-    }
-    const filePaths = allPaths
-      .filter((p) => !folderPaths.includes(p))
-      .filter((p) => p?.toLowerCase().endsWith('.docx'));
+    const { folderPaths, filePaths } = await parseDataTransferItems(
+      e.dataTransfer,
+    );
+    const docxPaths = filePaths.filter((p) => p?.toLowerCase().endsWith('.docx'));
     if (folderPaths.length) {
       if (!window.electronAPI?.importFoldersAsProjects) {
         console.error('electronAPI unavailable');
@@ -90,18 +123,18 @@ function App() {
       await window.electronAPI.importFoldersAsProjects(folderPaths);
       if (fileManagerRef.current?.reload) await fileManagerRef.current.reload();
       toast.success('Projects imported');
-    } else if (fileItems.length) {
+    } else if (filePaths.length) {
       const projectName = 'Quick Scripts';
       if (!window.electronAPI?.importScriptsToProject) {
         console.error('electronAPI unavailable');
         toast.error('Unable to import scripts');
         return;
       }
-      if (!filePaths.length) {
+      if (!docxPaths.length) {
         toast.error('Only .docx files can be imported');
         return;
       }
-      await window.electronAPI.importScriptsToProject(filePaths, projectName);
+      await window.electronAPI.importScriptsToProject(docxPaths, projectName);
       if (fileManagerRef.current?.reload) await fileManagerRef.current.reload();
       toast.success('Scripts imported');
     }

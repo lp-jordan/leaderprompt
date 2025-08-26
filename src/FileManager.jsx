@@ -344,16 +344,45 @@ const FileManager = forwardRef(function FileManager({
     e.dataTransfer.dropEffect = 'copy';
   };
 
-  const getDroppedFolders = async (dataTransfer) => {
-    const paths = Array.from(dataTransfer.files || [])
-      .map((f) => f.path)
-      .filter(Boolean);
-    if (!paths.length) return [];
-    if (!window.electronAPI?.filterDirectories) {
-      console.error('electronAPI unavailable');
-      return [];
+  const parseDataTransferItems = async (dataTransfer) => {
+    const items = Array.from(dataTransfer?.items || []);
+    const folderPaths = [];
+    let filePaths = [];
+    for (const item of items) {
+      if (item.kind !== 'file') continue;
+      let entry = null;
+      if (item.webkitGetAsEntry) {
+        entry = item.webkitGetAsEntry();
+      } else if (item.getAsFileSystemHandle) {
+        try {
+          entry = await item.getAsFileSystemHandle();
+        } catch {
+          entry = null;
+        }
+      }
+      const file = item.getAsFile?.();
+      const path = file?.path;
+      if (!path) continue;
+      if (entry?.isDirectory) folderPaths.push(path);
+      else filePaths.push(path);
     }
-    return await window.electronAPI.filterDirectories(paths);
+    if (!folderPaths.length && !filePaths.length && dataTransfer?.files?.length) {
+      const allPaths = Array.from(dataTransfer.files)
+        .map((f) => f.path)
+        .filter(Boolean);
+      let dirs = [];
+      if (window.electronAPI?.filterDirectories) {
+        dirs = await window.electronAPI.filterDirectories(allPaths);
+      }
+      folderPaths.push(...dirs);
+      filePaths = allPaths.filter((p) => !dirs.includes(p));
+    }
+    return { folderPaths, filePaths };
+  };
+
+  const getDroppedFolders = async (dataTransfer) => {
+    const { folderPaths } = await parseDataTransferItems(dataTransfer);
+    return folderPaths;
   };
 
   const handleRootDragEnter = (e) => {
@@ -370,16 +399,10 @@ const FileManager = forwardRef(function FileManager({
     e.preventDefault();
     e.stopPropagation();
     setRootDrag(false);
-    const fileItems = Array.from(e.dataTransfer.files || []);
-    if (!fileItems.length) return;
-    const allPaths = fileItems.map((f) => f.path).filter(Boolean);
-    let folderPaths = [];
-    if (window.electronAPI?.filterDirectories) {
-      folderPaths = await window.electronAPI.filterDirectories(allPaths);
-    }
-    const filePaths = allPaths
-      .filter((p) => !folderPaths.includes(p))
-      .filter((p) => p?.toLowerCase().endsWith('.docx'));
+    const { folderPaths, filePaths } = await parseDataTransferItems(
+      e.dataTransfer,
+    );
+    const docxPaths = filePaths.filter((p) => p?.toLowerCase().endsWith('.docx'));
     if (folderPaths.length > 0) {
       if (!window.electronAPI?.importFoldersAsProjects) {
         console.error('electronAPI unavailable');
@@ -397,12 +420,12 @@ const FileManager = forwardRef(function FileManager({
       toast.error('Unable to import scripts');
       return;
     }
-    if (!filePaths.length) {
-      toast.error('Only .docx files can be imported');
+    if (!docxPaths.length) {
+      if (filePaths.length) toast.error('Only .docx files can be imported');
       return;
     }
     const imported = await window.electronAPI.importScriptsToProject(
-      filePaths,
+      docxPaths,
       projectName,
     );
     await loadProjects();
