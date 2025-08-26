@@ -509,13 +509,15 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleDrop = async (e, projectName, index) => {
+    e.persist?.();
+    const dataTransfer = e.dataTransfer;
     console.log('Drop', { projectName, index, dragInfo });
     e.preventDefault();
     e.stopPropagation();
-    const external = e.dataTransfer.files && e.dataTransfer.files.length;
+    const external = dataTransfer.files && dataTransfer.files.length;
     if (external && !dragInfo) {
       console.log('External drop detected');
-      const { folders, files } = await parseDataTransferItems(e.dataTransfer);
+      const { folders, files } = await parseDataTransferItems(dataTransfer);
       const allFiles = [
         ...files,
         ...folders.flatMap((f) => f.files),
@@ -524,7 +526,7 @@ const FileManager = forwardRef(function FileManager({
         f.name.toLowerCase().endsWith('.docx'),
       );
       if (!docxFiles.length) {
-        const fallback = Array.from(e.dataTransfer.files || []);
+        const fallback = Array.from(dataTransfer.files || []);
         docxFiles = fallback.filter((f) =>
           f.name.toLowerCase().endsWith('.docx'),
         );
