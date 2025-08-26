@@ -515,10 +515,19 @@ const FileManager = forwardRef(function FileManager({
         ...files,
         ...folders.flatMap((f) => f.files),
       ];
-      const docxFiles = allFiles.filter((f) =>
+      let docxFiles = allFiles.filter((f) =>
         f.name.toLowerCase().endsWith('.docx'),
       );
-      if (!docxFiles.length) return;
+      if (!docxFiles.length) {
+        const fallback = Array.from(e.dataTransfer.files || []);
+        docxFiles = fallback.filter((f) =>
+          f.name.toLowerCase().endsWith('.docx'),
+        );
+      }
+      if (!docxFiles.length) {
+        toast.error('Only .docx files can be imported');
+        return;
+      }
       if (!window.electronAPI?.importFilesToProject) {
         console.error('electronAPI unavailable');
         return;
@@ -535,9 +544,14 @@ const FileManager = forwardRef(function FileManager({
         'to',
         projectName,
       );
-      await window.electronAPI.importFilesToProject(payload, projectName);
-      await loadProjects();
-      toast.success('Scripts imported');
+      const imported = await window.electronAPI.importFilesToProject(
+        payload,
+        projectName,
+      );
+      if (imported) {
+        await loadProjects();
+        toast.success('Scripts imported');
+      }
       return;
     }
     if (!dragInfo) {
