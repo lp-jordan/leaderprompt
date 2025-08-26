@@ -51,7 +51,8 @@ export const parseDataTransferItems = async (dataTransfer) => {
     );
     return { folders, files };
   }
-  for (const item of items) {
+  for (let index = 0; index < items.length; index++) {
+    const item = items[index];
     if (item.kind !== 'file') {
       console.log('Skipping non-file item', { kind: item.kind, type: item.type });
       continue;
@@ -77,7 +78,7 @@ export const parseDataTransferItems = async (dataTransfer) => {
         dirFiles.map((f) => ({ name: f.name, type: f.type })),
       );
     } else {
-      const file = item.getAsFile
+      let file = item.getAsFile
         ? item.getAsFile()
         : handle?.getFile
           ? await handle.getFile()
@@ -86,7 +87,16 @@ export const parseDataTransferItems = async (dataTransfer) => {
         console.log('Adding file', { name: file.name, type: file.type });
         files.push(file);
       } else {
-        console.log('No file obtained from item');
+        const fallback = dataTransfer?.files?.[index];
+        if (fallback) {
+          console.log('Adding file via files fallback', {
+            name: fallback.name,
+            type: fallback.type,
+          });
+          files.push(fallback);
+        } else {
+          console.log('No file obtained from item');
+        }
       }
     }
   }
