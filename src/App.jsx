@@ -96,6 +96,10 @@ function App() {
     const items = Array.from(dataTransfer?.items || []);
     const folders = [];
     const files = [];
+    if (!items.length && dataTransfer?.files?.length) {
+      files.push(...Array.from(dataTransfer.files));
+      return { folders, files };
+    }
     for (const item of items) {
       if (item.kind !== 'file') continue;
       let handle = null;
