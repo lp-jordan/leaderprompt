@@ -347,7 +347,7 @@ const FileManager = forwardRef(function FileManager({
   const parseDataTransferItems = async (dataTransfer) => {
     const items = Array.from(dataTransfer?.items || []);
     const folderPaths = [];
-    const filePaths = [];
+    let filePaths = [];
     for (const item of items) {
       if (item.kind !== 'file') continue;
       let entry = null;
@@ -365,6 +365,17 @@ const FileManager = forwardRef(function FileManager({
       if (!path) continue;
       if (entry?.isDirectory) folderPaths.push(path);
       else filePaths.push(path);
+    }
+    if (!folderPaths.length && !filePaths.length && dataTransfer?.files?.length) {
+      const allPaths = Array.from(dataTransfer.files)
+        .map((f) => f.path)
+        .filter(Boolean);
+      let dirs = [];
+      if (window.electronAPI?.filterDirectories) {
+        dirs = await window.electronAPI.filterDirectories(allPaths);
+      }
+      folderPaths.push(...dirs);
+      filePaths = allPaths.filter((p) => !dirs.includes(p));
     }
     return { folderPaths, filePaths };
   };
