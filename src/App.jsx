@@ -126,9 +126,23 @@ function App() {
 
   const handleLeftDragEnter = (e) => {
     if (e.target.closest?.('.file-manager')) return;
-    parseDataTransferItems(e.dataTransfer).then(({ folders }) => {
-      setLeftDrag(folders.length > 0);
-    });
+    if (e.dataTransfer?.types?.includes('Files')) setLeftDrag(true);
+    parseDataTransferItems(e.dataTransfer)
+      .then(({ folders }) => {
+        if (folders.length > 0 || e.dataTransfer.files?.length) {
+          setLeftDrag(true);
+        } else {
+          setLeftDrag(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Error parsing drag items', err);
+        if (e.dataTransfer.files?.length) {
+          setLeftDrag(true);
+        } else {
+          setLeftDrag(false);
+        }
+      });
   };
 
   const handleLeftDragLeave = (e) => {
