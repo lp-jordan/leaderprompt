@@ -4,7 +4,7 @@ import PreviewCarousel from './components/PreviewCarousel';
 const ReadPage = () => {
   return (
     <div>
-      <HeroSection />
+      <HeroSection pageKey="read" />
       <PreviewCarousel />
     </div>
   );
