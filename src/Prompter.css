@@ -197,6 +197,19 @@
   border-radius: 4px;
 }
 
+.edit-toggle {
+  position: fixed;
+  bottom: var(--space-3);
+  right: var(--space-3);
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 4px;
+}
+
 .stop-button:hover {
   background-color: #dd5555;
 }
