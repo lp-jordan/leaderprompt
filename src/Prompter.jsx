@@ -594,8 +594,12 @@ function Prompter() {
           className="editor-layer"
           style={{
             padding: 0,
-            visibility: isEditing ? 'visible' : 'hidden',
+            display: isEditing ? 'block' : 'none',
             pointerEvents: isEditing ? 'auto' : 'none',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
           }}
         >
           <TipTapEditor
