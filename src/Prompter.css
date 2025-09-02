@@ -204,8 +204,8 @@
 
 .edit-toggle {
   position: fixed;
-  bottom: var(--space-3);
-  right: var(--space-3);
+  bottom: var(--space-4);
+  right: var(--space-4);
   z-index: 1000;
   background: var(--accent-color);
   border: none;
