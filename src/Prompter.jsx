@@ -428,8 +428,9 @@ function Prompter() {
           className={`main-settings-toggle ${mainSettingsOpen ? 'open' : ''}`}
           onClick={() => !isEditing && setMainSettingsOpen(!mainSettingsOpen)}
           disabled={isEditing}
+          aria-label="Settings"
         >
-          {mainSettingsOpen ? '←' : '→'}
+          ⚙
         </button>
         <div className={`main-settings ${mainSettingsOpen ? 'open' : ''}`}>
         <button
