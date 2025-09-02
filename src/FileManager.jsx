@@ -82,6 +82,7 @@ const FileManager = forwardRef(function FileManager({
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
   const [tooltipScript, setTooltipScript] = useState(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const tooltipTimerRef = useRef(null);
   const [sortBy, setSortBy] = useState('');
   const [confirmState, setConfirmState] = useState(null);
@@ -297,10 +298,17 @@ const FileManager = forwardRef(function FileManager({
     }));
   };
 
-  const handleScriptMouseEnter = (scriptName) => {
+  const handleScriptMouseEnter = (scriptName, e) => {
+    setTooltipPosition({ x: e.clientX, y: e.clientY });
     tooltipTimerRef.current = setTimeout(() => {
       setTooltipScript(scriptName);
-    }, 2000);
+    }, 1000);
+  };
+
+  const handleScriptMouseMove = (e) => {
+    if (tooltipTimerRef.current || tooltipScript) {
+      setTooltipPosition({ x: e.clientX, y: e.clientY });
+    }
   };
 
   const handleScriptMouseLeave = () => {
@@ -709,13 +717,11 @@ const FileManager = forwardRef(function FileManager({
                           <button
                             className="script-button"
                             onClick={() => onScriptSelect(project.name, scriptName)}
-                            onMouseEnter={() => handleScriptMouseEnter(scriptName)}
+                            onMouseEnter={(e) => handleScriptMouseEnter(scriptName, e)}
                             onMouseLeave={handleScriptMouseLeave}
+                            onMouseMove={handleScriptMouseMove}
                           >
                             {scriptName.replace(/\.[^/.]+$/, '')}
-                            {tooltipScript === scriptName && (
-                              <span className="script-tooltip">{scriptName}</span>
-                            )}
                           </button>
                           <div className="script-actions">
                             <button
@@ -752,6 +758,15 @@ const FileManager = forwardRef(function FileManager({
           }}
           onCancel={() => setConfirmState(null)}
         />
+      )}
+
+      {tooltipScript && (
+        <div
+          className="script-tooltip"
+          style={{ top: tooltipPosition.y, left: tooltipPosition.x }}
+        >
+          {tooltipScript}
+        </div>
       )}
 
     </div>
