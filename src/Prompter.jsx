@@ -54,8 +54,18 @@ function Prompter() {
   const editorRef = useRef(null)
   const editorContainerRef = useRef(null)
   const [isEditing, setIsEditing] = useState(false)
+  const isEditingRef = useRef(isEditing)
+  const pendingRemoteHtmlRef = useRef(null)
   const updateTimeoutRef = useRef(null)
   const [findOpen, setFindOpen] = useState(false)
+
+  useEffect(() => {
+    isEditingRef.current = isEditing
+    if (!isEditing && pendingRemoteHtmlRef.current !== null) {
+      setContent(pendingRemoteHtmlRef.current)
+      pendingRemoteHtmlRef.current = null
+    }
+  }, [isEditing])
 
   const handleEditorReady = (editor) => {
     editorRef.current = editor
@@ -303,6 +313,10 @@ function Prompter() {
       setProjectName(data.project || null)
     }
     const handleUpdated = (html) => {
+      if (isEditingRef.current) {
+        pendingRemoteHtmlRef.current = html
+        return
+      }
       setContent(html)
     }
 
