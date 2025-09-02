@@ -626,8 +626,11 @@ function Prompter() {
           </button>
         </div>
       )}
-      <button className="edit-toggle" onClick={toggleEditing}>
-        {isEditing ? 'EDITING...' : 'EDIT'}
+      <button
+        className={`edit-toggle${isEditing ? ' editing' : ''}`}
+        onClick={toggleEditing}
+      >
+        {isEditing ? 'STOP EDITING' : 'EDIT'}
       </button>
     </div>
   )
