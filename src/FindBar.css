@@ -13,3 +13,30 @@
   outline: none;
   border: none;
 }
+
+.find-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.find-controls button {
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0 4px;
+}
+
+.find-counter {
+  font-size: 12px;
+}
+
+.find-highlight {
+  background: yellow;
+}
+
+.find-highlight.active {
+  outline: 1px solid orange;
+}
