@@ -147,11 +147,16 @@
   left: 0;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.6);
-  border: none;
+  border: 1px solid #e0e0e0;
+  border-left: none;
   color: #e0e0e0;
   cursor: pointer;
-  padding: var(--space-2);
-  border-radius: 0 4px 4px 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 8px 8px 0;
   transform: translateX(0);
   transition: transform 0.3s ease-in-out;
 }
