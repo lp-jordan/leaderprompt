@@ -101,7 +101,16 @@ function Prompter() {
       setIsEditing(true)
       setMainSettingsOpen(false)
       setTimeout(() => {
-        editorRef.current?.commands.focus('end')
+        const container = containerRef.current
+        const pos = editorRef.current?.view.posAtCoords({
+          left: container.clientLeft + 1,
+          top: container.scrollTop + 1,
+        })
+        editorRef.current
+          ?.chain()
+          .focus()
+          .setTextSelection(pos?.pos ?? 0)
+          .run()
       }, 0)
     }
   }
