@@ -574,7 +574,8 @@ function Prompter() {
           ref={editorContainerRef}
           className="editor-layer"
           style={{
-            padding: 0,
+            padding: `2rem ${margin}px`,
+            boxSizing: 'border-box',
             display: isEditing ? 'block' : 'none',
             pointerEvents: isEditing ? 'auto' : 'none',
             top: 0,
