@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import TipTapEditor from './TipTapEditor.jsx';
 import { toast } from 'react-hot-toast';
 import './utils/disableLinks.css';
+import FindBar from './FindBar.jsx';
 
 function ScriptViewer({
   projectName,
@@ -19,6 +20,7 @@ function ScriptViewer({
   const [scriptHtml, setScriptHtml] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
   const saveTimeout = useRef(null);
   const scriptHtmlRef = useRef(null);
   const onSendRef = useRef(onSend);
@@ -63,6 +65,17 @@ function ScriptViewer({
     }
     return () => clearTimeout(timeout);
   }, [loaded]);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setFindOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
 useEffect(() => {
   let cancelled = false;
@@ -250,6 +263,7 @@ useEffect(() => {
 
   return (
     <div className="script-viewer">
+      {findOpen && <FindBar onClose={() => setFindOpen(false)} />}
       <div className="viewer-header">
         <div className="header-left">
           <h2 className="header-title">Script Viewer</h2>

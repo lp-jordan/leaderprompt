@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import TipTapEditor from './TipTapEditor.jsx'
 import './Prompter.css'
 import './utils/disableLinks.css'
+import FindBar from './FindBar.jsx'
 
 const MARGIN_MIN = 0
 const MARGIN_MAX = 600
@@ -54,6 +55,7 @@ function Prompter() {
   const editorContainerRef = useRef(null)
   const [isEditing, setIsEditing] = useState(false)
   const updateTimeoutRef = useRef(null)
+  const [findOpen, setFindOpen] = useState(false)
 
   const handleEditorReady = (editor) => {
     editorRef.current = editor
@@ -156,6 +158,17 @@ function Prompter() {
     }
     container.addEventListener('scroll', syncScroll)
     return () => container.removeEventListener('scroll', syncScroll)
+  }, [])
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault()
+        setFindOpen(true)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
   }, [])
 
   useEffect(() => {
@@ -412,6 +425,7 @@ function Prompter() {
 
   return (
     <div className="prompter-wrapper">
+      {findOpen && <FindBar onClose={() => setFindOpen(false)} />}
       <div className="resize-handle top" onMouseDown={(e) => startResize(e, 'top')} />
       <div className="resize-handle bottom" onMouseDown={(e) => startResize(e, 'bottom')} />
       <div className="resize-handle left" onMouseDown={(e) => startResize(e, 'left')} />
