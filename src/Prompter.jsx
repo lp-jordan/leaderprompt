@@ -596,6 +596,10 @@ function Prompter() {
             padding: 0,
             display: isEditing ? 'block' : 'none',
             pointerEvents: isEditing ? 'auto' : 'none',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
           }}
         >
           <TipTapEditor
