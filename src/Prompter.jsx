@@ -100,16 +100,19 @@ function Prompter() {
     } else {
       setIsEditing(true)
       setMainSettingsOpen(false)
+      const scrollTop = containerRef.current.scrollTop
       setTimeout(() => {
         const container = containerRef.current
-        const pos = editorRef.current?.view.posAtCoords({
-          left: container.clientLeft + 1,
-          top: container.scrollTop + 1,
+        editorRef.current.view.dom.scrollTop = scrollTop
+        const rect = container.getBoundingClientRect()
+        const pos = editorRef.current.view.posAtCoords({
+          left: rect.left + 1,
+          top: rect.top + 1,
         })
         editorRef.current
-          ?.chain()
-          .focus()
+          .chain()
           .setTextSelection(pos?.pos ?? 0)
+          .focus(undefined, { scrollIntoView: false })
           .run()
       }, 0)
     }
