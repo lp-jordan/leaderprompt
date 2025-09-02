@@ -92,38 +92,19 @@ function Prompter() {
     }
   }, [])
 
-  const enterEdit = (e) => {
-    const { clientX, clientY } = e
-    setIsEditing(true)
-    setTimeout(() => {
-      const editor = editorRef.current
-      if (!editor) return
-      const pos = editor.view.posAtCoords({ left: clientX, top: clientY })
-      if (pos) {
-        editor.chain().focus().setTextSelection(pos.pos).run()
-      } else {
-        editor.commands.focus('end')
-      }
-    }, 0)
-  }
-
-  useEffect(() => {
-    if (!isEditing) return
-    const handleOutside = (e) => {
-      if (editorContainerRef.current?.contains(e.target)) return
+  const toggleEditing = () => {
+    if (isEditing) {
       flushEdit()
-      editorRef.current?.chain().setTextSelection({ from: 0, to: 0 }).run()
       editorRef.current?.commands.blur()
       setIsEditing(false)
+    } else {
+      setIsEditing(true)
+      setMainSettingsOpen(false)
+      setTimeout(() => {
+        editorRef.current?.commands.focus('end')
+      }, 0)
     }
-    const timeout = setTimeout(() => {
-      document.addEventListener('mousedown', handleOutside)
-    }, 50)
-    return () => {
-      clearTimeout(timeout)
-      document.removeEventListener('mousedown', handleOutside)
-    }
-  }, [isEditing, flushEdit])
+  }
 
   const resetDefaults = () => {
     setAutoscroll(DEFAULT_SETTINGS.autoscroll)
@@ -436,7 +417,8 @@ function Prompter() {
       <div className="resize-handle bottom-right" onMouseDown={(e) => startResize(e, 'bottom-right')} />
         <button
           className={`main-settings-toggle ${mainSettingsOpen ? 'open' : ''}`}
-          onClick={() => setMainSettingsOpen(!mainSettingsOpen)}
+          onClick={() => !isEditing && setMainSettingsOpen(!mainSettingsOpen)}
+          disabled={isEditing}
         >
           {mainSettingsOpen ? '←' : '→'}
         </button>
@@ -581,7 +563,6 @@ function Prompter() {
           <div
             key="render"
             className="script-output disable-links"
-            onClick={enterEdit}
             dangerouslySetInnerHTML={{
               __html: notecardMode ? slides[currentSlide] || '' : content,
             }}
@@ -635,6 +616,9 @@ function Prompter() {
           </button>
         </div>
       )}
+      <button className="edit-toggle" onClick={toggleEditing}>
+        {isEditing ? 'EDITING...' : 'EDIT'}
+      </button>
     </div>
   )
 }
