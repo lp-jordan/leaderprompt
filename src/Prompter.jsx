@@ -332,7 +332,7 @@ function Prompter() {
 
 
   useEffect(() => {
-    if (!autoscroll || notecardMode) return undefined
+    if (!autoscroll || notecardMode || isEditing) return undefined
     let requestId
     const step = () => {
       if (containerRef.current) {
@@ -342,7 +342,7 @@ function Prompter() {
     }
     requestId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(requestId)
-  }, [autoscroll, speed, notecardMode])
+  }, [autoscroll, speed, notecardMode, isEditing])
 
   // Generate notecard slides when layout-related values change
   useEffect(() => {
