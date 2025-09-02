@@ -102,6 +102,17 @@ function Prompter() {
     }
   }, [])
 
+  const handleBlur = useCallback(() => {
+    if (!isEditingRef.current) return
+    flushEdit()
+    setIsEditing(false)
+  }, [flushEdit])
+
+  useEffect(() => {
+    window.addEventListener('blur', handleBlur)
+    return () => window.removeEventListener('blur', handleBlur)
+  }, [handleBlur])
+
   const toggleEditing = () => {
     if (isEditing) {
       flushEdit()
