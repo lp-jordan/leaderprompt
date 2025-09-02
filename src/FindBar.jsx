@@ -76,7 +76,15 @@ function FindBar({ onClose }) {
     results[currentIndex]?.classList.remove('active');
     const el = results[clamped];
     el.classList.add('active');
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const container = el.closest('.script-viewer-content, .prompter-container');
+    if (container) {
+      container.scrollTo({
+        top: el.offsetTop - container.clientHeight / 2,
+        behavior: 'smooth',
+      });
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     setCurrentIndex(clamped);
   };
 
@@ -86,7 +94,15 @@ function FindBar({ onClose }) {
     setCurrentIndex(0);
     if (res.length) {
       res[0].classList.add('active');
-      res[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const container = res[0].closest('.script-viewer-content, .prompter-container');
+      if (container) {
+        container.scrollTo({
+          top: res[0].offsetTop - container.clientHeight / 2,
+          behavior: 'smooth',
+        });
+      } else {
+        res[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   };
 
