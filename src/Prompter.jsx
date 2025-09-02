@@ -77,7 +77,7 @@ function Prompter() {
   const handleEdit = useCallback((html) => {
     if (updateTimeoutRef.current) clearTimeout(updateTimeoutRef.current)
     updateTimeoutRef.current = setTimeout(() => {
-      setContent(html)
+      if (!isEditingRef.current) setContent(html)
       if (!window.electronAPI?.sendUpdatedScript) {
         console.error('electronAPI unavailable')
         return
@@ -380,7 +380,8 @@ function Prompter() {
     document.body.appendChild(measure)
 
     const parser = document.createElement('div')
-    parser.innerHTML = content
+    const html = isEditing && editorRef.current ? editorRef.current.getHTML() : content
+    parser.innerHTML = html
     const nodes = Array.from(parser.childNodes)
 
     const newSlides = []
@@ -402,7 +403,7 @@ function Prompter() {
     document.body.removeChild(measure)
     setSlides(newSlides)
     setCurrentSlide(0)
-  }, [notecardMode, content, fontSize, lineHeight, margin])
+  }, [notecardMode, content, fontSize, lineHeight, margin, isEditing])
 
   useEffect(() => {
     if (containerRef.current) containerRef.current.scrollTop = 0
