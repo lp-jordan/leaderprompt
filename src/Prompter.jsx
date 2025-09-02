@@ -594,7 +594,7 @@ function Prompter() {
           className="editor-layer"
           style={{
             padding: 0,
-            visibility: isEditing ? 'visible' : 'hidden',
+            display: isEditing ? 'block' : 'none',
             pointerEvents: isEditing ? 'auto' : 'none',
           }}
         >
