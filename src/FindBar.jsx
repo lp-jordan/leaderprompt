@@ -1,13 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import './FindBar.css';
 
-function FindBar({ onClose }) {
+function FindBar({ onClose, containerRef }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const inputRef = useRef(null);
   const barRef = useRef(null);
   const lastQueryRef = useRef('');
+
+  const clearHighlights = useCallback(() => {
+    const root = containerRef?.current || document.body;
+    root.querySelectorAll('span.find-highlight').forEach((span) => {
+      const text = document.createTextNode(span.textContent);
+      span.replaceWith(text);
+    });
+  }, [containerRef]);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -22,18 +30,12 @@ function FindBar({ onClose }) {
       document.removeEventListener('mousedown', handleClick);
       clearHighlights();
     };
-  }, [onClose]);
-
-  const clearHighlights = () => {
-    document.querySelectorAll('span.find-highlight').forEach((span) => {
-      const text = document.createTextNode(span.textContent);
-      span.replaceWith(text);
-    });
-  };
+  }, [onClose, clearHighlights]);
 
   const highlightAll = (term) => {
     clearHighlights();
     if (!term) return [];
+    const root = containerRef?.current || document.body;
     const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
     const matched = [];
     const traverse = (node) => {
@@ -44,7 +46,9 @@ function FindBar({ onClose }) {
         let match;
         while ((match = regex.exec(text)) !== null) {
           if (match.index > lastIndex) {
-            frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            frag.appendChild(
+              document.createTextNode(text.slice(lastIndex, match.index)),
+            );
           }
           const span = document.createElement('span');
           span.className = 'find-highlight';
@@ -66,7 +70,7 @@ function FindBar({ onClose }) {
         Array.from(node.childNodes).forEach(traverse);
       }
     };
-    traverse(document.body);
+    traverse(root);
     return matched;
   };
 
@@ -76,7 +80,23 @@ function FindBar({ onClose }) {
     results[currentIndex]?.classList.remove('active');
     const el = results[clamped];
     el.classList.add('active');
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const container = containerRef?.current;
+    if (container) {
+      container.scrollTo({
+        top: el.offsetTop - container.clientHeight / 2,
+        behavior: 'smooth',
+      });
+    } else {
+      const fallback = el.closest('.script-viewer-content, .prompter-container');
+      if (fallback) {
+        fallback.scrollTo({
+          top: el.offsetTop - fallback.clientHeight / 2,
+          behavior: 'smooth',
+        });
+      } else {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
     setCurrentIndex(clamped);
   };
 
@@ -86,7 +106,23 @@ function FindBar({ onClose }) {
     setCurrentIndex(0);
     if (res.length) {
       res[0].classList.add('active');
-      res[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const container = containerRef?.current;
+      if (container) {
+        container.scrollTo({
+          top: res[0].offsetTop - container.clientHeight / 2,
+          behavior: 'smooth',
+        });
+      } else {
+        const fallback = res[0].closest('.script-viewer-content, .prompter-container');
+        if (fallback) {
+          fallback.scrollTo({
+            top: res[0].offsetTop - fallback.clientHeight / 2,
+            behavior: 'smooth',
+          });
+        } else {
+          res[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
     }
   };
 

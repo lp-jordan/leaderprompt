@@ -425,7 +425,12 @@ function Prompter() {
 
   return (
     <div className="prompter-wrapper">
-      {findOpen && <FindBar onClose={() => setFindOpen(false)} />}
+      {findOpen && (
+        <FindBar
+          onClose={() => setFindOpen(false)}
+          containerRef={containerRef}
+        />
+      )}
       <div className="resize-handle top" onMouseDown={(e) => startResize(e, 'top')} />
       <div className="resize-handle bottom" onMouseDown={(e) => startResize(e, 'bottom')} />
       <div className="resize-handle left" onMouseDown={(e) => startResize(e, 'left')} />

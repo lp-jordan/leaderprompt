@@ -30,6 +30,7 @@ function ScriptViewer({
   const onCloseViewerRef = useRef(onCloseViewer);
   const projectNameRef = useRef(projectName);
   const scriptNameRef = useRef(scriptName);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     onSendRef.current = onSend;
@@ -263,7 +264,12 @@ useEffect(() => {
 
   return (
     <div className="script-viewer">
-      {findOpen && <FindBar onClose={() => setFindOpen(false)} />}
+      {findOpen && (
+        <FindBar
+          onClose={() => setFindOpen(false)}
+          containerRef={contentRef}
+        />
+      )}
       <div className="viewer-header">
         <div className="header-left">
           <h2 className="header-title">Script Viewer</h2>
@@ -276,7 +282,7 @@ useEffect(() => {
           </div>
         </div>
       )}
-      <div className={viewerClass}>
+      <div className={viewerClass} ref={contentRef}>
         {showEditor && (
           <TipTapEditor initialHtml={scriptHtml || ''} onUpdate={handleEdit} />
         )}
