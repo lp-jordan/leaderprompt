@@ -36,9 +36,7 @@
   padding: 4px;
   display: flex;
   gap: 4px;
-  width: 20vw;
-  max-height: 50vh;
-  overflow-y: auto;
+  font-size: 0.875rem;
 }
 
 .context-menu.format {
