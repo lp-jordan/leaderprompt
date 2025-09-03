@@ -194,6 +194,12 @@ function ensureDirectories() {
     log('Created projects.json metadata file');
   }
 
+  const cfgPath = path.join(getUserDataPath(), 'config.json');
+  if (!fs.existsSync(cfgPath)) {
+    fs.writeFileSync(cfgPath, JSON.stringify({ OPENAI_API_KEY: '' }, null, 2));
+    log('Created config.json file');
+  }
+
 }
 
 function setupAutoUpdates() {
@@ -289,6 +295,14 @@ function createAppMenu() {
         {
           label: 'Check for Updates…',
           click: manualCheckForUpdates,
+        },
+        {
+          label: 'API Key…',
+          click: () => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('request-openai-key');
+            }
+          },
         },
         process.platform === 'darwin' ? { role: 'close' } : { role: 'quit' },
       ],
@@ -602,6 +616,26 @@ app.whenReady().then(async () => {
     } catch (err) {
       error('Spell check failed:', err);
       return [];
+    }
+  });
+
+  ipcMain.handle('save-openai-key', async (_, key) => {
+    try {
+      const cfgPath = path.join(getUserDataPath(), 'config.json');
+      let cfg = {};
+      if (fs.existsSync(cfgPath)) {
+        try {
+          cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        } catch {}
+      }
+      cfg.OPENAI_API_KEY = key;
+      fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+      process.env.OPENAI_API_KEY = key;
+      OPENAI_API_KEY = key;
+      return true;
+    } catch (err) {
+      error('Failed to save API key:', err);
+      return false;
     }
   });
 

@@ -26,6 +26,23 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    if (!window.electronAPI?.onRequestOpenAIKey) return;
+    const unsubscribe = window.electronAPI.onRequestOpenAIKey(async () => {
+      const key = window.prompt('Enter OpenAI API key');
+      if (key) {
+        try {
+          await window.electronAPI.saveOpenAIKey(key);
+          toast.success('API key saved');
+        } catch (err) {
+          console.error('Failed to save API key', err);
+          toast.error('Failed to save API key');
+        }
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   const handleScriptSelect = (projectName, scriptName) => {
     setSelectedProject(projectName);
     setSelectedScript(scriptName);

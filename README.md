@@ -74,6 +74,8 @@ Alternatively, create `~/leaderprompt/config.json` with:
 { "OPENAI_API_KEY": "sk-your-key" }
 ```
 
+You can also set the key from inside the running app via **File → API Key…**.
+
 If the key is missing, the app logs an error and rewrite options are hidden.
 
 ## Script Persistence
@@ -98,6 +100,12 @@ running `npm run package`.
 
 LeaderPrompt requires an OpenAI API key for rewrite features. The app reads the
 key from the `OPENAI_API_KEY` environment variable at runtime.
+
+You can supply this key in several ways:
+
+- Set `OPENAI_API_KEY` in the environment before launching the app.
+- Store it in `~/leaderprompt/config.json` or use **File → API Key…** to create
+  or update that file for you.
 
 ### Local Development
 
