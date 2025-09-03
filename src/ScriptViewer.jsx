@@ -116,30 +116,33 @@ useEffect(() => {
   };
 }, [projectName, scriptName]);
 
-  const handleEdit = (html) => {
-    setScriptHtml(html);
-    scriptHtmlRef.current = html;
-    if (projectName && scriptName) {
-      if (saveTimeout.current) {
-        clearTimeout(saveTimeout.current);
+  const handleEdit = useCallback(
+    (html) => {
+      setScriptHtml(html);
+      scriptHtmlRef.current = html;
+      if (projectName && scriptName) {
+        if (saveTimeout.current) {
+          clearTimeout(saveTimeout.current);
+        }
+        saveTimeout.current = setTimeout(() => {
+          if (!window.electronAPI?.saveScript) {
+            console.error('electronAPI unavailable');
+            return;
+          }
+          window.electronAPI.saveScript(projectName, scriptName, html);
+          saveTimeout.current = null;
+        }, 300);
       }
-      saveTimeout.current = setTimeout(() => {
-        if (!window.electronAPI?.saveScript) {
+      if (projectName === loadedProject && scriptName === loadedScript) {
+        if (!window.electronAPI?.sendUpdatedScript) {
           console.error('electronAPI unavailable');
           return;
         }
-        window.electronAPI.saveScript(projectName, scriptName, html);
-        saveTimeout.current = null;
-      }, 300);
-    }
-    if (projectName === loadedProject && scriptName === loadedScript) {
-      if (!window.electronAPI?.sendUpdatedScript) {
-        console.error('electronAPI unavailable');
-        return;
+        window.electronAPI.sendUpdatedScript(html);
       }
-      window.electronAPI.sendUpdatedScript(html);
-    }
-  };
+    },
+    [projectName, scriptName, loadedProject, loadedScript],
+  );
 
   useEffect(() => {
     if (!window.electronAPI?.onScriptUpdated || !window.electronAPI?.saveScript) {

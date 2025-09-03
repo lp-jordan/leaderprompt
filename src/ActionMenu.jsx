@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, memo } from 'react';
 
 function ActionMenu({ actions }) {
   const [open, setOpen] = useState(false);
@@ -14,10 +14,13 @@ function ActionMenu({ actions }) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
-  const handleAction = (fn) => {
-    fn();
-    setOpen(false);
-  };
+  const handleAction = useCallback(
+    (fn) => {
+      fn();
+      setOpen(false);
+    },
+    [],
+  );
 
   return (
     <div className="menu-container" ref={menuRef}>
@@ -35,4 +38,4 @@ function ActionMenu({ actions }) {
   );
 }
 
-export default ActionMenu;
+export default memo(ActionMenu);
