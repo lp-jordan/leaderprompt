@@ -78,6 +78,7 @@ const api = {
     ipcRenderer.send('set-prompter-always-on-top', flag),
 
   closePrompter: () => ipcRenderer.send('close-prompter'),
+  destroyPrompter: () => ipcRenderer.send('destroy-prompter'),
   minimizePrompter: () => ipcRenderer.send('minimize-prompter'),
 
   onPrompterClosed: (callback) => {

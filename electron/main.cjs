@@ -573,13 +573,18 @@ app.whenReady().then(async () => {
 
   ipcMain.on('close-prompter', () => {
     if (prompterWindow && !prompterWindow.isDestroyed()) {
+      prompterWindow.hide();
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('prompter-closed');
+      }
+      log('Prompter window hidden');
+    }
+  });
+
+  ipcMain.on('destroy-prompter', () => {
+    if (prompterWindow && !prompterWindow.isDestroyed()) {
       prompterWindow.close();
     }
-    prompterWindow = null;
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('prompter-closed');
-    }
-    log('Prompter window closed');
   });
 
   ipcMain.on('minimize-prompter', () => {
