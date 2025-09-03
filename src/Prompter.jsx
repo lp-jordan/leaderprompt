@@ -58,6 +58,7 @@ function Prompter() {
   const pendingRemoteHtmlRef = useRef(null)
   const updateTimeoutRef = useRef(null)
   const [findOpen, setFindOpen] = useState(false)
+  const saveSettingsRef = useRef(null)
 
   useEffect(() => {
     isEditingRef.current = isEditing
@@ -154,6 +155,7 @@ function Prompter() {
     setTransparentMode(DEFAULT_SETTINGS.transparentMode)
     if (projectName) {
       if (window.electronAPI?.saveProjectSettings) {
+        saveSettingsRef.current?.flush?.()
         window.electronAPI.saveProjectSettings(projectName, {})
       } else {
         localStorage.removeItem(`prompterSettings-${projectName}`)
@@ -183,6 +185,36 @@ function Prompter() {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
+  }, [])
+
+  useEffect(() => {
+    if (!window.electronAPI?.saveProjectSettings) return
+
+    let timeout
+    let lastArgs
+    const save = (...args) => {
+      lastArgs = args
+      clearTimeout(timeout)
+      timeout = setTimeout(() => {
+        timeout = null
+        window.electronAPI.saveProjectSettings(...args)
+      }, 250)
+    }
+    save.flush = () => {
+      if (timeout) {
+        clearTimeout(timeout)
+        timeout = null
+        if (lastArgs) window.electronAPI.saveProjectSettings(...lastArgs)
+      }
+    }
+    saveSettingsRef.current = save
+    return () => save.flush()
+  }, [])
+
+  useEffect(() => {
+    const handleBeforeUnload = () => saveSettingsRef.current?.flush?.()
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [])
 
   useEffect(() => {
@@ -243,8 +275,8 @@ function Prompter() {
       notecardMode,
       transparentMode,
     }
-    if (window.electronAPI?.saveProjectSettings) {
-      window.electronAPI.saveProjectSettings(projectName, settings)
+    if (saveSettingsRef.current) {
+      saveSettingsRef.current(projectName, settings)
     } else {
       localStorage.setItem(
         `prompterSettings-${projectName}`,

@@ -376,11 +376,14 @@ function readProjectSettings(projectName) {
   }
 }
 
-function writeProjectSettings(projectName, settings) {
+async function writeProjectSettings(projectName, settings) {
   const settingsPath = getProjectSettingsPath(projectName);
   try {
-    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    await fs.promises.mkdir(path.dirname(settingsPath), { recursive: true });
+    await fs.promises.writeFile(
+      settingsPath,
+      JSON.stringify(settings, null, 2),
+    );
     return true;
   } catch (err) {
     error('Failed to write project settings:', err);
