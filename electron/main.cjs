@@ -650,6 +650,9 @@ app.whenReady().then(async () => {
           cancelId: 1,
           title: 'OpenAI API Key',
           message: 'Enter your OpenAI API key',
+          // provide an input for the API key
+          inputLabel: 'API Key',
+          inputPlaceholder: 'sk-...',
           // electron 37+ supports input field on message boxes
           inputType: 'password',
         },
