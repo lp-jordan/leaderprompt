@@ -639,6 +639,29 @@ app.whenReady().then(async () => {
     }
   });
 
+  ipcMain.handle('prompt-openai-key', async () => {
+    try {
+      const { response, inputValue } = await dialog.showMessageBox(
+        mainWindow,
+        {
+          type: 'question',
+          buttons: ['Save', 'Cancel'],
+          defaultId: 0,
+          cancelId: 1,
+          title: 'OpenAI API Key',
+          message: 'Enter your OpenAI API key',
+          // electron 37+ supports input field on message boxes
+          inputType: 'password',
+        },
+      );
+      if (response === 0 && inputValue) return inputValue;
+      return null;
+    } catch (err) {
+      error('Failed to prompt for API key:', err);
+      return null;
+    }
+  });
+
   ipcMain.handle('get-all-projects-with-scripts', async () => {
     log('Fetching all projects with scripts');
     try {
