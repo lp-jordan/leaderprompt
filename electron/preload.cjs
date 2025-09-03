@@ -131,6 +131,7 @@ const api = {
     return () => ipcRenderer.removeListener('request-openai-key', handler)
   },
 
+  promptOpenAIKey: () => ipcRenderer.invoke('prompt-openai-key'),
   saveOpenAIKey: (key) => ipcRenderer.invoke('save-openai-key', key),
 };
 
