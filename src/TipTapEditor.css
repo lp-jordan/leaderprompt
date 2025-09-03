@@ -37,9 +37,6 @@
   display: flex;
   gap: 4px;
   font-size: 0.875rem;
-  width: 20vw;
-  max-height: 50vh;
-  overflow-y: auto;
 }
 
 .context-menu.format {
@@ -86,12 +83,10 @@
   color: #e0e0e0;
   border: 1px solid #555;
   border-radius: 4px;
-  width: min(220px, 20vw);
   display: flex;
   flex-direction: column;
-  font-size: 0.875rem;
-  max-height: 50vh;
-  overflow-y: auto;
+  min-width: 200px;
+  max-width: 100%;
 }
 
 .ai-rescript-panel .ai-header {
