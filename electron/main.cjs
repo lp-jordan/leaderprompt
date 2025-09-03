@@ -6,6 +6,7 @@ const fs = require('fs');
 const mammoth = require('mammoth');
 const htmlToDocx = require('html-to-docx');
 const { spawn } = require('child_process');
+const pLimit = require('p-limit');
 const SpellChecker = require('simple-spellchecker');
 
 // OpenAI API key is provided at runtime via the OPENAI_API_KEY environment
@@ -945,30 +946,40 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
 
   expanded = Array.from(new Set(expanded));
 
+  const total = expanded.length;
+  let processed = 0;
   let importedCount = 0;
-  for (const file of expanded) {
-    try {
-      const result = await mammoth.convertToHtml({ path: file });
-      const html = result.value || '';
+  const limit = pLimit(4);
 
-      let safeName = sanitizeFilename(path.basename(file));
-      if (!safeName) {
-        error('Invalid sanitized file name for', file);
-        continue;
-      }
-      if (!safeName.toLowerCase().endsWith('.docx')) {
-        safeName += '.docx';
-      }
+  await Promise.all(
+    expanded.map((file) =>
+      limit(async () => {
+        let safeName = sanitizeFilename(path.basename(file));
+        if (!safeName) {
+          error('Invalid sanitized file name for', file);
+          processed += 1;
+          log(`Progress: ${processed}/${total}`);
+          return;
+        }
+        if (!safeName.toLowerCase().endsWith('.docx')) {
+          safeName += '.docx';
+        }
 
-      const dest = path.join(destDir, safeName);
-      const buffer = await htmlToDocx(html);
-      await fs.promises.writeFile(dest, buffer);
-      log(`Imported script: ${safeName} → ${dest}`);
-      importedCount++;
-    } catch (err) {
-      error(`Failed to import file ${file}:`, err);
-    }
-  }
+        const dest = path.join(destDir, safeName);
+        try {
+          await fs.promises.copyFile(file, dest);
+          importedCount += 1;
+          log(`Imported script: ${safeName}`);
+        } catch (err) {
+          error(`Failed to import file ${file}:`, err);
+        } finally {
+          processed += 1;
+          log(`Progress: ${processed}/${total}`);
+        }
+      })
+    )
+  );
+
   updateProjectMetadata(projectName);
   return importedCount;
 });
@@ -985,26 +996,43 @@ ipcMain.handle('import-files-to-project', async (_, files, projectName) => {
     return;
   }
 
+  const total = files.length;
+  let processed = 0;
   let importedCount = 0;
-  for (const f of files) {
-    if (!f || !f.name || !f.data) continue;
-    try {
-      const buffer = Buffer.from(f.data);
-      const result = await mammoth.convertToHtml({ buffer });
-      const html = result.value || '';
+  const limit = pLimit(4);
 
-      let safeName = sanitizeFilename(f.name);
-      if (!safeName) continue;
-      if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
+  await Promise.all(
+    files.map((f) =>
+      limit(async () => {
+        if (!f || !f.name || !f.data) {
+          processed += 1;
+          log(`Progress: ${processed}/${total}`);
+          return;
+        }
+        let safeName = sanitizeFilename(f.name);
+        if (!safeName) {
+          processed += 1;
+          log(`Progress: ${processed}/${total}`);
+          return;
+        }
+        if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
 
-      const dest = path.join(destDir, safeName);
-      const out = await htmlToDocx(html);
-      await fs.promises.writeFile(dest, out);
-      importedCount++;
-    } catch (err) {
-      error(`Failed to import dropped file ${f.name}:`, err);
-    }
-  }
+        const dest = path.join(destDir, safeName);
+        const buffer = Buffer.from(f.data);
+        try {
+          await fs.promises.writeFile(dest, buffer);
+          importedCount += 1;
+          log(`Imported script: ${safeName}`);
+        } catch (err) {
+          error(`Failed to import dropped file ${f.name}:`, err);
+        } finally {
+          processed += 1;
+          log(`Progress: ${processed}/${total}`);
+        }
+      })
+    )
+  );
+
   updateProjectMetadata(projectName);
   return importedCount;
 });
@@ -1041,28 +1069,41 @@ ipcMain.handle('import-folders-data-as-projects', async (_, folders) => {
 
     try {
       await fs.promises.mkdir(destDir, { recursive: true });
-      for (const file of folder.files) {
-        if (!file || !file.name || !file.data) continue;
-        try {
-          const buffer = Buffer.from(file.data);
-          const result = await mammoth.convertToHtml({ buffer });
-          const html = result.value || '';
-          let safeName = sanitizeFilename(file.name);
-          if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
-          let dest = path.join(destDir, safeName);
-          if (fs.existsSync(dest)) {
-            let n = 1;
-            const base = path.basename(safeName, path.extname(safeName));
-            const ext = path.extname(safeName);
-            while (fs.existsSync(path.join(destDir, `${base}-${n}${ext}`))) n++;
-            dest = path.join(destDir, `${base}-${n}${ext}`);
-          }
-          const out = await htmlToDocx(html);
-          await fs.promises.writeFile(dest, out);
-        } catch (err) {
-          error('Failed to import file from folder:', err);
-        }
-      }
+      const totalFiles = folder.files.length;
+      let processedFiles = 0;
+      const limit = pLimit(4);
+
+      await Promise.all(
+        folder.files.map((file) =>
+          limit(async () => {
+            if (!file || !file.name || !file.data) {
+              processedFiles += 1;
+              log(`Progress: ${processedFiles}/${totalFiles}`);
+              return;
+            }
+            let safeName = sanitizeFilename(file.name);
+            if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
+            let dest = path.join(destDir, safeName);
+            if (fs.existsSync(dest)) {
+              let n = 1;
+              const base = path.basename(safeName, path.extname(safeName));
+              const ext = path.extname(safeName);
+              while (fs.existsSync(path.join(destDir, `${base}-${n}${ext}`))) n++;
+              dest = path.join(destDir, `${base}-${n}${ext}`);
+              safeName = `${base}-${n}${ext}`;
+            }
+            try {
+              await fs.promises.writeFile(dest, Buffer.from(file.data));
+              log(`Imported script: ${safeName}`);
+            } catch (err) {
+              error('Failed to import file from folder:', err);
+            } finally {
+              processedFiles += 1;
+              log(`Progress: ${processedFiles}/${totalFiles}`);
+            }
+          })
+        )
+      );
       updateProjectMetadata(projectName);
     } catch (err) {
       error('Failed to import folder as project:', err);
@@ -1125,33 +1166,43 @@ ipcMain.handle('import-folders-as-projects', async (_, folderPaths) => {
     try {
       await fs.promises.mkdir(destDir, { recursive: true });
       const entries = await fs.promises.readdir(folder, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.docx')) continue;
-        const src = path.join(folder, entry.name);
-        try {
-          const result = await mammoth.convertToHtml({ path: src });
-          const html = result.value || '';
-          let safeName = sanitizeFilename(entry.name);
-          if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
-          let dest = path.join(destDir, safeName);
-          if (fs.existsSync(dest)) {
-            const { name, ext } = path.parse(safeName);
-            let i = 1;
-            let candidate = `${name}-${i}${ext}`;
-            while (fs.existsSync(path.join(destDir, candidate))) {
-              i++;
-              candidate = `${name}-${i}${ext}`;
+      const docxEntries = entries.filter(
+        (e) => e.isFile() && e.name.toLowerCase().endsWith('.docx')
+      );
+      const totalFiles = docxEntries.length;
+      let processedFiles = 0;
+      const limit = pLimit(4);
+
+      await Promise.all(
+        docxEntries.map((entry) =>
+          limit(async () => {
+            const src = path.join(folder, entry.name);
+            let safeName = sanitizeFilename(entry.name);
+            if (!safeName.toLowerCase().endsWith('.docx')) safeName += '.docx';
+            let dest = path.join(destDir, safeName);
+            if (fs.existsSync(dest)) {
+              const { name, ext } = path.parse(safeName);
+              let i = 1;
+              let candidate = `${name}-${i}${ext}`;
+              while (fs.existsSync(path.join(destDir, candidate))) {
+                i++;
+                candidate = `${name}-${i}${ext}`;
+              }
+              dest = path.join(destDir, candidate);
+              safeName = candidate;
             }
-            dest = path.join(destDir, candidate);
-            safeName = candidate;
-          }
-          const buffer = await htmlToDocx(html);
-          await fs.promises.writeFile(dest, buffer);
-          log(`Imported script: ${safeName} → ${dest}`);
-        } catch (err) {
-          error(`Failed to import file ${src}:`, err);
-        }
-      }
+            try {
+              await fs.promises.copyFile(src, dest);
+              log(`Imported script: ${safeName} → ${dest}`);
+            } catch (err) {
+              error(`Failed to import file ${src}:`, err);
+            } finally {
+              processedFiles += 1;
+              log(`Progress: ${processedFiles}/${totalFiles}`);
+            }
+          })
+        )
+      );
       projectName = updateProjectMetadata(projectName);
     } catch (err) {
       error('Failed to import folder', folder, err);
