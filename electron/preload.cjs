@@ -124,6 +124,14 @@ const api = {
     ipcRenderer.on('update-downloaded', handler)
     return () => ipcRenderer.removeListener('update-downloaded', handler)
   },
+
+  onRequestOpenAIKey: (callback) => {
+    const handler = () => callback()
+    ipcRenderer.on('request-openai-key', handler)
+    return () => ipcRenderer.removeListener('request-openai-key', handler)
+  },
+
+  saveOpenAIKey: (key) => ipcRenderer.invoke('save-openai-key', key),
 };
 
 api.rewriteSelection = (text, modifier, context) => {
