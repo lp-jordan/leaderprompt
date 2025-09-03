@@ -27,17 +27,17 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!window.electronAPI?.onRequestOpenAIKey) return;
+    if (!window.electronAPI?.onRequestOpenAIKey || !window.electronAPI?.promptOpenAIKey) return;
     const unsubscribe = window.electronAPI.onRequestOpenAIKey(async () => {
-      const key = window.prompt('Enter OpenAI API key');
-      if (key) {
-        try {
+      try {
+        const key = await window.electronAPI.promptOpenAIKey();
+        if (key) {
           await window.electronAPI.saveOpenAIKey(key);
           toast.success('API key saved');
-        } catch (err) {
-          console.error('Failed to save API key', err);
-          toast.error('Failed to save API key');
         }
+      } catch (err) {
+        console.error('Failed to save API key', err);
+        toast.error('Failed to save API key');
       }
     });
     return unsubscribe;

@@ -39,3 +39,11 @@ test('saveOpenAIKey forwards key', async () => {
   assert.strictEqual(args[1], 'abc');
   delete global.window;
 });
+
+test('promptOpenAIKey invokes IPC channel', async () => {
+  const api = loadPreload();
+  await api.promptOpenAIKey();
+  const args = loadPreload.invokeArgs;
+  assert.strictEqual(args[0], 'prompt-openai-key');
+  delete global.window;
+});
