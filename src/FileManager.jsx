@@ -4,6 +4,7 @@ import {
   forwardRef,
   useImperativeHandle,
   useRef,
+  useMemo,
 } from 'react';
 import ConfirmModal from './ConfirmModal.jsx';
 import { toast } from 'react-hot-toast';
@@ -90,6 +91,22 @@ const FileManager = forwardRef(function FileManager({
   const [hoverIndex, setHoverIndex] = useState(null);
   const [hoverProject, setHoverProject] = useState(null);
   const [rootDrag, setRootDrag] = useState(false);
+
+  const sortedScripts = useMemo(() => {
+    const result = {};
+    projects.forEach((project) => {
+      let scripts = project.scripts;
+      if (sortBy === 'name') {
+        scripts = [...scripts].sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortBy === 'date') {
+        scripts = [...scripts].sort(
+          (a, b) => (a.added || 0) - (b.added || 0),
+        );
+      }
+      result[project.name] = scripts;
+    });
+    return result;
+  }, [projects, sortBy]);
 
 
   useEffect(() => {
@@ -664,18 +681,7 @@ const FileManager = forwardRef(function FileManager({
               )}
             </div>
             <ul className={collapsed[project.name] ? 'collapsed' : ''}>
-              {project.scripts
-                .slice()
-                .sort((a, b) => {
-                  if (sortBy === 'name') {
-                    return a.name.localeCompare(b.name);
-                  }
-                  if (sortBy === 'date') {
-                    return (a.added || 0) - (b.added || 0);
-                  }
-                  return 0;
-                })
-                .map((script) => {
+              {sortedScripts[project.name].map((script) => {
                   const index = project.scripts.findIndex((s) => s.name === script.name);
                   const scriptName = script.name;
                   const isPrompting =
