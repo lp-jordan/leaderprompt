@@ -578,7 +578,7 @@ const FileManager = forwardRef(function FileManager({
     <div className="file-manager">
       <div className="file-manager-header">
         <div className="header-left">
-          <h2 className="header-title">Projects</h2>
+          <h2 className="header-title mb-2">Projects</h2>
         </div>
       </div>
       <div className="header-buttons">
