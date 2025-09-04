@@ -269,7 +269,7 @@ useEffect(() => {
       {findOpen && <FindBar onClose={() => setFindOpen(false)} />}
       <div className="viewer-header">
         <div className="header-left">
-          <h2 className="header-title mb-2">Script Viewer</h2>
+          <h2 className="header-title">Script Viewer</h2>
         </div>
       </div>
       {loaded && scriptName && (
