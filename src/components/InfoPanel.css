@@ -29,6 +29,11 @@
   flex: 1;
 }
 
+.info-details h4 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
 .info-credits {
   list-style: none;
   padding: 0;
