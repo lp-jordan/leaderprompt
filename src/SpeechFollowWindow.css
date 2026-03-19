@@ -1,0 +1,58 @@
+.speech-follow-window-shell {
+  min-height: 100vh;
+  padding: 28px;
+  background:
+    radial-gradient(circle at top, rgba(226, 183, 102, 0.08), transparent 38%),
+    linear-gradient(180deg, #0e1722 0%, #0a1018 100%);
+  color: var(--color-text-primary);
+}
+
+.speech-follow-window-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.speech-follow-window-header h1 {
+  margin: 6px 0 6px;
+  font-size: 2rem;
+}
+
+.speech-follow-window-header p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.speech-follow-window-label {
+  display: inline-block;
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-accent-muted);
+}
+
+.speech-follow-window-body {
+  display: grid;
+  gap: 20px;
+}
+
+.speech-follow-window-card {
+  border: 1px solid rgba(121, 136, 153, 0.22);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(13, 22, 34, 0.94), rgba(9, 15, 24, 0.98));
+  box-shadow: 0 20px 60px rgba(2, 7, 13, 0.34);
+  padding: 18px;
+}
+
+.speech-follow-window-controls {
+  display: grid;
+  gap: 16px;
+}
+
+.speech-follow-window-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}

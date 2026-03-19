@@ -1,21 +1,44 @@
 /* global global, setImmediate */
 import test from 'node:test'
 import assert from 'node:assert'
-import { JSDOM } from 'jsdom'
-import { Editor } from '@tiptap/core'
-import StarterKit from '@tiptap/starter-kit'
 import { handleContextMenu } from '../src/utils/contextMenu.js'
 
-function setupEditor(content, pos) {
-  const dom = new JSDOM('<!doctype html><html><body></body></html>')
-  global.window = dom.window
-  global.document = dom.window.document
-  const editor = new Editor({ extensions: [StarterKit], content })
-  editor.commands.setTextSelection(pos)
-  return editor
+function setupEditor(content, cursorPosition) {
+  const state = {
+    selection: {
+      empty: true,
+      from: cursorPosition,
+      to: cursorPosition,
+      $from: {
+        parent: { textContent: content },
+        parentOffset: cursorPosition - 1,
+      },
+    },
+    doc: {
+      textBetween(from, to) {
+        return content.slice(from - 1, to - 1)
+      },
+    },
+  }
+
+  return {
+    state,
+    commands: {
+      setTextSelection({ from, to }) {
+        state.selection = {
+          ...state.selection,
+          empty: false,
+          from,
+          to,
+        }
+      },
+    },
+  }
 }
 
 test('right-click with empty selection selects word', async () => {
+  global.window = {}
+  global.document = {}
   const editor = setupEditor('hello wurld', 10)
   const containerRef = {
     current: { getBoundingClientRect: () => ({ left: 0, top: 0 }) },
@@ -47,6 +70,8 @@ test('right-click with empty selection selects word', async () => {
 })
 
 test('word passed to spellCheck strips trailing punctuation', async () => {
+  global.window = {}
+  global.document = {}
   const editor = setupEditor('hello wurld,', 10)
   const containerRef = {
     current: { getBoundingClientRect: () => ({ left: 0, top: 0 }) },

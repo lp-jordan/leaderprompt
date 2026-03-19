@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import fs from 'fs';
-import { readAllFiles, parseDataTransferItems, buildDocxPayload } from '../src/utils/dragHelpers.js';
+import {
+  readAllFiles,
+  parseDataTransferItems,
+  buildImportPayload,
+  isSupportedImportFile,
+} from '../src/utils/dragHelpers.js';
 
 test('readAllFiles recursively collects files from directories', async () => {
   const fileAHandle = {
@@ -90,22 +95,25 @@ function makeFile(name) {
   };
 }
 
-test('buildDocxPayload filters and maps docx files', async () => {
-  const files = [makeFile('a.docx'), makeFile('b.txt')];
-  const payload = await buildDocxPayload(files);
-  assert.deepStrictEqual(payload.map((p) => p.name), ['a.docx']);
+test('isSupportedImportFile accepts docx and pdf', () => {
+  assert.strictEqual(isSupportedImportFile(makeFile('a.docx')), true);
+  assert.strictEqual(isSupportedImportFile(makeFile('a.pdf')), true);
+  assert.strictEqual(isSupportedImportFile(makeFile('a.txt')), false);
+});
+
+test('buildImportPayload filters and maps supported files', async () => {
+  const files = [makeFile('a.docx'), makeFile('b.pdf'), makeFile('c.txt')];
+  const payload = await buildImportPayload(files);
+  assert.deepStrictEqual(payload.map((p) => p.name), ['a.docx', 'b.pdf']);
   assert.ok(payload[0].data instanceof ArrayBuffer);
 });
 
-test('App handleLeftDrop uses buildDocxPayload', () => {
+test('App handleLeftDrop uses buildImportPayload', () => {
   const source = fs.readFileSync('./src/App.jsx', 'utf8');
-  const hasHelperCall = /buildDocxPayload\(/.test(source);
-  assert.ok(hasHelperCall);
+  assert.match(source, /buildImportPayload\(/);
 });
 
-
-test('FileManager handleDrop uses buildDocxPayload', () => {
+test('FileManager handleDrop uses buildImportPayload', () => {
   const source = fs.readFileSync('./src/FileManager.jsx', 'utf8');
-  const hasHelperCall = /buildDocxPayload\(/.test(source);
-  assert.ok(hasHelperCall);
+  assert.match(source, /buildImportPayload\(/);
 });

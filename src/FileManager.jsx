@@ -6,64 +6,98 @@ import {
   useRef,
 } from 'react';
 import ConfirmModal from './ConfirmModal.jsx';
+import NewProjectModal from './NewProjectModal.jsx';
 import { toast } from 'react-hot-toast';
-import { parseDataTransferItems, buildDocxPayload } from './utils/dragHelpers.js';
+import {
+  parseDataTransferItems,
+  buildImportPayload,
+  isSupportedImportFile,
+} from './utils/dragHelpers.js';
 
-function PencilIcon() {
+const CONTEXT_MENU_WIDTH = 196;
+const CONTEXT_MENU_ITEM_HEIGHT = 38;
+const CONTEXT_MENU_PADDING = 8;
+
+const PROJECT_ACCENTS = [
+  {
+    accent: '#d7aa63',
+    strong: '#ebbf75',
+    quiet: 'rgba(215, 170, 99, 0.12)',
+    avatar: 'linear-gradient(180deg, rgba(215, 170, 99, 0.24), rgba(126, 87, 28, 0.24))',
+  },
+  {
+    accent: '#6c8fbe',
+    strong: '#8fb0de',
+    quiet: 'rgba(108, 143, 190, 0.12)',
+    avatar: 'linear-gradient(180deg, rgba(108, 143, 190, 0.24), rgba(43, 71, 117, 0.26))',
+  },
+  {
+    accent: '#77a18d',
+    strong: '#95bea9',
+    quiet: 'rgba(119, 161, 141, 0.12)',
+    avatar: 'linear-gradient(180deg, rgba(119, 161, 141, 0.24), rgba(46, 87, 69, 0.26))',
+  },
+  {
+    accent: '#a787c5',
+    strong: '#c6a8e0',
+    quiet: 'rgba(167, 135, 197, 0.12)',
+    avatar: 'linear-gradient(180deg, rgba(167, 135, 197, 0.24), rgba(84, 57, 115, 0.26))',
+  },
+];
+
+function DotsIcon() {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-.8 2.685 2.685-.8a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"
-      />
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 7.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM12 19.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" />
     </svg>
   );
 }
 
-function TrashIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-      />
-    </svg>
-  );
+function getProjectAccent(projectName, index) {
+  if (!projectName) return PROJECT_ACCENTS[index % PROJECT_ACCENTS.length];
+  const hash = Array.from(projectName).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return PROJECT_ACCENTS[hash % PROJECT_ACCENTS.length];
 }
 
-function PlusIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 4.5v15m7.5-7.5h-15"
-      />
-    </svg>
-  );
+function getProjectInitials(name) {
+  if (!name) return '??';
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('') || '??';
+}
+
+function normalizeScriptName(scriptName) {
+  return scriptName.replace(/\.[^/.]+$/, '');
+}
+
+function matchesSearch(scriptName, query) {
+  if (!query) return true;
+  return normalizeScriptName(scriptName).toLowerCase().includes(query.toLowerCase());
+}
+
+function getDropPosition(clientY, rect) {
+  return clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+}
+
+function buildImportToast(result, fallback = 'Scripts imported') {
+  if (!result || typeof result === 'number') return fallback;
+  const importedCount = result.importedCount || 0;
+  const renamedCount = result.renamedCount || 0;
+  if (renamedCount > 0) {
+    return `${importedCount} script${importedCount === 1 ? '' : 's'} imported (${renamedCount} renamed)`;
+  }
+  return `${importedCount} script${importedCount === 1 ? '' : 's'} imported`;
+}
+
+function buildExportToast(result, noun) {
+  if (!result?.success) return null;
+  if (result.exportedCount) {
+    return `${result.exportedCount} ${noun}${result.exportedCount === 1 ? '' : 's'} exported`;
+  }
+  return `${noun} exported`;
 }
 
 const FileManager = forwardRef(function FileManager({
@@ -73,108 +107,243 @@ const FileManager = forwardRef(function FileManager({
   currentProject,
   currentScript,
   onRootDragStateChange,
+  onCreateDraft,
 }, ref) {
+  const fileManagerRef = useRef(null);
+  const tooltipTimerRef = useRef(null);
   const [projects, setProjects] = useState([]);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [showNewProjectInput, setShowNewProjectInput] = useState(false);
+  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+  const [clientNames, setClientNames] = useState([]);
   const [renamingProject, setRenamingProject] = useState(null);
   const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
   const [tooltipScript, setTooltipScript] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const tooltipTimerRef = useRef(null);
-  const [sortBy, setSortBy] = useState('');
+  const [sortBy, setSortBy] = useState({});
   const [confirmState, setConfirmState] = useState(null);
   const [dragInfo, setDragInfo] = useState(null);
-  const [hoverIndex, setHoverIndex] = useState(null);
-  const [hoverProject, setHoverProject] = useState(null);
+  const [hoverScriptDrop, setHoverScriptDrop] = useState(null);
+  const [hoverProjectDrop, setHoverProjectDrop] = useState(null);
   const [rootDrag, setRootDrag] = useState(false);
-
+  const [searchQuery, setSearchQuery] = useState('');
+  const [projectMenu, setProjectMenu] = useState(null);
+  const [scriptMenu, setScriptMenu] = useState(null);
+  const [sortMenu, setSortMenu] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     loadProjects();
   }, []);
 
+  useEffect(() => {
+    const closeMenus = () => {
+      setProjectMenu(null);
+      setScriptMenu(null);
+      setSortMenu(null);
+    };
+    window.addEventListener('click', closeMenus);
+    window.addEventListener('resize', closeMenus);
+    return () => {
+      window.removeEventListener('click', closeMenus);
+      window.removeEventListener('resize', closeMenus);
+    };
+  }, []);
+
+
+  useEffect(() => {
+    const menuSelector = projectMenu
+      ? '.context-popover.project-menu button'
+      : scriptMenu
+        ? '.context-popover.script-menu button'
+        : sortMenu
+          ? '.context-popover.sort-menu button'
+          : '';
+    if (!menuSelector) return undefined;
+    const id = requestAnimationFrame(() => fileManagerRef.current?.querySelector(menuSelector)?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [projectMenu, scriptMenu, sortMenu]);
+  const getProjectSortMode = (projectName) => sortBy[projectName] || '';
+
+  const getDisplayedScripts = (project) => {
+    const sortMode = getProjectSortMode(project.name);
+    const scripts = project.scripts.slice();
+    if (sortMode === 'name') scripts.sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortMode === 'date') scripts.sort((a, b) => (a.added || 0) - (b.added || 0));
+    return scripts;
+  };
+
+  const getProjectMenuItemCount = (project) => (project?.archived ? 5 : 6);
+  const getScriptMenuItemCount = () => 5;
+
+  const getMenuPosition = (clientX, clientY, itemCount) => {
+    const containerRect = fileManagerRef.current?.getBoundingClientRect();
+    const menuHeight = itemCount * CONTEXT_MENU_ITEM_HEIGHT + CONTEXT_MENU_PADDING;
+    const minLeft = (containerRect?.left ?? 0) + CONTEXT_MENU_PADDING;
+    const maxLeft = (containerRect?.right ?? window.innerWidth) - CONTEXT_MENU_WIDTH - CONTEXT_MENU_PADDING;
+    const minTop = (containerRect?.top ?? 0) + CONTEXT_MENU_PADDING;
+    const maxTop = Math.min(
+      window.innerHeight - menuHeight - CONTEXT_MENU_PADDING,
+      (containerRect?.bottom ?? window.innerHeight) - menuHeight - CONTEXT_MENU_PADDING,
+    );
+
+    return {
+      x: Math.max(minLeft, Math.min(clientX, maxLeft)),
+      y: Math.max(minTop, Math.min(clientY, maxTop)),
+    };
+  };
+
   const loadProjects = async () => {
-    if (!window.electronAPI?.getAllProjectsWithScripts) {
-      console.error('electronAPI unavailable');
-      return;
-    }
+    if (!window.electronAPI?.getAllProjectsWithScripts) return;
     const result = await window.electronAPI.getAllProjectsWithScripts();
     if (result) {
       setProjects(result);
       setCollapsed((prev) => {
         const next = { ...prev };
-        result.forEach((p) => {
-          if (typeof next[p.name] === 'undefined') {
-            next[p.name] = true;
-          }
+        result.forEach((project) => {
+          if (typeof next[project.name] === 'undefined') next[project.name] = true;
         });
         return next;
       });
     }
   };
 
-  const handleNewProject = async () => {
-    if (!newProjectName.trim()) return;
 
-    if (!window.electronAPI?.createNewProject) {
-      console.error('electronAPI unavailable');
+  const handleMenuKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setProjectMenu(null);
+      setScriptMenu(null);
+      setSortMenu(null);
       return;
     }
-    const created = await window.electronAPI.createNewProject(newProjectName.trim());
+
+    const items = Array.from(event.currentTarget.querySelectorAll('button:not(:disabled)'));
+    const currentIndex = items.indexOf(document.activeElement);
+    if (!items.length) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      items[(currentIndex + 1 + items.length) % items.length]?.focus();
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      items[(currentIndex - 1 + items.length) % items.length]?.focus();
+    }
+    if (event.key === 'Home') {
+      event.preventDefault();
+      items[0]?.focus();
+    }
+    if (event.key === 'End') {
+      event.preventDefault();
+      items[items.length - 1]?.focus();
+    }
+  };
+
+  const handleProjectHeaderKeyDown = (event, projectName) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleCollapse(projectName);
+    }
+  };
+
+  const handleRenameKeyDown = (event, onSave) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      onSave();
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancelRename();
+    }
+  };
+
+  const handleNewProject = async (name, clientName) => {
+    if (!window.electronAPI?.createNewProject) return;
+    setShowNewProjectModal(false);
+    const created = await window.electronAPI.createNewProject(name, clientName);
     if (created) {
-      setNewProjectName('');
-      setShowNewProjectInput(false);
-      loadProjects();
+      await loadProjects();
       toast.success('Project created');
     } else {
-      console.error('Failed to create project');
       toast.error('Failed to create project');
     }
   };
 
   const handleImportClick = async (projectName) => {
-    if (!window.electronAPI?.selectFiles || !window.electronAPI?.importScriptsToProject) {
-      console.error('electronAPI unavailable');
-      return;
-    }
+    if (!window.electronAPI?.selectFiles || !window.electronAPI?.importScriptsToProject) return;
     const filePaths = await window.electronAPI.selectFiles();
     if (!filePaths) return;
-
-    await window.electronAPI.importScriptsToProject(filePaths, projectName);
+    const result = await window.electronAPI.importScriptsToProject(filePaths, projectName);
     await loadProjects();
-    toast.success('Scripts imported');
+    toast.success(buildImportToast(result));
   };
 
-  const handleNewScript = async () => {
-    const projectName = 'Quick Scripts';
-    if (!window.electronAPI?.createNewScript) {
-      console.error('electronAPI unavailable');
+  const handleExportProject = async (projectName, format) => {
+    setProjectMenu(null);
+    const result = await window.electronAPI?.exportProject?.(projectName, format);
+    if (!result || result.canceled) return;
+    if (result.success) {
+      toast.success(buildExportToast(result, 'script'));
+    } else {
+      toast.error(`Failed to export project as ${format.toUpperCase()}`);
+    }
+  };
+
+  const handleExportScript = async (projectName, scriptName, format) => {
+    setScriptMenu(null);
+    const result = await window.electronAPI?.exportScript?.(projectName, scriptName, format);
+    if (!result || result.canceled) return;
+    if (result.success) {
+      toast.success(`${format.toUpperCase()} exported`);
+    } else {
+      toast.error(`Failed to export script as ${format.toUpperCase()}`);
+    }
+  };
+
+  const handleArchiveProject = (projectName) => {
+    openConfirm(`Archive project "${projectName}"? You can restore it later.`, async () => {
+      const archived = await window.electronAPI?.archiveProject?.(projectName);
+      if (!archived) {
+        toast.error('Failed to archive project');
+        return;
+      }
+      if (currentProject === projectName) onScriptSelect(null, null);
+      toast.success('Project archived');
+      await loadProjects();
+    });
+  };
+
+  const handleRestoreProject = async (projectName) => {
+    setProjectMenu(null);
+    const restored = await window.electronAPI?.restoreProject?.(projectName);
+    if (!restored) {
+      toast.error('Failed to restore project');
       return;
     }
-    const result = await window.electronAPI.createNewScript(projectName, 'New Script');
-    if (result && result.success) {
-      await loadProjects();
-      onScriptSelect(projectName, result.scriptName);
-      toast.success('Script created');
-    }
+    toast.success('Project restored');
+    setShowArchived(false);
+    await loadProjects();
   };
 
+  const handleNewScript = () => {
+    onCreateDraft?.();
+    setShowArchived(false);
+  };
 
-  useImperativeHandle(ref, () => ({
-    newScript: handleNewScript,
-    reload: loadProjects,
-  }));
+  useImperativeHandle(ref, () => ({ newScript: handleNewScript, reload: loadProjects }));
 
   const startRenameProject = (name) => {
+    setProjectMenu(null);
+    setSortMenu(null);
     setRenamingScript(null);
     setRenamingProject(name);
     setRenameValue(name);
   };
 
   const startRenameScript = (projectName, scriptName) => {
+    setScriptMenu(null);
+    setSortMenu(null);
     setRenamingProject(null);
     setRenamingScript({ projectName, scriptName });
     setRenameValue(scriptName);
@@ -187,128 +356,54 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const confirmRenameProject = async (oldName) => {
-    if (!renameValue.trim()) return;
-    if (!window.electronAPI?.renameProject) {
-      console.error('electronAPI unavailable');
-      toast.error('Failed to rename project');
-      cancelRename();
-      return;
-    }
-    const success = await window.electronAPI.renameProject(
-      oldName,
-      renameValue.trim(),
-    );
-    if (!success) {
-      console.error('Failed to rename project');
-      toast.error('Failed to rename project');
-    } else {
-      toast.success('Project renamed');
-    }
+    if (!renameValue.trim() || !window.electronAPI?.renameProject) return;
+    const success = await window.electronAPI.renameProject(oldName, renameValue.trim());
+    toast[success ? 'success' : 'error'](success ? 'Project renamed' : 'Failed to rename project');
     cancelRename();
     await loadProjects();
   };
 
   const confirmRenameScript = async (projectName, oldName) => {
-    if (!renameValue.trim()) return;
+    if (!renameValue.trim() || !window.electronAPI?.renameScript) return;
     let newName = renameValue.trim();
-    if (!newName.toLowerCase().endsWith('.docx')) {
-      newName += '.docx';
-    }
-    if (!window.electronAPI?.renameScript) {
-      console.error('electronAPI unavailable');
-      toast.error('Failed to rename script');
-      cancelRename();
-      return;
-    }
-    const success = await window.electronAPI.renameScript(
-      projectName,
-      oldName,
-      newName,
-    );
-    if (!success) {
-      console.error('Failed to rename script');
-      toast.error('Failed to rename script');
-    } else {
-      toast.success('Script renamed');
-    }
+    if (!newName.toLowerCase().endsWith('.docx')) newName += '.docx';
+    const success = await window.electronAPI.renameScript(projectName, oldName, newName);
+    toast[success ? 'success' : 'error'](success ? 'Script renamed' : 'Failed to rename script');
     cancelRename();
     await loadProjects();
   };
 
-
   const openConfirm = (message, action) => {
+    setProjectMenu(null);
+    setScriptMenu(null);
+    setSortMenu(null);
     setConfirmState({ message, action });
   };
 
-  const handleDeleteProject = (projectName) => {
-    openConfirm(
-      `Delete project "${projectName}"? This will remove all its scripts.`,
-      async () => {
-        if (!window.electronAPI?.deleteProject) {
-          console.error('electronAPI unavailable');
-          toast.error('Failed to delete project');
-          return;
-        }
-        const deleted = await window.electronAPI.deleteProject(projectName);
-        if (!deleted) {
-          console.error('Failed to delete project');
-          toast.error('Failed to delete project');
-        } else {
-          toast.success('Project deleted');
-          if (currentProject === projectName) {
-            onScriptSelect(null, null);
-          }
-        }
-        await loadProjects();
-      },
-    );
-  };
-
   const handleDeleteScript = (projectName, scriptName) => {
-    openConfirm(
-      `Delete script "${scriptName}" from "${projectName}"?`,
-      async () => {
-        if (!window.electronAPI?.deleteScript) {
-          console.error('electronAPI unavailable');
-          toast.error('Failed to delete script');
-          return;
-        }
-        const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
-        if (!deleted) {
-          console.error('Failed to delete script');
-          toast.error('Failed to delete script');
-        } else {
-          toast.success('Script deleted');
-          if (
-            currentProject === projectName &&
-            currentScript === scriptName
-          ) {
-            onScriptSelect(null, null);
-          }
-        }
-        await loadProjects();
-      },
-    );
+    openConfirm(`Delete script "${scriptName}" from "${projectName}"?`, async () => {
+      if (!window.electronAPI?.deleteScript) return;
+      const deleted = await window.electronAPI.deleteScript(projectName, scriptName);
+      if (!deleted) toast.error('Failed to delete script');
+      else {
+        toast.success('Script deleted');
+        if (currentProject === projectName && currentScript === scriptName) onScriptSelect(null, null);
+      }
+      await loadProjects();
+    });
   };
 
   const toggleCollapse = (projectName) => {
-    setCollapsed((prev) => ({
-      ...prev,
-      [projectName]: !prev[projectName],
-    }));
+    setCollapsed((prev) => ({ ...prev, [projectName]: !prev[projectName] }));
   };
 
   const handleScriptMouseEnter = (scriptName, e) => {
     setTooltipPosition({ x: e.clientX, y: e.clientY });
-    tooltipTimerRef.current = setTimeout(() => {
-      setTooltipScript(scriptName);
-    }, 1000);
+    tooltipTimerRef.current = setTimeout(() => setTooltipScript(scriptName), 1000);
   };
 
   const handleScriptMouseMove = (e) => {
-    if (tooltipTimerRef.current || tooltipScript) {
-      setTooltipPosition({ x: e.clientX, y: e.clientY });
-    }
+    if (tooltipTimerRef.current || tooltipScript) setTooltipPosition({ x: e.clientX, y: e.clientY });
   };
 
   const handleScriptMouseLeave = () => {
@@ -317,59 +412,113 @@ const FileManager = forwardRef(function FileManager({
     setTooltipScript(null);
   };
 
-  const handleDragStart = (projectName, index) => {
-    console.log('Drag start', { projectName, index });
-    setDragInfo({ projectName, index });
+  const handleScriptDragStart = (event, projectName, scriptName) => {
+    event.dataTransfer.effectAllowed = 'move';
+    setSortBy((current) => ({ ...current, [projectName]: '' }));
+    setDragInfo({ type: 'script', projectName, scriptName });
   };
 
-  const handleDragOver = (e) => {
-    console.log('Drag over');
-    e.preventDefault();
+  const handleProjectDragStart = (event, projectName) => {
+    event.stopPropagation();
+    event.dataTransfer.effectAllowed = 'move';
+    setDragInfo({ type: 'project', projectName });
   };
 
-  const handleDragEnter = (index) => {
-    console.log('Drag enter', index);
-    setHoverIndex(index);
+  const handleDragOver = (event) => {
+    event.preventDefault();
   };
 
-  const handleDragLeave = (index) => {
-    console.log('Drag leave', index);
-    setHoverIndex((prev) => (prev === index ? null : prev));
+  const handleScriptDragOver = (event, projectName, scriptName) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (dragInfo?.type === 'project') return;
+    const position = getDropPosition(event.clientY, event.currentTarget.getBoundingClientRect());
+    setHoverProjectDrop(null);
+    setHoverScriptDrop({ projectName, scriptName, position });
   };
 
-  const handleProjectDragEnter = (projectName) => {
-    console.log('Project drag enter', projectName);
-    setHoverProject(projectName);
+  const reorderVisibleProjects = (allProjects, sourceName, targetName, position) => {
+    const targetArchived = allProjects.find((project) => project.name === targetName)?.archived;
+    const visible = allProjects.filter((project) => project.archived === targetArchived);
+    const visibleIndex = new Map(visible.map((project, index) => [project.name, index]));
+    const sourceIndex = visibleIndex.get(sourceName);
+    const targetIndex = visibleIndex.get(targetName);
+    if (typeof sourceIndex !== 'number' || typeof targetIndex !== 'number') {
+      return { changed: false, projects: allProjects };
+    }
+
+    const reordered = [...visible];
+    const [moved] = reordered.splice(sourceIndex, 1);
+    let insertAt = targetIndex;
+    if (position === 'after') insertAt += 1;
+    if (sourceIndex < targetIndex) insertAt -= 1;
+    insertAt = Math.max(0, Math.min(insertAt, reordered.length));
+    reordered.splice(insertAt, 0, moved);
+
+    if (reordered.every((project, index) => project.name === visible[index]?.name)) {
+      return { changed: false, projects: allProjects };
+    }
+
+    let visibleCursor = 0;
+    return {
+      changed: true,
+      projects: allProjects.map((project) => (
+        project.archived === targetArchived ? reordered[visibleCursor++] : project
+      )),
+    };
   };
 
-  const handleProjectDragLeave = (projectName) => {
-    console.log('Project drag leave', projectName);
-    setHoverProject((prev) => (prev === projectName ? null : prev));
+  const handleProjectDragOver = (event, projectName) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (dragInfo?.type !== 'project') return;
+    const position = getDropPosition(event.clientY, event.currentTarget.getBoundingClientRect());
+    setHoverScriptDrop(null);
+    setHoverProjectDrop({ projectName, position });
   };
 
-  const handleProjectDrop = (e, projectName) => {
-    console.log('Project drop', projectName);
-    const proj = projects.find((p) => p.name === projectName);
-    const index = proj ? proj.scripts.length : -1;
-    handleDrop(e, projectName, index);
-    setHoverProject(null);
+  const handleProjectDrop = async (event, projectName) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const position = getDropPosition(event.clientY, event.currentTarget.getBoundingClientRect());
+
+    if (dragInfo?.type === 'project') {
+      const { changed, projects: nextProjects } = reorderVisibleProjects(
+        projects,
+        dragInfo.projectName,
+        projectName,
+        position,
+      );
+      setDragInfo(null);
+      setHoverProjectDrop(null);
+      setHoverScriptDrop(null);
+      if (!changed) return;
+      setProjects(nextProjects);
+      await window.electronAPI?.reorderProjects?.(nextProjects.map((project) => project.name));
+      return;
+    }
+
+    const project = projects.find((item) => item.name === projectName);
+    const firstScript = project?.scripts[0] || null;
+    const lastScript = project?.scripts[project.scripts.length - 1] || null;
+    const appendToEnd = position === 'after';
+    const anchorScript = appendToEnd ? lastScript?.name || null : firstScript?.name || null;
+    await handleDrop(event, projectName, anchorScript, appendToEnd, appendToEnd ? 'after' : 'before');
+    setHoverProjectDrop(null);
   };
 
   const handleRootDragOver = (e) => {
-    console.log('Root drag over');
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
   };
 
-
   const getDroppedFolders = async (dataTransfer) => {
     const { folders } = await parseDataTransferItems(dataTransfer);
-    return folders.map((f) => f.name);
+    return folders.map((folder) => folder.name);
   };
 
   const handleRootDragEnter = (e) => {
     getDroppedFolders(e.dataTransfer).then((folders) => {
-      console.log('Root drag enter', folders);
       const dragging = folders.length > 0;
       setRootDrag(dragging);
       onRootDragStateChange?.(dragging);
@@ -377,7 +526,6 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleRootDragLeave = (e) => {
-    console.log('Root drag leave');
     if (!e.currentTarget.contains(e.relatedTarget)) {
       setRootDrag(false);
       onRootDragStateChange?.(false);
@@ -385,393 +533,339 @@ const FileManager = forwardRef(function FileManager({
   };
 
   const handleRootDrop = async (e) => {
-    console.log('Root drop');
     e.preventDefault();
     e.stopPropagation();
     setRootDrag(false);
     onRootDragStateChange?.(false);
     const { folders, files } = await parseDataTransferItems(e.dataTransfer);
-    console.log('Root drop items', { folders, files });
     if (folders.length > 0) {
       if (!window.electronAPI?.importFoldersDataAsProjects) {
-        console.error('electronAPI unavailable');
         toast.error('Unable to import folders');
         return;
       }
       const payload = await Promise.all(
-        folders.map(async (f) => ({
-          name: f.name,
-          files: await Promise.all(
-            f.files
-              .filter((file) => file.name.toLowerCase().endsWith('.docx'))
-              .map(async (file) => ({
-                name: file.name,
-                data: await file.arrayBuffer(),
-              })),
-          ),
+        folders.map(async (folder) => ({
+          name: folder.name,
+          files: await buildImportPayload(folder.files),
         })),
       );
-      await window.electronAPI.importFoldersDataAsProjects(payload);
+      const result = await window.electronAPI.importFoldersDataAsProjects(payload);
       await loadProjects();
-      toast.success('Projects imported');
+      toast.success(buildImportToast(result, 'Projects imported'));
       return;
     }
     const projectName = 'Quick Scripts';
     if (!window.electronAPI?.importFilesToProject) {
-      console.error('electronAPI unavailable');
       toast.error('Unable to import scripts');
       return;
     }
-    const docxFiles = files.filter((f) => f.name.toLowerCase().endsWith('.docx'));
-    if (!docxFiles.length) {
-      if (files.length) toast.error('Only .docx files can be imported');
+    const filePayload = await buildImportPayload(files);
+    if (!filePayload.length) {
+      if (files.length) toast.error('Only .docx or .pdf files can be imported');
       return;
     }
-    const filePayload = await Promise.all(
-      docxFiles.map(async (file) => ({
-        name: file.name,
-        data: await file.arrayBuffer(),
-      })),
-    );
-    const imported = await window.electronAPI.importFilesToProject(
-      filePayload,
-      projectName,
-    );
+    const result = await window.electronAPI.importFilesToProject(filePayload, projectName);
     await loadProjects();
-    if (imported) {
-      toast.success('Scripts imported');
-    } else {
-      toast.error('Only .docx files can be imported');
-    }
+    if ((result?.importedCount || result) > 0) toast.success(buildImportToast(result));
+    else toast.error('No supported files were imported');
   };
 
-  const handleDrop = async (e, projectName, index) => {
+  const handleDrop = async (e, projectName, beforeScriptName = null, appendToEnd = false, dropPosition = 'before') => {
     e.persist?.();
     const dataTransfer = e.dataTransfer;
-    console.log('Drop', { projectName, index, dragInfo });
     e.preventDefault();
     e.stopPropagation();
     const external = dataTransfer.files && dataTransfer.files.length;
     if (external && !dragInfo) {
-      console.log('External drop detected');
       const { folders, files } = await parseDataTransferItems(dataTransfer);
-      const allFiles = [
-        ...files,
-        ...folders.flatMap((f) => f.files),
-      ];
-      let payload = await buildDocxPayload(allFiles);
+      const allFiles = [...files, ...folders.flatMap((folder) => folder.files)];
+      let payload = await buildImportPayload(allFiles);
+      if (!payload.length) payload = await buildImportPayload(Array.from(dataTransfer.files || []));
       if (!payload.length) {
-        const fallback = Array.from(dataTransfer.files || []);
-        payload = await buildDocxPayload(fallback);
-      }
-      if (!payload.length) {
-        toast.error('Only .docx files can be imported');
+        toast.error('Only .docx or .pdf files can be imported');
         return;
       }
-      if (!window.electronAPI?.importFilesToProject) {
-        console.error('electronAPI unavailable');
-        return;
-      }
-      console.log(
-        'Importing scripts via data',
-        payload.map((p) => p.name),
-        'to',
-        projectName,
-      );
-      const imported = await window.electronAPI.importFilesToProject(
-        payload,
-        projectName,
-      );
-      if (imported) {
+      if (!window.electronAPI?.importFilesToProject) return;
+      const result = await window.electronAPI.importFilesToProject(payload, projectName);
+      if ((result?.importedCount || result) > 0) {
         await loadProjects();
-        toast.success('Scripts imported');
+        toast.success(buildImportToast(result));
       }
       return;
     }
-    if (!dragInfo) {
-      console.log('No drag info');
-      return;
-    }
-
+    if (!dragInfo) return;
+    if (dragInfo.type !== 'script') return;
+    setSortBy((current) => ({
+      ...current,
+      [dragInfo.projectName]: '',
+      [projectName]: '',
+    }));
     if (dragInfo.projectName === projectName) {
-      console.log('Reordering within project');
-      let newOrder = null;
-      setProjects((prev) =>
-        prev.map((p) => {
-          if (p.name !== projectName) return p;
-          const scripts = [...p.scripts];
-          const [moved] = scripts.splice(dragInfo.index, 1);
-          let target = index;
-          if (dragInfo.index < index) target -= 1;
-          scripts.splice(target, 0, moved);
-          newOrder = scripts.map((s) => s.name);
-          return { ...p, scripts };
-        }),
-      );
-      setDragInfo(null);
-      if (newOrder) {
-        if (!window.electronAPI?.reorderScripts) {
-          console.error('electronAPI unavailable');
-          return;
-        }
-        console.log('Saving new order', newOrder);
-        await window.electronAPI.reorderScripts(projectName, newOrder);
-      }
-    } else {
-      console.log('Moving script to another project');
-      const sourceProject = dragInfo.projectName;
-      const sourceScripts =
-        projects.find((p) => p.name === sourceProject)?.scripts || [];
-      const scriptName = sourceScripts[dragInfo.index]?.name;
-      if (!scriptName) {
-        console.log('No script name found');
+      if (beforeScriptName === dragInfo.scriptName) {
         setDragInfo(null);
+        setHoverScriptDrop(null);
+        setHoverProjectDrop(null);
         return;
       }
-      const destScripts =
-        projects.find((p) => p.name === projectName)?.scripts.map((s) => s.name) || [];
-      const destOrder = [...destScripts];
-      if (index < 0 || index > destOrder.length) destOrder.push(scriptName);
-      else destOrder.splice(index, 0, scriptName);
+      let newOrder = null;
+      setProjects((prev) => prev.map((project) => {
+        if (project.name !== projectName) return project;
+        const scripts = [...project.scripts];
+        const fromIndex = scripts.findIndex((item) => item.name === dragInfo.scriptName);
+        if (fromIndex < 0) return project;
+        const [moved] = scripts.splice(fromIndex, 1);
+        let targetIndex = appendToEnd || !beforeScriptName ? scripts.length : scripts.findIndex((item) => item.name === beforeScriptName);
+        if (targetIndex < 0) targetIndex = scripts.length;
+        if (!appendToEnd && beforeScriptName && dropPosition === 'after') targetIndex += 1;
+        scripts.splice(targetIndex, 0, moved);
+        newOrder = scripts.map((item) => item.name);
+        return { ...project, scripts };
+      }));
       setDragInfo(null);
-      if (!window.electronAPI?.moveScript || !window.electronAPI?.reorderScripts) {
-        console.error('electronAPI unavailable');
+      setHoverScriptDrop(null);
+      if (newOrder && window.electronAPI?.reorderScripts) await window.electronAPI.reorderScripts(projectName, newOrder);
+    } else {
+      const sourceProject = dragInfo.projectName;
+      const scriptName = dragInfo.scriptName;
+      const destScripts = projects.find((project) => project.name === projectName)?.scripts.map((item) => item.name) || [];
+      const destOrder = destScripts.filter((name) => name !== scriptName);
+      let targetIndex = appendToEnd || !beforeScriptName ? destOrder.length : destOrder.findIndex((name) => name === beforeScriptName);
+      if (targetIndex < 0) targetIndex = destOrder.length;
+      if (!appendToEnd && beforeScriptName && dropPosition === 'after') targetIndex += 1;
+      destOrder.splice(targetIndex, 0, scriptName);
+      setDragInfo(null);
+      setHoverScriptDrop(null);
+      if (!window.electronAPI?.moveScript || !window.electronAPI?.reorderScripts) return;
+      const moved = await window.electronAPI.moveScript(sourceProject, projectName, scriptName, targetIndex);
+      if (!moved) {
+        toast.error('Failed to move script');
+        await loadProjects();
         return;
       }
-      console.log('Moving script', scriptName, 'from', sourceProject, 'to', projectName);
-      await window.electronAPI.moveScript(
-        sourceProject,
-        projectName,
-        scriptName,
-        index,
-      );
-      console.log('Saving destination order', destOrder);
       await window.electronAPI.reorderScripts(projectName, destOrder);
       await loadProjects();
     }
   };
 
   const handleDragEnd = () => {
-    console.log('Drag end');
     setDragInfo(null);
-    setHoverIndex(null);
+    setHoverScriptDrop(null);
+    setHoverProjectDrop(null);
   };
 
+  const handleProjectMenu = (e, project) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setScriptMenu(null);
+    setSortMenu(null);
+    setProjectMenu({
+      projectName: project.name,
+      archived: !!project.archived,
+      ...getMenuPosition(e.clientX, e.clientY, getProjectMenuItemCount(project)),
+    });
+  };
+
+  const handleScriptContextMenu = (e, projectName, scriptName) => {
+    e.preventDefault();
+    setProjectMenu(null);
+    setSortMenu(null);
+    setScriptMenu({ projectName, scriptName, ...getMenuPosition(e.clientX, e.clientY, getScriptMenuItemCount()) });
+  };
+
+  const handleSortMenu = (e, projectName) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setProjectMenu(null);
+    setScriptMenu(null);
+    setSortMenu({ projectName, ...getMenuPosition(e.clientX, e.clientY, 3) });
+  };
+
+  const visibleProjects = projects.filter((project) => !!project.archived === showArchived);
+  const totalScripts = visibleProjects.reduce((sum, project) => sum + project.scripts.length, 0);
+  const archivedProjectCount = projects.filter((project) => project.archived).length;
+
   return (
-    <div className="file-manager">
-      <div className="file-manager-header">
-        <div className="header-left">
-          <h2 className="header-title">Projects</h2>
+    <div className="file-manager" ref={fileManagerRef}>
+      <div className="library-header surface-block">
+        <div className="library-header-copy">
+          <h2 className="header-title">Scripts and Projects</h2>
+        </div>
+        <div className="library-header-actions">
+          <button className="surface-button surface-button-secondary" onClick={handleNewScript}>New Script</button>
+          <button
+            className="surface-button surface-button-primary"
+            onClick={async () => {
+              if (window.electronAPI?.lposGetClientNames) {
+                const names = await window.electronAPI.lposGetClientNames();
+                setClientNames(names || []);
+              }
+              setShowNewProjectModal(true);
+            }}
+          >New Project</button>
+        </div>
+        <div className="library-toolbar-row">
+          <span className="library-count">{totalScripts} total script{totalScripts === 1 ? '' : 's'}</span>
+          <div className="library-view-toggle" role="tablist" aria-label="Library view">
+            <button className={`library-view-pill${showArchived ? '' : ' active'}`} onClick={() => setShowArchived(false)}>Library</button>
+            <button className={`library-view-pill${showArchived ? ' active' : ''}`} onClick={() => setShowArchived(true)}>Archive{archivedProjectCount ? ` (${archivedProjectCount})` : ''}</button>
+          </div>
+        </div>
+        <div className="library-search-wrap compact">
+          <input type="search" className="library-search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={showArchived ? 'Search archived scripts' : 'Search all scripts'} aria-label="Search scripts" />
         </div>
       </div>
-      <div className="header-buttons">
-        <button onClick={handleNewScript}>+ New Script</button>
-        <button onClick={() => setShowNewProjectInput(!showNewProjectInput)}>
-          + New Project
-        </button>
-      </div>
 
-      {showNewProjectInput && (
-        <div className="new-project-input">
-          <input
-            type="text"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            placeholder="Project name"
-          />
-          <button onClick={handleNewProject}>Create</button>
-        </div>
-      )}
+      <div className={`file-manager-list${rootDrag ? ' drop-target' : ''}`} onDragOver={handleRootDragOver} onDragEnter={handleRootDragEnter} onDragLeave={handleRootDragLeave} onDrop={handleRootDrop}>
+        {!visibleProjects.length && <div className="library-empty-state surface-block">{showArchived ? 'No archived projects yet' : 'No projects yet'}</div>}
+        {visibleProjects.map((project, projectIndex) => {
+          const sortMode = getProjectSortMode(project.name);
+          const displayedScripts = getDisplayedScripts(project);
+          const visibleScripts = displayedScripts.filter((script) => matchesSearch(script.name, searchQuery));
+          const isOpen = !collapsed[project.name];
+          const accent = getProjectAccent(project.name, projectIndex);
+          const projectStyle = {
+            '--project-accent': accent.accent,
+            '--project-accent-strong': accent.strong,
+            '--project-accent-quiet': accent.quiet,
+            '--project-avatar-bg': accent.avatar,
+          };
 
-      <div
-        className={`file-manager-list${rootDrag ? ' drop-target' : ''}`}
-        onDragOver={handleRootDragOver}
-        onDragEnter={handleRootDragEnter}
-        onDragLeave={handleRootDragLeave}
-        onDrop={handleRootDrop}
-      >
-        {projects.map((project) => (
-          <div className="project-group" key={project.name}>
+          return (
             <div
-              className={`project-header${hoverProject === project.name ? ' drop-target' : ''}`}
-              onDragOver={handleDragOver}
+              className={`project-group surface-block${isOpen ? ' open' : ''}${hoverProjectDrop?.projectName === project.name ? ` drop-${hoverProjectDrop.position}` : ''}`}
+              key={project.name}
+              style={projectStyle}
+              onDragOver={(e) => handleProjectDragOver(e, project.name)}
               onDrop={(e) => handleProjectDrop(e, project.name)}
-              onDragEnter={() => handleProjectDragEnter(project.name)}
-              onDragLeave={() => handleProjectDragLeave(project.name)}
             >
-              {renamingProject === project.name ? (
-                <>
-                  <input
-                    type="text"
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                  />
-                  <button onClick={() => confirmRenameProject(project.name)}>Save</button>
-                  <button onClick={cancelRename}>Cancel</button>
-                </>
-              ) : (
-                <>
-                  <div
-                    className="project-title"
-                    onClick={() => toggleCollapse(project.name)}
-                  >
-                    <button
-                      className="toggle-button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleCollapse(project.name);
-                      }}
-                    >
-                      {collapsed[project.name] ? '▶' : '▼'}
-                    </button>
-                    <h4>{project.name}</h4>
+              <div
+                className={`project-header${dragInfo?.type !== 'project' && hoverProjectDrop?.projectName === project.name ? ' drop-target' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-expanded={!collapsed[project.name]}
+                onKeyDown={(e) => handleProjectHeaderKeyDown(e, project.name)}
+                onClick={() => toggleCollapse(project.name)}
+                onContextMenu={(e) => handleProjectMenu(e, project)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleProjectDrop(e, project.name)}
+                draggable={!project.archived}
+                onDragStart={(e) => handleProjectDragStart(e, project.name)}
+                onDragEnd={handleDragEnd}
+                title="Drag to reorder projects"
+              >
+                {renamingProject === project.name ? (
+                  <div className="rename-row">
+                    <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onKeyDown={(e) => handleRenameKeyDown(e, () => confirmRenameProject(project.name))} autoFocus />
+                    <button className="surface-button surface-button-primary" onClick={() => confirmRenameProject(project.name)}>Save</button>
+                    <button className="surface-button surface-button-secondary" onClick={cancelRename}>Cancel</button>
                   </div>
-                  <div className="project-actions">
-                    <button
-                      className="icon-button"
-                      onClick={() => handleImportClick(project.name)}
-                      aria-label="Add Script"
-                    >
-                      <PlusIcon />
-                    </button>
-                    <button
-                      className="icon-button"
-                      onClick={() => startRenameProject(project.name)}
-                      aria-label="Rename"
-                    >
-                      <PencilIcon />
-                    </button>
-                    <button
-                      className="icon-button"
-                      onClick={() => handleDeleteProject(project.name)}
-                      aria-label="Delete"
-                    >
-                      <TrashIcon />
-                    </button>
-                    <select
-                      className="sort-select"
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                    >
-                      <option value="" disabled>
-                        Sort
-                      </option>
-                      <option value="name">Name</option>
-                      <option value="date">Date Added</option>
-                    </select>
-                  </div>
-                </>
-              )}
-            </div>
-            <ul className={collapsed[project.name] ? 'collapsed' : ''}>
-              {project.scripts
-                .slice()
-                .sort((a, b) => {
-                  if (sortBy === 'name') {
-                    return a.name.localeCompare(b.name);
-                  }
-                  if (sortBy === 'date') {
-                    return (a.added || 0) - (b.added || 0);
-                  }
-                  return 0;
-                })
-                .map((script) => {
-                  const index = project.scripts.findIndex((s) => s.name === script.name);
+                ) : (
+                  <>
+                    <div className="project-title">
+                      <span className="project-avatar" aria-hidden="true">{getProjectInitials(project.name)}</span>
+                      <div className="project-title-copy">
+                        <h4 title={project.name}>{project.name}</h4>
+                        <span className="project-meta">{displayedScripts.length} script{displayedScripts.length === 1 ? '' : 's'}</span>
+                      </div>
+                    </div>
+                    <div className="project-header-controls" onClick={(e) => e.stopPropagation()}>
+                      <button className="sort-trigger" onClick={(e) => handleSortMenu(e, project.name)}>Sort by</button>
+                      <button className="icon-button quiet" onClick={(e) => handleProjectMenu(e, project)} aria-label="Project Options"><DotsIcon /></button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <ul className={`project-script-list${collapsed[project.name] ? ' collapsed' : ''}`}>
+                {!collapsed[project.name] && visibleScripts.map((script, scriptIndex) => {
                   const scriptName = script.name;
-                  const isPrompting =
-                    loadedProject === project.name && loadedScript === scriptName;
-                  const isLoaded =
-                    currentProject === project.name && currentScript === scriptName;
-                  const isRenaming =
-                    renamingScript &&
-                    renamingScript.projectName === project.name &&
-                    renamingScript.scriptName === scriptName;
+                  const isPrompting = loadedProject === project.name && loadedScript === scriptName;
+                  const isLoaded = currentProject === project.name && currentScript === scriptName;
+                  const isRenaming = renamingScript && renamingScript.projectName === project.name && renamingScript.scriptName === scriptName;
                   return (
                     <li
                       key={scriptName}
                       draggable
-                      onDragStart={() => handleDragStart(project.name, index)}
-                      onDragOver={handleDragOver}
-                      onDrop={(e) => handleDrop(e, project.name, index)}
-                      onDragEnter={() => handleDragEnter(index)}
-                      onDragLeave={() => handleDragLeave(index)}
+                      onDragStart={(e) => handleScriptDragStart(e, project.name, scriptName)}
+                      onDragOver={(e) => handleScriptDragOver(e, project.name, scriptName)}
+                      onDrop={(e) => handleDrop(e, project.name, scriptName, false, getDropPosition(e.clientY, e.currentTarget.getBoundingClientRect()))}
                       onDragEnd={handleDragEnd}
-                      className={`script-item${
-                        isPrompting ? ' prompting' : ''
-                      }${isLoaded ? ' loaded' : ''}${
-                        hoverIndex === index ? ' drop-target' : ''
-                      }`}
+                      className={`script-item${isPrompting ? ' prompting' : ''}${isLoaded ? ' loaded' : ''}${hoverScriptDrop?.projectName === project.name && hoverScriptDrop?.scriptName === scriptName ? ` drop-${hoverScriptDrop.position}` : ''}`}
+                      title="Drag to reorder scripts"
                     >
                       {isRenaming ? (
-                        <>
-                          <input
-                            type="text"
-                            value={renameValue}
-                            onChange={(e) => setRenameValue(e.target.value)}
-                          />
-                          <button onClick={() => confirmRenameScript(project.name, scriptName)}>Save</button>
-                          <button onClick={cancelRename}>Cancel</button>
-                        </>
+                        <div className="rename-row">
+                          <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
+                          <button className="surface-button surface-button-primary" onClick={() => confirmRenameScript(project.name, scriptName)}>Save</button>
+                          <button className="surface-button surface-button-secondary" onClick={cancelRename}>Cancel</button>
+                        </div>
                       ) : (
-                        <>
-                          <button
-                            className="script-button"
-                            onClick={() => onScriptSelect(project.name, scriptName)}
-                            onMouseEnter={(e) => handleScriptMouseEnter(scriptName, e)}
-                            onMouseLeave={handleScriptMouseLeave}
-                            onMouseMove={handleScriptMouseMove}
-                          >
-                            {scriptName.replace(/\.[^/.]+$/, '')}
-                          </button>
-                          <div className="script-actions">
-                            <button
-                              className="icon-button"
-                              onClick={() => startRenameScript(project.name, scriptName)}
-                              aria-label="Rename"
-                            >
-                              <PencilIcon />
-                            </button>
-                            <button
-                              className="icon-button"
-                              onClick={() => handleDeleteScript(project.name, scriptName)}
-                              aria-label="Delete"
-                            >
-                              <TrashIcon />
-                            </button>
-                          </div>
-                        </>
+                        <button className="script-button minimal" onClick={() => onScriptSelect(project.name, scriptName)} onContextMenu={(e) => handleScriptContextMenu(e, project.name, scriptName)} onMouseEnter={(e) => handleScriptMouseEnter(scriptName, e)} onMouseLeave={handleScriptMouseLeave} onMouseMove={handleScriptMouseMove} title={normalizeScriptName(scriptName)}>
+                          <span className="script-row-index">{String(scriptIndex + 1).padStart(2, '0')}</span>
+                          <span className="script-row-copy">
+                            <span className="script-button-title truncate-text">{normalizeScriptName(scriptName)}</span>
+                          </span>
+                          <span className="script-state-tags">
+                            {isPrompting && <span className="script-state-tag live">Live</span>}
+                          </span>
+                        </button>
                       )}
                     </li>
                   );
                 })}
-            </ul>
-          </div>
-        ))}
+                {!collapsed[project.name] && visibleScripts.length === 0 && <li className="project-empty-state">{searchQuery ? 'No scripts match' : 'No scripts yet'}</li>}
+              </ul>
+            </div>
+          );
+        })}
       </div>
-      {confirmState && (
-        <ConfirmModal
-          message={confirmState.message}
-          onConfirm={() => {
-            const { action } = confirmState;
-            setConfirmState(null);
-            action();
-          }}
-          onCancel={() => setConfirmState(null)}
-        />
-      )}
 
-      {tooltipScript && (
-        <div
-          className="script-tooltip"
-          style={{ top: tooltipPosition.y, left: tooltipPosition.x }}
-        >
-          {tooltipScript}
+      {projectMenu && (
+        <div className="context-popover surface-block project-menu" style={{ top: projectMenu.y, left: projectMenu.x }} onClick={(e) => e.stopPropagation()} onKeyDown={handleMenuKeyDown}>
+          {!projectMenu.archived && <button onClick={() => handleImportClick(projectMenu.projectName)}><span className="menu-check" />Import script</button>}
+          <button onClick={() => handleExportProject(projectMenu.projectName, 'docx')}><span className="menu-check" />Export project (.docx)</button>
+          <button onClick={() => handleExportProject(projectMenu.projectName, 'pdf')}><span className="menu-check" />Export project (.pdf)</button>
+          {projectMenu.archived ? (
+            <button onClick={() => handleRestoreProject(projectMenu.projectName)}><span className="menu-check" />Restore project</button>
+          ) : (
+            <button onClick={() => handleArchiveProject(projectMenu.projectName)}><span className="menu-check" />Archive project</button>
+          )}
+          <button onClick={() => startRenameProject(projectMenu.projectName)}><span className="menu-check" />Rename project</button>
         </div>
       )}
 
+      {sortMenu && (
+        <div className="context-popover surface-block sort-menu" style={{ top: sortMenu.y, left: sortMenu.x }} onClick={(e) => e.stopPropagation()} onKeyDown={handleMenuKeyDown}>
+          <button className={`sort-menu-option${getProjectSortMode(sortMenu.projectName) === '' ? ' active' : ''}`} onClick={() => { setSortBy((current) => ({ ...current, [sortMenu.projectName]: '' })); setSortMenu(null); }}>Manual order</button>
+          <button className={`sort-menu-option${getProjectSortMode(sortMenu.projectName) === 'name' ? ' active' : ''}`} onClick={() => { setSortBy((current) => ({ ...current, [sortMenu.projectName]: 'name' })); setSortMenu(null); }}>Name</button>
+          <button className={`sort-menu-option${getProjectSortMode(sortMenu.projectName) === 'date' ? ' active' : ''}`} onClick={() => { setSortBy((current) => ({ ...current, [sortMenu.projectName]: 'date' })); setSortMenu(null); }}>Date added</button>
+        </div>
+      )}
+
+      {scriptMenu && (
+        <div className="context-popover surface-block script-menu" style={{ top: scriptMenu.y, left: scriptMenu.x }} onClick={(e) => e.stopPropagation()} onKeyDown={handleMenuKeyDown}>
+          <button onClick={() => { onScriptSelect(scriptMenu.projectName, scriptMenu.scriptName); setScriptMenu(null); }}><span className="menu-check" />Open</button>
+          <button onClick={() => startRenameScript(scriptMenu.projectName, scriptMenu.scriptName)}><span className="menu-check" />Rename</button>
+          <button onClick={() => handleExportScript(scriptMenu.projectName, scriptMenu.scriptName, 'docx')}><span className="menu-check" />Export (.docx)</button>
+          <button onClick={() => handleExportScript(scriptMenu.projectName, scriptMenu.scriptName, 'pdf')}><span className="menu-check" />Export (.pdf)</button>
+          <button className="danger" onClick={() => handleDeleteScript(scriptMenu.projectName, scriptMenu.scriptName)}><span className="menu-check" />Delete</button>
+        </div>
+      )}
+
+      {confirmState && <ConfirmModal message={confirmState.message} onConfirm={() => { const { action } = confirmState; setConfirmState(null); action(); }} onCancel={() => setConfirmState(null)} />}
+      {showNewProjectModal && (
+        <NewProjectModal
+          clientNames={clientNames}
+          onConfirm={handleNewProject}
+          onCancel={() => setShowNewProjectModal(false)}
+        />
+      )}
+      {tooltipScript && <div className="script-tooltip" style={{ top: tooltipPosition.y, left: tooltipPosition.x }}>{tooltipScript}</div>}
     </div>
   );
 });
 
 export default FileManager;
+
+
 

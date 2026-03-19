@@ -27,16 +27,21 @@ const api = {
 
   // Project management
   selectProjectFolder: () => ipcRenderer.invoke('select-project-folder'),
-  createNewProject: (name) => ipcRenderer.invoke('create-new-project', name),
+  createNewProject: (name, clientName) => ipcRenderer.invoke('create-new-project', name, clientName),
+  lposGetClientNames: () => ipcRenderer.invoke('lpos-get-client-names'),
   renameProject: (oldName, newName) =>
     ipcRenderer.invoke('rename-project', oldName, newName),
   deleteProject: (name) => ipcRenderer.invoke('delete-project', name),
+  archiveProject: (name) => ipcRenderer.invoke('archive-project', name),
+  restoreProject: (name) => ipcRenderer.invoke('restore-project', name),
   renameScript: (projectName, oldName, newName) =>
     ipcRenderer.invoke('rename-script', projectName, oldName, newName),
   createNewScript: (projectName, scriptName) =>
     ipcRenderer.invoke('create-new-script', projectName, scriptName),
   reorderScripts: (projectName, order) =>
     ipcRenderer.invoke('reorder-scripts', projectName, order),
+  reorderProjects: (order) =>
+    ipcRenderer.invoke('reorder-projects', order),
   moveScript: (projectName, newProjectName, scriptName, index) =>
     ipcRenderer.invoke('move-script', projectName, newProjectName, scriptName, index),
 
@@ -67,6 +72,15 @@ const api = {
     ipcRenderer.invoke('save-script', { projectName, scriptName, html }),
   deleteScript: (projectName, scriptName) =>
     ipcRenderer.invoke('delete-script', projectName, scriptName),
+  exportScript: (projectName, scriptName, format) =>
+    ipcRenderer.invoke('export-script', projectName, scriptName, format),
+  exportProject: (projectName, format) =>
+    ipcRenderer.invoke('export-project', projectName, format),
+  exportSpeechFollowSnapshot: (payload) =>
+    ipcRenderer.invoke('export-speech-follow-snapshot', payload),
+  getWhisperConfig: () => ipcRenderer.invoke('get-whisper-config'),
+  transcribeWhisperChunk: (payload) =>
+    ipcRenderer.invoke('transcribe-whisper-chunk', payload),
 
   onLogMessage: (callback) => {
     const handler = (_, msg) => callback(msg)
@@ -79,11 +93,18 @@ const api = {
 
   closePrompter: () => ipcRenderer.send('close-prompter'),
   minimizePrompter: () => ipcRenderer.send('minimize-prompter'),
+  openSpeechFollowInspector: () => ipcRenderer.send('open-speech-follow-inspector'),
+  closeSpeechFollowInspector: () => ipcRenderer.send('close-speech-follow-inspector'),
 
   onPrompterClosed: (callback) => {
     const handler = () => callback()
     ipcRenderer.on('prompter-closed', handler)
     return () => ipcRenderer.removeListener('prompter-closed', handler)
+  },
+  onSpeechFollowInspectorClosed: (callback) => {
+    const handler = () => callback()
+    ipcRenderer.on('speech-follow-inspector-closed', handler)
+    return () => ipcRenderer.removeListener('speech-follow-inspector-closed', handler)
   },
 
   getPrompterBounds: () => ipcRenderer.invoke('get-prompter-bounds'),
@@ -91,6 +112,7 @@ const api = {
     ipcRenderer.send('set-prompter-bounds', bounds),
 
   prompterReady: () => ipcRenderer.send('prompter-ready'),
+  prompterDebugLog: (message, extra) => ipcRenderer.send('prompter-debug-log', { message, extra }),
 
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   restartAndInstall: () => ipcRenderer.invoke('quit-and-install'),
@@ -142,4 +164,34 @@ api.abortRewrite = (id) => ipcRenderer.send('rewrite-selection-abort', id);
 
 api.spellCheck = (word) => ipcRenderer.invoke('spell-check', word);
 
+// ── LPOS Sync ─────────────────────────────────────────────────────────────────
+api.lposGetConfig = () => ipcRenderer.invoke('lpos-get-config');
+api.lposSaveConfig = (config) => ipcRenderer.invoke('lpos-save-config', config);
+api.lposGetStatus = () => ipcRenderer.invoke('lpos-get-status');
+api.lposSyncNow = () => ipcRenderer.invoke('lpos-sync-now');
+api.lposGetRemoteProjects = (serverUrl) => ipcRenderer.invoke('lpos-get-remote-projects', serverUrl);
+api.onLposSyncUpdate = (callback) => {
+  const handler = (_, status) => callback(status);
+  ipcRenderer.on('lpos-sync-update', handler);
+  return () => ipcRenderer.removeListener('lpos-sync-update', handler);
+};
+api.onLposScriptsUpdated = (callback) => {
+  const handler = (_, data) => callback(data);
+  ipcRenderer.on('lpos-scripts-updated', handler);
+  return () => ipcRenderer.removeListener('lpos-scripts-updated', handler);
+};
+api.onLposProjectsUpdated = (callback) => {
+  const handler = () => callback();
+  ipcRenderer.on('lpos-projects-updated', handler);
+  return () => ipcRenderer.removeListener('lpos-projects-updated', handler);
+};
+api.onLposConnectionChanged = (callback) => {
+  const handler = (_, data) => callback(data);
+  ipcRenderer.on('lpos-connection-changed', handler);
+  return () => ipcRenderer.removeListener('lpos-connection-changed', handler);
+};
+
 contextBridge.exposeInMainWorld('electronAPI', api);
+
+
+

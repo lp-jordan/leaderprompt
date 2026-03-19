@@ -1,19 +1,20 @@
 .prompter-wrapper {
   height: 100vh;
   width: 100vw;
+  background:
+    radial-gradient(circle at top left, rgba(215, 170, 99, 0.08), transparent 24%),
+    linear-gradient(180deg, #111821 0%, #090d13 100%);
 }
 
 .prompter-container {
   height: 100vh;
   overflow-y: scroll;
-  background: #000000;
-  color: #e0e0e0;
+  background: linear-gradient(180deg, #10161f 0%, #090d13 100%);
+  color: var(--color-text);
   font-family: sans-serif;
   transform-origin: center;
   position: relative;
 }
-
-
 
 .resize-handle {
   position: fixed;
@@ -93,25 +94,27 @@
   transform: translateX(-50%);
   display: flex;
   gap: var(--space-2);
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(14, 20, 28, 0.84);
+  border: 1px solid var(--color-border);
   padding: var(--space-2) var(--space-3);
-  border-radius: 6px;
+  border-radius: 999px;
   z-index: 999;
+  box-shadow: var(--shadow-lift);
 }
 
 .notecard-controls button {
-  background: #333;
-  border: none;
-  color: #e0e0e0;
-  cursor: pointer;
+  background: rgba(242, 235, 221, 0.06);
+  border-color: transparent;
 }
 
 .notecard-controls button:hover {
-  background: var(--accent-color);
+  background: rgba(215, 170, 99, 0.18);
+  color: var(--color-accent-strong);
 }
 
 .notecard-index {
   align-self: center;
+  color: var(--color-text-soft);
 }
 
 .main-settings {
@@ -119,26 +122,36 @@
   top: 0;
   left: 0;
   height: 100vh;
-  width: 220px;
+  width: 248px;
   transform: translateX(-100%);
   transition: transform 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  background: rgba(0, 0, 0, 0.8);
-  padding: var(--space-4);
+  gap: var(--space-3);
+  background: linear-gradient(180deg, rgba(19, 27, 37, 0.96), rgba(10, 15, 23, 0.98));
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-5);
   overflow-y: auto;
   z-index: 999;
-  color: #e0e0e0;
+  color: var(--color-text);
+  box-shadow: var(--shadow-panel);
 }
 
 .main-settings.open {
   transform: translateX(0);
 }
 
+.main-settings label,
+.main-settings .setting-label {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
 .main-settings input[type='range'],
 .main-settings input[type='checkbox'] {
-  accent-color: var(--accent-color);
+  accent-color: var(--color-accent);
 }
 
 .main-settings-toggle {
@@ -146,60 +159,148 @@
   top: var(--space-3);
   left: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid #e0e0e0;
+  background: rgba(14, 20, 28, 0.92);
+  border: 1px solid var(--color-border);
   border-left: none;
-  color: #e0e0e0;
+  color: var(--color-text);
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 14px 14px 0;
   transform: translateX(0);
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .main-settings-toggle.open {
-  transform: translateX(220px);
+  transform: translateX(248px);
 }
 
 .toggle-btn {
-  background: #333;
-  border: none;
-  color: #e0e0e0;
+  background: rgba(242, 235, 221, 0.06);
+  border-color: transparent;
+  color: var(--color-text-soft);
   cursor: pointer;
   padding: var(--space-2) var(--space-3);
-  border-radius: 4px;
+  border-radius: 999px;
 }
 
 .toggle-btn.active {
-  background: var(--accent-color);
-  color: #000;
+  background: rgba(215, 170, 99, 0.18);
+  color: var(--color-accent-strong);
+  border-color: rgba(215, 170, 99, 0.28);
 }
 
 .script-output {
+  position: relative;
+  z-index: 1;
   pointer-events: auto;
   user-select: none;
 }
 
+
+.speech-eyeline-marker {
+  position: absolute;
+  right: 0.45rem;
+  z-index: 3;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border-right: 0;
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
+  border-left: 20px solid rgba(255, 214, 102, 0.96);
+  background: transparent;
+  outline: none;
+  box-shadow: -4px 0 14px rgba(255, 214, 102, 0.18);
+  cursor: ns-resize;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.speech-eyeline-marker:hover,
+.speech-eyeline-marker:focus-visible {
+  border-left-color: rgba(255, 230, 151, 1);
+  outline: none;
+}
+
+.speech-eyeline-marker-label {
+  position: absolute;
+  right: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.14rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(255, 214, 102, 0.92);
+  color: #141006;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.speech-eyeline-marker:hover .speech-eyeline-marker-label,
+.speech-eyeline-marker:focus-visible .speech-eyeline-marker-label {
+  opacity: 1;
+}
+.speech-follow-line-overlay {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  box-sizing: border-box;
+  border-left: 8px solid rgba(255, 214, 102, 0.98);
+  background: linear-gradient(90deg, rgba(255, 214, 102, 0.24), rgba(255, 214, 102, 0.03));
+  box-shadow: inset 0 0 0 2px rgba(255, 214, 102, 0.82), 0 0 24px rgba(255, 214, 102, 0.18);
+  border-radius: 0.4rem;
+  transition:
+    top 110ms linear,
+    height 110ms linear,
+    opacity 110ms linear;
+  will-change: top, height;
+}
+
+.speech-follow-line-overlay.overlay-source-last_good_rect {
+  opacity: 0.82;
+}
+
+.speech-follow-line-overlay.overlay-source-anchor_fallback {
+  border-left-style: dashed;
+  opacity: 0.68;
+}
+.speech-follow-line-overlay-chip {
+  position: absolute;
+  top: -0.9rem;
+  left: 0.7rem;
+  display: inline-block;
+  padding: 0.12rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 214, 102, 1);
+  color: #141006;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .editor-layer {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: 1;
 }
 
 .stop-button {
-  background-color: #bb4444;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  padding: var(--space-2) var(--space-3);
-  border-radius: 4px;
+  background-color: #9f5b54;
+  color: #fff4f2;
+  border-color: rgba(184, 110, 102, 0.55);
+}
+
+.stop-button:hover {
+  background-color: #b86e66;
 }
 
 .edit-toggle {
@@ -207,23 +308,368 @@
   bottom: var(--space-4);
   right: var(--space-4);
   z-index: 1000;
-  background: var(--accent-color);
-  border: none;
-  color: #1e1e1e;
+  background: linear-gradient(180deg, var(--color-accent-strong), var(--color-accent));
+  border-color: rgba(235, 191, 117, 0.45);
+  color: #16110a;
   cursor: pointer;
-  padding: var(--space-2) var(--space-3);
-  border-radius: 6px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 999px;
+  box-shadow: var(--shadow-lift);
 }
 
 .edit-toggle.editing {
-  background: #bb4444;
-  color: #fff;
+  background: linear-gradient(180deg, #b86e66, #95544d);
+  color: #fff4f2;
+  border-color: rgba(184, 110, 102, 0.55);
 }
 
 .edit-toggle.editing:hover {
-  background: #dd5555;
+  background: linear-gradient(180deg, #c77c74, #a65e57);
 }
 
-.stop-button:hover {
-  background-color: #dd5555;
+
+.speech-follow-panel {
+  min-width: min(24rem, 100%);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid rgba(125, 145, 176, 0.24);
+  border-radius: calc(var(--radius-lg) - 4px);
+  background: linear-gradient(180deg, rgba(13, 24, 42, 0.92), rgba(8, 16, 29, 0.9));
 }
+
+.speech-follow-inline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.speech-follow-panel label {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--color-text-soft);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.speech-follow-panel select {
+  width: 100%;
+}
+
+.speech-follow-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.speech-follow-test {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid rgba(125, 145, 176, 0.18);
+  border-radius: calc(var(--radius-lg) - 6px);
+  background: rgba(5, 12, 22, 0.68);
+}
+
+.speech-follow-test-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.speech-follow-test-label,
+.speech-follow-preview-label {
+  color: var(--color-text-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.speech-follow-test-device {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.speech-follow-audio-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.speech-follow-audio-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(198, 105, 97, 0.55);
+  background: rgba(159, 63, 56, 0.92);
+  box-shadow: 0 0 0 3px rgba(159, 63, 56, 0.14);
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.speech-follow-audio-dot.active {
+  border-color: rgba(126, 176, 123, 0.72);
+  background: rgba(111, 175, 104, 0.96);
+  box-shadow: 0 0 0 3px rgba(111, 175, 104, 0.18);
+}
+
+.speech-follow-audio-label {
+  color: var(--color-text-primary);
+}
+
+.speech-follow-preview {
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: calc(var(--radius-md) - 2px);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary);
+  line-height: 1.45;
+}
+
+.speech-follow-status {
+  color: var(--color-text-soft);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.speech-follow-status.speech-follow-status-following {
+  color: var(--color-success);
+}
+
+.speech-follow-status.speech-follow-status-attention_required,
+.speech-follow-status.speech-follow-status-unavailable {
+  color: var(--color-danger);
+}
+
+.speech-follow-status.speech-follow-status-starting,
+.speech-follow-status.speech-follow-status-listening,
+.speech-follow-status.speech-follow-status-ready {
+  color: var(--color-text-primary);
+}
+
+.speech-follow-recovery {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0.8rem;
+  border: 1px solid rgba(184, 110, 102, 0.28);
+  border-radius: calc(var(--radius-md) - 2px);
+  background: rgba(71, 28, 25, 0.18);
+}
+
+.speech-follow-recovery p,
+.speech-follow-advanced-copy {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.speech-follow-recovery-actions,
+.speech-follow-advanced-panel {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.speech-follow-advanced {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.speech-follow-metric-panel {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(125, 145, 176, 0.18);
+  border-radius: calc(var(--radius-md) - 2px);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.speech-follow-meter {
+  position: relative;
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.speech-follow-meter-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  background: linear-gradient(90deg, rgba(143, 176, 222, 0.8), rgba(235, 191, 117, 0.95));
+}
+
+.speech-follow-metric-copy {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.speech-follow-metric-copy strong {
+  color: var(--color-text-primary);
+  font-size: 0.96rem;
+}
+
+.speech-follow-metric-copy span {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+
+
+
+.speech-follow-debug {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.speech-follow-debug-toolbar,
+.speech-follow-debug-actions,
+.speech-follow-debug-grid,
+.speech-follow-debug-output {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.speech-follow-debug-toolbar {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.speech-follow-debug-actions {
+  flex-wrap: wrap;
+}
+
+.speech-follow-debug-grid,
+.speech-follow-debug-output {
+  flex-wrap: wrap;
+}
+
+.speech-follow-debug-card,
+.speech-follow-debug-pane {
+  min-width: 12rem;
+  flex: 1 1 16rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: var(--space-3);
+  border: 1px solid rgba(125, 145, 176, 0.18);
+  border-radius: calc(var(--radius-lg) - 6px);
+  background: rgba(7, 14, 24, 0.56);
+}
+
+.speech-follow-debug-value {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.speech-follow-debug-meta,
+.speech-follow-debug-path,
+.speech-follow-debug-log-time {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.speech-follow-debug-paths {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.speech-follow-debug-path {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.speech-follow-debug-pane pre {
+  margin: 0;
+  max-height: 7.5rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--color-text-primary);
+  font: 0.78rem/1.45 Consolas, Monaco, monospace;
+}
+
+.speech-follow-debug-log {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.speech-follow-debug-log-list {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 12rem;
+  overflow: auto;
+  padding: var(--space-2);
+  border: 1px solid rgba(125, 145, 176, 0.18);
+  border-radius: calc(var(--radius-lg) - 6px);
+  background: rgba(5, 12, 22, 0.68);
+}
+
+.speech-follow-debug-log-item {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: var(--space-2);
+  align-items: baseline;
+}
+
+.speech-follow-debug-log-type {
+  color: var(--color-accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.speech-follow-debug-log-summary,
+.speech-follow-debug-empty {
+  color: var(--color-text-primary);
+  font-size: 0.82rem;
+}
+
+
+
+.speech-follow-stage-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.speech-follow-stage-card {
+  display: grid;
+  gap: 0.25rem;
+  padding: var(--space-3);
+  border: 1px solid rgba(125, 145, 176, 0.18);
+  border-radius: calc(var(--radius-lg) - 6px);
+  background: rgba(7, 14, 24, 0.56);
+}
+
+.speech-follow-stage-card strong {
+  color: var(--color-text-primary);
+  font-size: 0.98rem;
+}
+
+.speech-follow-stage-card.passed {
+  border-color: rgba(126, 176, 123, 0.4);
+  background: rgba(41, 72, 56, 0.28);
+}
+
+.speech-follow-checkpoint-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.speech-follow-anchor-candidate {
+  box-shadow: inset 3px 0 0 rgba(143, 176, 222, 0.82);
+}
+
+.speech-follow-anchor-committed {
+  box-shadow: inset 3px 0 0 rgba(235, 191, 117, 0.92);
+  background: rgba(235, 191, 117, 0.06);
+}
+
+

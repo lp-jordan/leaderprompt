@@ -9,6 +9,7 @@ import { handleContextMenu as handleContextMenuUtil } from './utils/contextMenu.
 
 function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
   const containerRef = useRef(null)
+  const lastAppliedHtmlRef = useRef(initialHtml)
   const editor = useEditor(
     {
       extensions: [StarterKit, TextStyle, Color],
@@ -25,9 +26,13 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
   }, [editor, onReady])
 
   useEffect(() => {
-    if (editor && editor.getHTML() !== initialHtml) {
-      editor.commands.setContent(initialHtml, false)
+    if (!editor || lastAppliedHtmlRef.current === initialHtml) return
+    if (editor.getHTML() === initialHtml) {
+      lastAppliedHtmlRef.current = initialHtml
+      return
     }
+    editor.commands.setContent(initialHtml, false)
+    lastAppliedHtmlRef.current = initialHtml
   }, [editor, initialHtml])
 
   const [menuPos, setMenuPos] = useState(null)
@@ -100,8 +105,6 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
     }
   }, [])
 
-  // Context menu now opens only via right click; no automatic menu on selection.
-
   const cancelRewrite = () => {
     if (loaderRef.current) {
       clearInterval(loaderRef.current)
@@ -153,7 +156,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
 
     cancelRewrite()
     setSelectedText(text)
-    const frames = ['▹▹▹', '▸▹▹', '▹▸▹', '▹▹▸']
+    const frames = ['???', '???', '???', '???']
     let i = 0
     setSuggestions([frames[0], frames[1], frames[2]])
     loaderRef.current = setInterval(() => {
@@ -231,12 +234,6 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
     return () => window.removeEventListener('mousedown', hide)
   }, [isColorPickerOpen])
 
-  useEffect(() => {
-    if (editor && initialHtml !== editor.getHTML()) {
-      editor.commands.setContent(initialHtml)
-    }
-  }, [initialHtml, editor])
-
   const replaceSelection = (text) => {
     editor
       ?.chain()
@@ -282,7 +279,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
                   disabled={!isOnline}
                   title={isOnline ? '' : 'No internet connection'}
                 >
-                  ✨
+                  ?
                 </button>
               </div>
               {!isOnline && (
@@ -294,7 +291,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
           )}
           {activeMenu === 'format' && (
             <div className="context-menu format fade-in">
-              <button onClick={goBack}>←</button>
+              <button onClick={goBack}>?</button>
               <button
                 onClick={() =>
                   apply(() => editor.chain().focus().toggleBold().run())
@@ -312,7 +309,6 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
               <div className="color-wrapper">
                 <button
                   onMouseDown={(e) => {
-                    // minimal change: ensure native picker opens reliably
                     e.preventDefault()
                     e.stopPropagation()
                     const sel = editor.state.selection
@@ -325,12 +321,11 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
                     setColorPickerOpen(true)
                   }}
                 >
-                  🎨
+                  ??
                 </button>
                 <input
                   ref={colorInputRef}
                   type="color"
-                  // minimal change: keep it in DOM & focusable (not fully offscreen)
                   style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}
                   onChange={(e) => {
                     apply(
@@ -356,7 +351,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
           )}
           {activeMenu === 'size' && (
             <div className="context-menu format fade-in">
-              <button onClick={goBack}>←</button>
+              <button onClick={goBack}>?</button>
               <button
                 onClick={() =>
                   apply(() => editor.chain().focus().setParagraph().run(), false)
@@ -391,7 +386,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
           {activeMenu === 'ai' && (
             <div className="ai-rescript-panel fade-in">
               <div className="ai-header">
-                <button className="back-btn" onClick={goBack}>←</button>
+                <button className="back-btn" onClick={goBack}>?</button>
                 <div className="ai-header-right">
                   {!isModifierInputVisible && (
                     <button
@@ -406,7 +401,7 @@ function TipTapEditor({ initialHtml = '', onUpdate, onReady, style = {} }) {
                     onClick={() => runRewrite(selectedText)}
                     title="Run again"
                   >
-                    ↻
+                    ?
                   </button>
                 </div>
               </div>

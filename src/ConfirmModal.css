@@ -1,13 +1,14 @@
 .confirm-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(3, 7, 12, 0.72);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
   opacity: 0;
-  transform: scale(1.05);
+  transform: scale(1.03);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -17,12 +18,13 @@
 }
 
 .confirm-modal {
-  background: #222;
-  padding: calc(var(--space-4) * 2);
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  max-width: 300px;
-  text-align: center;
+  width: min(420px, calc(100vw - 2rem));
+  background: linear-gradient(180deg, rgba(24, 32, 43, 0.98), rgba(14, 20, 29, 0.98));
+  border: 1px solid var(--color-border);
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  text-align: left;
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -34,7 +36,9 @@
 }
 
 .confirm-modal p {
-  margin: 0 0 var(--space-3) 0;
+  margin: 0 0 var(--space-5) 0;
+  color: var(--color-text-soft);
+  font-size: 0.98rem;
 }
 
 .confirm-buttons {
@@ -44,14 +48,5 @@
 }
 
 .confirm-modal button {
-  padding: var(--space-2) var(--space-4);
-}
-
-.delete-button {
-  background-color: #bb4444;
-  color: #fff;
-}
-
-.delete-button:hover {
-  background-color: #dd5555;
+  min-width: 104px;
 }

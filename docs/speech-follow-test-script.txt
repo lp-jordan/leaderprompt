@@ -1,0 +1,23 @@
+LeaderPrompt Speech Follow Test Script
+
+Welcome to the LeaderPrompt speech follow test.
+Today we are checking whether the transcript stays aligned with the script.
+The goal is to keep the currently spoken word near the center of the screen.
+If the system is working well, the prompt should speed up when I move ahead.
+It should slow down when I pause or repeat a sentence.
+Now I will start this sentence over.
+Now I will start this sentence over.
+Then I will continue into the next paragraph without stopping.
+
+This second paragraph gives us a few repeated words to test matching.
+We save the script, we send the script, and we review the script again.
+The recognizer should not jump wildly when the same word shows up more than once.
+It should choose the local phrase that best matches what I am saying right now.
+If I skip ahead to the next line, the controller should catch up smoothly.
+If I fall behind, it should ease back instead of snapping too hard.
+
+This final paragraph is for restart behavior.
+Sometimes a speaker begins a thought, stops, and starts the sentence over.
+Sometimes a speaker begins a thought, stops, and starts the sentence over.
+After that restart, the prompter should recover and keep moving forward.
+That is the end of the LeaderPrompt speech follow test.

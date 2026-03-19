@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './ConfirmModal.css';
 
 const ANIMATION_DURATION = 300; // ms
 
 function ConfirmModal({ message, onConfirm, onCancel }) {
   const [visible, setVisible] = useState(false);
+  const cancelButtonRef = useRef(null);
 
   useEffect(() => {
-    // trigger visibility after mount
-    const id = requestAnimationFrame(() => setVisible(true));
+    const id = requestAnimationFrame(() => {
+      setVisible(true);
+      cancelButtonRef.current?.focus();
+    });
     return () => cancelAnimationFrame(id);
   }, []);
 
@@ -20,12 +23,32 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
   const handleCancel = () => closeThen(onCancel);
   const handleConfirm = () => closeThen(onConfirm);
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      handleCancel();
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleConfirm();
+    }
+  };
+
   return (
-    <div className={`confirm-modal-overlay ${visible ? 'visible' : ''}`}>
-      <div className={`confirm-modal ${visible ? 'visible' : ''}`}>
+    <div
+      className={`confirm-modal-overlay ${visible ? 'visible' : ''}`}
+      onKeyDown={handleKeyDown}
+      role="presentation"
+    >
+      <div
+        className={`confirm-modal ${visible ? 'visible' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Confirmation dialog"
+      >
         <p>{message}</p>
         <div className="confirm-buttons">
-          <button onClick={handleCancel}>Cancel</button>
+          <button ref={cancelButtonRef} onClick={handleCancel}>Cancel</button>
           <button className="delete-button" onClick={handleConfirm}>Delete</button>
         </div>
       </div>

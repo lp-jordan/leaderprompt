@@ -1,14 +1,15 @@
 .find-bar {
   position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
+  top: var(--space-4);
+  right: var(--space-4);
   z-index: 1000;
-  background: #333;
-  color: #e0e0e0;
-  padding: var(--space-2);
-  border: 1px solid #555;
-  border-radius: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  min-width: 220px;
+  background: linear-gradient(180deg, rgba(26, 34, 45, 0.98), rgba(15, 21, 30, 0.98));
+  color: var(--color-text);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -16,11 +17,6 @@
 
 .find-bar input {
   outline: none;
-  border: 1px solid #555;
-  background: #222;
-  color: #e0e0e0;
-  border-radius: 4px;
-  padding: 2px 4px;
 }
 
 .find-controls {
@@ -32,31 +28,21 @@
 
 .find-controls button {
   cursor: pointer;
-  background: #444;
-  border: 1px solid #555;
-  color: #e0e0e0;
-  padding: 0 6px;
-  border-radius: 4px;
-}
-
-.find-controls button:hover:not(:disabled) {
-  background: #555;
-}
-
-.find-controls button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  min-width: 36px;
+  padding: 0.45rem 0.65rem;
 }
 
 .find-counter {
   font-size: 12px;
+  color: var(--color-text-muted);
 }
 
 .find-highlight {
-  background: yellow;
-  color: #000;
+  background: rgba(215, 170, 99, 0.38);
+  color: #1a140d;
+  border-radius: 2px;
 }
 
 .find-highlight.active {
-  outline: 1px solid orange;
+  outline: 1px solid var(--color-accent-strong);
 }

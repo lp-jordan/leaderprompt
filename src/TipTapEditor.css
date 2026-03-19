@@ -1,4 +1,3 @@
-/* Editor container */
 .tiptap-editor,
 .tiptap-editor .ProseMirror {
   width: 100%;
@@ -8,34 +7,74 @@
 
 .tiptap-editor {
   position: relative;
+  min-height: 100%;
 }
 
 .tiptap-editor .ProseMirror {
   outline: none;
+  width: min(100%, 980px);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: clamp(0.5rem, 1vw, 0.9rem) clamp(0.25rem, 1.2vw, 1rem) 5rem;
   background: transparent;
   border-radius: 0;
   box-shadow: none;
   color: inherit;
-  line-height: inherit;
+  line-height: 1.72;
+  font-size: clamp(1.08rem, 1.1vw, 1.2rem);
+  font-weight: 500;
   text-align: inherit;
   white-space: pre-wrap;
   word-break: normal;
 }
 
-/* Context menu base */
+.tiptap-editor .ProseMirror > * {
+  max-width: 72ch;
+}
+
+.tiptap-editor .ProseMirror p,
+.tiptap-editor .ProseMirror li {
+  color: var(--color-text);
+}
+
+.tiptap-editor .ProseMirror p {
+  margin: 0 0 0.85em;
+}
+
+.tiptap-editor .ProseMirror h1,
+.tiptap-editor .ProseMirror h2,
+.tiptap-editor .ProseMirror h3 {
+  max-width: 24ch;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  margin: 1.1em 0 0.45em;
+  color: var(--color-text);
+}
+
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  padding-left: 1.6rem;
+  margin: 0 0 1rem;
+}
+
+.tiptap-editor .ProseMirror li + li {
+  margin-top: 0.35rem;
+}
+
 .context-menu-root {
   position: absolute;
   z-index: 1000;
 }
 
 .context-menu {
-  background: #333;
-  color: #e0e0e0;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 4px;
+  background: linear-gradient(180deg, rgba(26, 34, 45, 0.98), rgba(15, 21, 30, 0.98));
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 6px;
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  box-shadow: var(--shadow-lift);
 }
 
 .context-menu.format {
@@ -45,18 +84,22 @@
 .context-menu.suggestions {
   flex-direction: column;
   align-items: stretch;
+  min-width: 220px;
 }
 
 .context-menu button {
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: inherit;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 10px;
+  box-shadow: none;
 }
 
 .context-menu button:hover {
-  background: #555;
+  background: rgba(215, 170, 99, 0.12);
+  border-color: rgba(215, 170, 99, 0.2);
+  color: var(--color-accent-strong);
 }
 
 .context-menu button:disabled {
@@ -64,33 +107,37 @@
   cursor: not-allowed;
 }
 
-.color-wrapper { position: relative; }
+.color-wrapper {
+  position: relative;
+}
 
 .color-wrapper input[type='color'] {
   position: absolute;
   top: 0;
-  left: 0;        /* keep it on-screen so the popover has an anchor */
+  left: 0;
   width: 1px;
   height: 1px;
-  opacity: 0;     /* hide it visually without removing it from layout */
+  opacity: 0;
   border: 0;
   padding: 0;
 }
 
 .ai-rescript-panel {
-  background: #333;
-  color: #e0e0e0;
-  border: 1px solid #555;
-  border-radius: 4px;
-  width: 220px;
+  background: linear-gradient(180deg, rgba(27, 35, 46, 0.98), rgba(14, 20, 28, 0.98));
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: 240px;
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-panel);
 }
 
 .ai-rescript-panel .ai-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.7rem 0.8rem 0.4rem;
 }
 
 .ai-rescript-panel .ai-header-right {
@@ -99,93 +146,70 @@
   gap: 4px;
 }
 
-.ai-rescript-panel .back-btn {
+.ai-rescript-panel .back-btn,
+.ai-rescript-panel .rerun-btn {
   align-self: flex-start;
   background: transparent;
   border: none;
   color: inherit;
   cursor: pointer;
   padding: 4px 8px;
+  box-shadow: none;
 }
 
-.ai-rescript-panel .back-btn:hover {
-  background: #555;
+.ai-rescript-panel .back-btn:hover,
+.ai-rescript-panel .rerun-btn:hover {
+  background: rgba(215, 170, 99, 0.12);
 }
 
-.ai-rescript-panel .modifier-btn {
+.ai-rescript-panel .modifier-btn,
+.ai-rescript-panel .retry button {
   align-self: flex-end;
   background: none;
   border: none;
-  color: #89c4ff;
+  color: var(--color-accent-strong);
   cursor: pointer;
   text-decoration: underline;
   padding: 4px 8px;
+  box-shadow: none;
 }
 
-.ai-rescript-panel .modifier-btn:hover {
-  color: #cde2ff;
-}
-
-.ai-rescript-panel .rerun-btn {
-  background: transparent;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 4px 8px;
-}
-
-.ai-rescript-panel .rerun-btn:hover {
-  background: #555;
+.ai-rescript-panel .modifier-btn:hover,
+.ai-rescript-panel .retry button:hover {
+  color: #f1d08f;
 }
 
 .ai-rescript-panel .modifier-input {
   margin: 4px 8px;
-  padding: 4px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background: #222;
-  color: #e0e0e0;
 }
 
 .ai-line {
-  padding: 6px 8px;
+  padding: 8px 10px;
   cursor: pointer;
 }
 
 .ai-line + .ai-line {
-  border-top: 1px solid #555;
+  border-top: 1px solid var(--color-border);
 }
 
 .ai-line:hover {
-  background: #555;
+  background: rgba(215, 170, 99, 0.09);
 }
 
 .ai-rescript-panel .retry {
   text-align: right;
-  padding: 4px 8px;
+  padding: 4px 8px 8px;
   font-size: 0.85em;
 }
 
-.ai-rescript-panel .retry button {
-  background: none;
-  border: none;
-  color: #89c4ff;
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
-
-.ai-rescript-panel .retry button:hover {
-  color: #cde2ff;
-}
-
-.ai-rescript-panel .error {
+.ai-rescript-panel .error,
+.network-warning {
   margin: 8px;
-  background: #4a0000;
-  color: #ffb3b3;
-  border: 1px solid #aa0000;
-  border-radius: 4px;
-  padding: 4px 8px;
+  background: var(--color-error-quiet);
+  color: #ffd9d5;
+  border: 1px solid rgba(184, 110, 102, 0.45);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
   font-size: 0.85em;
   text-align: center;
 }
@@ -193,9 +217,9 @@
 .ai-rescript-panel .skeleton-line {
   position: relative;
   height: 1em;
-  margin: 4px 8px;
+  margin: 6px 8px;
   border-radius: 4px;
-  background: #444;
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
 }
 
@@ -206,32 +230,18 @@
 .ai-rescript-panel .skeleton-line.rotate::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: 2px solid #555;
-  border-top-color: #89c4ff;
+  inset: 0;
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: rotate 1s linear infinite;
 }
 
 .ai-rescript-panel .loading-delay {
-  padding: 4px 8px;
+  padding: 4px 8px 10px;
   font-size: 0.8em;
-  color: #aaa;
+  color: var(--color-text-muted);
   font-style: italic;
-  text-align: center;
-}
-
-.network-warning {
-  margin-top: 4px;
-  background: #a00;
-  color: #fff;
-  border: 1px solid #f55;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.85em;
   text-align: center;
 }
 
