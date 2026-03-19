@@ -1,3 +1,7 @@
+// Allow self-signed / LAN mkcert certs in Node.js fetch (Electron main process).
+// Safe for internal LAN use — does not affect renderer or external requests.
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const { app, BrowserWindow, ipcMain, dialog, Menu, globalShortcut } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const http = require('http');
