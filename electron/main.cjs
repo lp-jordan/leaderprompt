@@ -214,7 +214,12 @@ function notifyLposSyncUpdate() {
 }
 
 async function lposFetchUrl(fullUrl, options = {}) {
-  return fetch(fullUrl, { ...options, signal: AbortSignal.timeout(10000) });
+  const token = readLposSyncConfig().apiToken?.trim();
+  const headers = {
+    ...(options.headers ?? {}),
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
+  return fetch(fullUrl, { ...options, headers, signal: AbortSignal.timeout(10000) });
 }
 
 async function lposPollOnce() {
