@@ -168,7 +168,7 @@ const FileManager = forwardRef(function FileManager({
   const getDisplayedScripts = (project) => {
     const sortMode = getProjectSortMode(project.name);
     const scripts = project.scripts.slice();
-    if (sortMode === 'name') scripts.sort((a, b) => a.name.localeCompare(b.name));
+    if (sortMode === 'name') scripts.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
     else if (sortMode === 'date') scripts.sort((a, b) => (a.added || 0) - (b.added || 0));
     return scripts;
   };

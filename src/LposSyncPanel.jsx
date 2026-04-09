@@ -3,6 +3,7 @@ import './LposSyncPanel.css';
 
 export default function LposSyncPanel({ onClose }) {
   const [serverUrl, setServerUrl] = useState('');
+  const [apiToken,  setApiToken]  = useState('');
   const [status,    setStatus]    = useState(null);
   const [loadingRemote, setLoadingRemote] = useState(false);
   const [syncing,       setSyncing]       = useState(false);
@@ -14,6 +15,7 @@ export default function LposSyncPanel({ onClose }) {
     async function init() {
       const cfg = await window.electronAPI.lposGetConfig();
       setServerUrl(cfg.serverUrl || '');
+      setApiToken(cfg.apiToken || '');
       const st = await window.electronAPI.lposGetStatus();
       setStatus(st);
     }
@@ -34,7 +36,7 @@ export default function LposSyncPanel({ onClose }) {
   }, [serverUrl]);
 
   async function handleSave() {
-    const cfg = { serverUrl: serverUrl.trim() };
+    const cfg = { serverUrl: serverUrl.trim(), apiToken: apiToken.trim() };
     await window.electronAPI.lposSaveConfig(cfg);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -96,6 +98,17 @@ export default function LposSyncPanel({ onClose }) {
             </button>
           </div>
           {remoteError && <p className="lpos-error">{remoteError}</p>}
+
+          <label className="lpos-field-label" style={{ marginTop: 14 }}>API Token</label>
+          <input
+            className="lpos-input"
+            type="password"
+            placeholder="Paste LPOS_LP_TOKEN value"
+            value={apiToken}
+            onChange={(e) => setApiToken(e.target.value)}
+          />
+          <p className="lpos-hint">Set <code>LPOS_LP_TOKEN</code> in your LPOS <code>.env</code>, then paste the same value here.</p>
+
           <p className="lpos-hint" style={{ marginTop: 12 }}>
             Once connected, LeaderPrompt will automatically mirror all LPOS projects and sync scripts in both directions.
           </p>

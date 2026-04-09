@@ -42,13 +42,17 @@ const getLposSyncConfigPath = () => path.join(getUserDataPath(), 'lpos-sync.json
 function readSyncConfig() {
   try {
     const p = getLposSyncConfigPath();
-    if (!fs.existsSync(p)) return { serverUrl: '' };
+    if (!fs.existsSync(p)) return { serverUrl: '', apiToken: '' };
     return JSON.parse(fs.readFileSync(p, 'utf8'));
-  } catch { return { serverUrl: '' }; }
+  } catch { return { serverUrl: '', apiToken: '' }; }
 }
 
 function getBaseUrl() {
   return readSyncConfig().serverUrl?.trim().replace(/\/$/, '') || null;
+}
+
+function getApiToken() {
+  return readSyncConfig().apiToken?.trim() || null;
 }
 
 // ── Connection state ──────────────────────────────────────────────────────────
@@ -152,9 +156,14 @@ function indexToLpFormat() {
 // ── LPOS HTTP helper ──────────────────────────────────────────────────────────
 
 async function lposFetch(urlPath, options = {}) {
-  const base = getBaseUrl();
+  const base  = getBaseUrl();
   if (!base) throw new Error('LPOS server URL not configured');
-  return fetch(`${base}${urlPath}`, { ...options, signal: AbortSignal.timeout(10000) });
+  const token = getApiToken();
+  const headers = {
+    ...(options.headers ?? {}),
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
+  return fetch(`${base}${urlPath}`, { ...options, headers, signal: AbortSignal.timeout(10000) });
 }
 
 // ── Change detection snapshot ─────────────────────────────────────────────────
@@ -347,7 +356,7 @@ function getClientNames() {
   const names = raw.projects
     .map((p) => (p.clientName || '').trim())
     .filter(Boolean);
-  return [...new Set(names)].sort((a, b) => a.localeCompare(b));
+  return [...new Set(names)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 }
 
 async function createProject(name, clientName = '') {
@@ -427,8 +436,8 @@ async function createScript(projectName, scriptDisplayName) {
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     }), `${scriptDisplayName}.docx`);
 
-    const res = await fetch(
-      `${getBaseUrl()}/api/projects/${entry.projectId}/scripts`,
+    const res = await lposFetch(
+      `/api/projects/${entry.projectId}/scripts`,
       { method: 'POST', body: formData, signal: AbortSignal.timeout(15000) },
     );
     if (!res.ok) return { success: false };
@@ -490,8 +499,8 @@ async function importFilesToProject(files, projectName) {
         new Blob([buf], { type: file.type || 'application/octet-stream' }),
         file.name,
       );
-      const res = await fetch(
-        `${getBaseUrl()}/api/projects/${entry.projectId}/scripts`,
+      const res = await lposFetch(
+        `/api/projects/${entry.projectId}/scripts`,
         { method: 'POST', body: formData, signal: AbortSignal.timeout(30000) },
       );
       if (res.ok) importedCount++;
