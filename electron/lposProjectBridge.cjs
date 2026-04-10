@@ -76,6 +76,76 @@ function onConnectionChange(cb) {
 
 function isConnected() { return lposConnected; }
 
+// ── Socket.io push listener (LPOS → LP) ──────────────────────────────────────
+// Replaces the 30-second poll for content changes with instant push.
+// LP→LPOS direction is already immediate via HTTP PUT; this covers the reverse.
+//
+// Loop prevention: when LP saves a script it stores the LPOS-assigned updatedAt
+// from the PUT response. If a scripts:changed event arrives with the same
+// updatedAt, we know LP triggered it and silently skip to avoid a needless
+// re-download of the same bytes.
+
+let ioSocket = null;
+let socketConnectUrl = null;
+const scriptChangedListeners = [];
+
+function onScriptChangedPush(cb) {
+  scriptChangedListeners.push(cb);
+  return () => {
+    const i = scriptChangedListeners.indexOf(cb);
+    if (i !== -1) scriptChangedListeners.splice(i, 1);
+  };
+}
+
+function fireScriptChangedPush(projectName) {
+  scriptChangedListeners.forEach((cb) => cb(projectName));
+}
+
+function startSocket() {
+  const base = getBaseUrl();
+  if (!base) return;
+  if (ioSocket && socketConnectUrl === base) return; // already connected to this server
+  stopSocket();
+  socketConnectUrl = base;
+
+  // socket.io-client is an Electron dependency, loaded lazily so it doesn't
+  // break anything if the package isn't installed in older environments.
+  let io;
+  try { ({ io } = require('socket.io-client')); }
+  catch { return; } // package not available — fall back to poll-only
+
+  const token = getApiToken();
+  ioSocket = io(base, {
+    transports:          ['websocket'],
+    auth:                token ? { token } : {},
+    reconnection:        true,
+    reconnectionDelay:   2000,
+    reconnectionDelayMax: 30000,
+  });
+
+  ioSocket.on('scripts:changed', ({ projectId, scriptId, updatedAt }) => {
+    for (const [projectName, entry] of Object.entries(lposIndex)) {
+      if (entry.projectId !== projectId) continue;
+      for (const [, sEntry] of Object.entries(entry.scripts || {})) {
+        if (sEntry.scriptId !== scriptId) continue;
+        // Skip if we already have this exact version (LP triggered this save)
+        if (updatedAt && updatedAt === sEntry.updatedAt) return;
+        if (updatedAt) sEntry.updatedAt = updatedAt;
+        fireScriptChangedPush(projectName);
+        return;
+      }
+    }
+  });
+}
+
+function stopSocket() {
+  if (ioSocket) {
+    ioSocket.disconnect();
+    ioSocket = null;
+    socketConnectUrl = null;
+  }
+}
+
 // ── LP-only archive flags (never synced to LPOS) ──────────────────────────────
 // Stored as { [projectName]: archivedAtTimestamp }
 
@@ -333,12 +403,12 @@ async function saveScript(projectName, scriptFilename, html) {
             headers: { 'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
           },
         );
-        // Update our in-memory updatedAt so the next poll snapshot matches
-        // and doesn't spuriously trigger a scriptsChangedFor notification
+        // Store LPOS's authoritative updatedAt so the socket loop-prevention
+        // check can match it exactly when the scripts:changed event arrives.
         if (res.ok) {
           try {
             const data = await res.json();
-            if (data?.script?.updatedAt) sEntry.updatedAt = data.script.updatedAt;
+            if (data?.updatedAt) sEntry.updatedAt = data.updatedAt;
           } catch {
             // LPOS may not return a body — use current file mtime as proxy
             sEntry.updatedAt = new Date(fs.statSync(cachePath).mtime).toISOString();
@@ -518,6 +588,16 @@ function getLocalScriptPath(projectName, scriptFilename) {
   return getScriptCachePath(entry.projectId, sEntry.scriptId);
 }
 
+// ── LP update check ───────────────────────────────────────────────────────────
+
+async function checkLpUpdate() {
+  try {
+    const res = await lposFetch('/api/lp-updates/version');
+    if (!res.ok) return null;
+    return await res.json();
+  } catch { return null; }
+}
+
 module.exports = {
   refreshProjects,
   getAllProjects,
@@ -536,4 +616,8 @@ module.exports = {
   getLocalScriptPath,
   onConnectionChange,
   isConnected,
+  startSocket,
+  stopSocket,
+  onScriptChangedPush,
+  checkLpUpdate,
 };

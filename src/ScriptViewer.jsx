@@ -502,14 +502,15 @@ function ScriptViewer({
             {saveDraftDialog.mode === 'existing' ? (
               <label className="script-save-field">
                 <span>Existing project</span>
-                <input
+                <select
                   ref={draftProjectInputRef}
-                  type="text"
-                  list="draft-project-options"
                   value={saveDraftDialog.existingProjectName}
                   onChange={(event) => setSaveDraftDialog((current) => ({ ...current, existingProjectName: event.target.value }))}
-                  placeholder="Choose a project"
-                />
+                >
+                  {saveDraftDialog.existingProjects.map((project) => (
+                    <option key={project.name} value={project.name}>{project.name}</option>
+                  ))}
+                </select>
               </label>
             ) : (
               <label className="script-save-field">
@@ -523,12 +524,7 @@ function ScriptViewer({
                 />
               </label>
             )}
-            <datalist id="draft-project-options">
-              {saveDraftDialog.existingProjects.map((project) => (
-                <option key={project.name} value={project.name} />
-              ))}
-            </datalist>
-            <label className="script-save-field">
+<label className="script-save-field">
               <span>Script name</span>
               <input
                 ref={draftScriptInputRef}

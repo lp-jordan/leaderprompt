@@ -191,6 +191,14 @@ api.onLposConnectionChanged = (callback) => {
   return () => ipcRenderer.removeListener('lpos-connection-changed', handler);
 };
 
+api.onLpUpdateAvailable = (callback) => {
+  const handler = (_, data) => callback(data);
+  ipcRenderer.on('lp-update-available', handler);
+  return () => ipcRenderer.removeListener('lp-update-available', handler);
+};
+
+api.openLpDownloadPage = (url) => ipcRenderer.invoke('open-lp-download-page', url);
+
 contextBridge.exposeInMainWorld('electronAPI', api);
 
 

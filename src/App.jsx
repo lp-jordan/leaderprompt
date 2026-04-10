@@ -35,6 +35,7 @@ function App() {
   const [showLposPanel, setShowLposPanel] = useState(false);
   const [lposSyncStatus, setLposSyncStatus] = useState('idle');
   const [lposConnected, setLposConnected] = useState(null); // null = unknown yet
+  const [lpUpdate, setLpUpdate] = useState(null); // { version, downloadPageUrl }
 
   useEffect(() => {
     const handleResize = () => {
@@ -59,7 +60,10 @@ function App() {
     const unsubProjects = window.electronAPI.onLposProjectsUpdated?.(() => {
       if (fileManagerRef.current?.reload) void fileManagerRef.current.reload();
     });
-    return () => { unsubStatus?.(); unsubScripts?.(); unsubConn?.(); unsubProjects?.(); };
+    const unsubUpdate = window.electronAPI.onLpUpdateAvailable?.((data) => {
+      setLpUpdate(data);
+    });
+    return () => { unsubStatus?.(); unsubScripts?.(); unsubConn?.(); unsubProjects?.(); unsubUpdate?.(); };
   }, []);
 
   const handleScriptSelect = (projectName, scriptName) => {
@@ -217,6 +221,21 @@ function App() {
           <span className="lpos-offline-dot" />
           LPOS unreachable — showing cached projects
           <button className="lpos-offline-cfg" onClick={() => setShowLposPanel(true)}>Configure</button>
+        </div>
+      )}
+      {lpUpdate?.version && (
+        <div className="lpos-offline-banner lp-update-banner" role="status">
+          <span className="lpos-offline-dot lp-update-dot" />
+          LeaderPrompt {lpUpdate.version} is available
+          {lpUpdate.downloadPageUrl && (
+            <button
+              className="lpos-offline-cfg"
+              onClick={() => window.electronAPI?.openLpDownloadPage?.(lpUpdate.downloadPageUrl)}
+            >
+              Download
+            </button>
+          )}
+          <button className="lpos-offline-cfg" onClick={() => setLpUpdate(null)}>Dismiss</button>
         </div>
       )}
       <div

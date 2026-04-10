@@ -165,7 +165,8 @@
   text-transform: uppercase;
 }
 
-.script-save-field input {
+.script-save-field input,
+.script-save-field select {
   width: 100%;
 }
 

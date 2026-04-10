@@ -143,6 +143,21 @@
 }
 .lpos-offline-cfg:hover { color: #f87171; }
 
+/* LP update available banner (amber, sits below offline banner if both show) */
+.lp-update-banner {
+  background: rgba(251, 191, 36, 0.08);
+  border-bottom-color: rgba(251, 191, 36, 0.2);
+  color: rgba(251, 191, 36, 0.85);
+  top: 0; /* stacks under offline banner via normal flow if both present */
+}
+.lp-update-dot {
+  background: rgba(251, 191, 36, 0.8);
+}
+.lp-update-banner .lpos-offline-cfg {
+  color: rgba(251, 191, 36, 0.9);
+}
+.lp-update-banner .lpos-offline-cfg:hover { color: #fbbf24; }
+
 .main-logo {
   width: clamp(110px, 10vw, 150px);
   height: auto;

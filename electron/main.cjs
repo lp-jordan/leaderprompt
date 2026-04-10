@@ -2,7 +2,7 @@
 // Safe for internal LAN use — does not affect renderer or external requests.
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const { app, BrowserWindow, ipcMain, dialog, Menu, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, globalShortcut, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const path = require('path');
@@ -345,11 +345,13 @@ function startLposPolling() {
   if (lposPollInterval) return;
   setTimeout(() => { void lposPollOnce(); }, 3000);
   lposPollInterval = setInterval(() => { void lposPollOnce(); }, 30000);
+  lposBridge.startSocket();
   log('LPOS polling started');
 }
 
 function stopLposPolling() {
   if (lposPollInterval) { clearInterval(lposPollInterval); lposPollInterval = null; }
+  lposBridge.stopSocket();
 }
 
 function resolveExistingPath(candidates) {
@@ -1041,6 +1043,10 @@ async function createSpeechFollowInspectorWindow() {
 
 ipcMain.handle('lpos-get-config', () => readLposSyncConfig());
 
+ipcMain.handle('open-lp-download-page', (_, url) => {
+  if (url && typeof url === 'string') shell.openExternal(url);
+});
+
 ipcMain.handle('lpos-save-config', (_, config) => {
   writeLposSyncConfig(config);
   stopLposPolling();
@@ -1083,10 +1089,37 @@ app.whenReady().then(async () => {
   setupAutoUpdates();
   startLposPolling();
 
+  // Check for LP update on startup and every hour
+  async function checkAndNotifyLpUpdate() {
+    const result = await lposBridge.checkLpUpdate();
+    if (!result?.version || !result?.available) return;
+    if (result.version === app.getVersion()) return;
+    const { serverUrl } = readLposSyncConfig();
+    const downloadPageUrl = serverUrl
+      ? `${serverUrl.replace(/\/$/, '')}/lp-update`
+      : null;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('lp-update-available', {
+        version: result.version,
+        downloadPageUrl,
+      });
+    }
+  }
+  setTimeout(() => { void checkAndNotifyLpUpdate(); }, 8000);
+  setInterval(() => { void checkAndNotifyLpUpdate(); }, 60 * 60 * 1000);
+
   // Notify renderer when LPOS connection state changes
   lposBridge.onConnectionChange((connected) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('lpos-connection-changed', { connected });
+    }
+  });
+
+  // Notify renderer immediately when LPOS pushes a script change via socket
+  // (same event the poll uses, so the renderer needs no changes)
+  lposBridge.onScriptChangedPush((projectName) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('lpos-scripts-updated', { projectName });
     }
   });
   createAppMenu();
@@ -1507,6 +1540,7 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
 
   let importedCount = 0;
   let renamedCount = 0;
+  const importedFiles = [];
   for (const file of expanded) {
     try {
       const imported = await importPathToProject(destDir, file);
@@ -1514,10 +1548,26 @@ ipcMain.handle('import-scripts-to-project', async (_, filePaths, projectName) =>
       log(`Imported script: ${imported.fileName} -> ${imported.destPath}`);
       importedCount++;
       if (imported.renamed) renamedCount++;
+      importedFiles.push(imported);
     } catch (err) {
       error(`Failed to import file ${file}:`, err);
     }
   }
+
+  // Push to LPOS so the script appears when getAllProjects() is called
+  if (importedFiles.length > 0 && lposBridge.isConnected()) {
+    try {
+      const lposFiles = await Promise.all(importedFiles.map(async (f) => ({
+        data: await fs.promises.readFile(f.destPath),
+        name: f.fileName,
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      })));
+      await lposBridge.importFilesToProject(lposFiles, projectName);
+    } catch (err) {
+      error('Failed to push imported scripts to LPOS:', err);
+    }
+  }
+
   invalidateProjectListCache();
   return buildImportResult(importedCount, renamedCount);
 });

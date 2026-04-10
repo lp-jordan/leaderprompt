@@ -15,13 +15,13 @@
   width: min(100%, 980px);
   min-height: 100%;
   margin: 0 auto;
-  padding: clamp(0.5rem, 1vw, 0.9rem) clamp(0.25rem, 1.2vw, 1rem) 5rem;
+  padding: 0 0 5rem;
   background: transparent;
   border-radius: 0;
   box-shadow: none;
   color: inherit;
-  line-height: 1.72;
-  font-size: clamp(1.08rem, 1.1vw, 1.2rem);
+  line-height: inherit;
+  font-size: inherit;
   font-weight: 500;
   text-align: inherit;
   white-space: pre-wrap;
