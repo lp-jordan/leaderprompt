@@ -6,7 +6,7 @@
   "type": "module",
   "main": "electron/main.cjs",
   "build": {
-    "appId": "com.yourcompany.leaderprompt",
+    "appId": "com.leaderpass.leaderprompt",
     "productName": "LeaderPrompt",
     "icon": "build/icons/icon",
     "directories": {
@@ -54,11 +54,11 @@
   },
   "dependencies": {
     "@tiptap/core": "3.0.7",
-    "socket.io-client": "4.8.3",
     "@tiptap/extension-color": "3.0.7",
     "@tiptap/extension-text-style": "3.1.0",
     "@tiptap/react": "3.0.7",
     "@tiptap/starter-kit": "3.0.7",
+    "dmg-license": "^1.0.11",
     "docx": "9.5.1",
     "electron-updater": "6.6.2",
     "html-to-docx": "1.8.0",
@@ -68,7 +68,8 @@
     "react-dom": "19.1.0",
     "react-hot-toast": "2.5.2",
     "react-router-dom": "7.6.3",
-    "simple-spellchecker": "1.0.2"
+    "simple-spellchecker": "1.0.2",
+    "socket.io-client": "4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "9.29.0",
