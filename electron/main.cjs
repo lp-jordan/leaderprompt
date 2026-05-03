@@ -509,31 +509,33 @@ function setupAutoUpdates() {
   autoUpdater.checkForUpdates()
 }
 
-function manualCheckForUpdates() {
-  if (!ENABLE_AUTO_UPDATES) {
-    log('Auto updates disabled');
-    return;
+async function checkAndNotifyLpUpdate() {
+  const result = await lposBridge.checkLpUpdate();
+  if (!result?.version || !result?.available) return;
+  if (result.version === app.getVersion()) return;
+  const { serverUrl } = readLposSyncConfig();
+  const downloadPageUrl = serverUrl
+    ? `${serverUrl.replace(/\/$/, '')}/lp-update`
+    : null;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('lp-update-available', {
+      version: result.version,
+      downloadPageUrl,
+    });
   }
-  if (!app.isPackaged) {
+}
+
+async function manualCheckForUpdates() {
+  const result = await lposBridge.checkLpUpdate();
+  if (result?.version && result?.available && result.version !== app.getVersion()) {
+    void checkAndNotifyLpUpdate();
+  } else {
     dialog.showMessageBox({
       type: 'info',
-      title: 'Check for Updates',
-      message: 'Updates are only available in packaged builds.',
+      title: 'Up to Date',
+      message: `You're running the latest version (${app.getVersion()}).`,
     });
-    return;
   }
-
-  const notifyLatest = () => {
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'No Updates Available',
-      message: 'You are running the latest version.',
-    });
-    autoUpdater.removeListener('update-not-available', notifyLatest);
-  };
-
-  autoUpdater.once('update-not-available', notifyLatest);
-  autoUpdater.checkForUpdates();
 }
 
 function createAppMenu() {
@@ -1089,22 +1091,6 @@ app.whenReady().then(async () => {
   setupAutoUpdates();
   startLposPolling();
 
-  // Check for LP update on startup and every hour
-  async function checkAndNotifyLpUpdate() {
-    const result = await lposBridge.checkLpUpdate();
-    if (!result?.version || !result?.available) return;
-    if (result.version === app.getVersion()) return;
-    const { serverUrl } = readLposSyncConfig();
-    const downloadPageUrl = serverUrl
-      ? `${serverUrl.replace(/\/$/, '')}/lp-update`
-      : null;
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('lp-update-available', {
-        version: result.version,
-        downloadPageUrl,
-      });
-    }
-  }
   setTimeout(() => { void checkAndNotifyLpUpdate(); }, 8000);
   setInterval(() => { void checkAndNotifyLpUpdate(); }, 60 * 60 * 1000);
 

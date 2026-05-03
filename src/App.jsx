@@ -35,6 +35,7 @@ function App() {
   const [showLposPanel, setShowLposPanel] = useState(false);
   const [lposSyncStatus, setLposSyncStatus] = useState('idle');
   const [lposConnected, setLposConnected] = useState(null); // null = unknown yet
+  const [lposSyncing, setLposSyncing] = useState(false);
   const [lpUpdate, setLpUpdate] = useState(null); // { version, downloadPageUrl }
 
   useEffect(() => {
@@ -120,6 +121,13 @@ function App() {
   const handleDraftStateChange = useCallback((updates) => {
     setDraftSession((current) => (current ? { ...current, ...updates } : current));
   }, []);
+
+  const handleLposSyncNow = useCallback(async () => {
+    if (lposSyncing || !window.electronAPI?.lposSyncNow) return;
+    setLposSyncing(true);
+    await window.electronAPI.lposSyncNow();
+    setLposSyncing(false);
+  }, [lposSyncing]);
 
   const handleDraftPersisted = useCallback(async (projectName, scriptName) => {
     setDraftSession(null);
@@ -289,19 +297,33 @@ function App() {
 
           <div className="workspace-logo-corner">
             <img src={leaderLogo} alt="LeaderPrompt Logo" className="main-logo" aria-hidden="true" />
-            <button
-              className={`lpos-sync-btn lpos-sync-btn--${lposSyncStatus}`}
-              onClick={() => setShowLposPanel(true)}
-              title="LPOS Sync Settings"
-              aria-label="LPOS Sync Settings"
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10"/>
-                <polyline points="1 20 1 14 7 14"/>
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-              </svg>
-              <span>LPOS</span>
-            </button>
+            <div className="lpos-btn-group">
+              <button
+                className={`lpos-sync-btn lpos-sync-btn--${lposSyncStatus}`}
+                onClick={() => setShowLposPanel(true)}
+                title="LPOS Sync Settings"
+                aria-label="LPOS Sync Settings"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                </svg>
+                <span>LPOS</span>
+              </button>
+              <button
+                className={`lpos-sync-btn lpos-refresh-btn${lposSyncing ? ' lpos-refresh-btn--spinning' : ''}`}
+                onClick={handleLposSyncNow}
+                disabled={lposSyncing}
+                title="Refresh now"
+                aria-label="Refresh LPOS scripts now"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 4v6h-6"/>
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           {showLposPanel && <LposSyncPanel onClose={() => setShowLposPanel(false)} />}

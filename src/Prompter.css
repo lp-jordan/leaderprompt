@@ -199,6 +199,12 @@
   pointer-events: auto;
   user-select: none;
 }
+.script-output p {
+  margin: 0 0 0.85em;
+}
+.script-output p:empty {
+  min-height: 1em;
+}
 
 
 .speech-eyeline-marker {

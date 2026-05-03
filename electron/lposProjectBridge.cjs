@@ -258,10 +258,17 @@ async function refreshProjects() {
   const prevNames   = new Set(Object.keys(lposIndex));
   const prevScripts = snapshotScripts();
 
+  const base = getBaseUrl();
+  if (!base) {
+    console.warn('[lposBridge] No server URL configured — skipping refresh');
+    return { projects: indexToLpFormat(), projectsChanged: false, scriptsChangedFor: [] };
+  }
+
   try {
     const res = await lposFetch('/api/projects');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { projects } = await res.json();
+    console.log(`[lposBridge] Fetched ${projects.length} projects from LPOS`);
 
     const scriptFetches = await Promise.all(
       projects.map(async (p) => {
@@ -303,7 +310,8 @@ async function refreshProjects() {
     }
 
     return { projects: indexToLpFormat(), projectsChanged, scriptsChangedFor };
-  } catch {
+  } catch (err) {
+    console.error('[lposBridge] refreshProjects failed:', err.message);
     setConnected(false);
     const cached = readRawCache();
     if (cached) lposIndex = buildIndexFromRaw(cached);
