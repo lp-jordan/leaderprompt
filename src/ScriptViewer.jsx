@@ -278,10 +278,15 @@ function ScriptViewer({
     }
 
     const existingProjects = await window.electronAPI?.getAllProjectsWithScripts?.() || [];
+    const preFilledProject = draftSessionRef.current.projectName || null;
+    const defaultProject = preFilledProject
+      ? (existingProjects.find((p) => p.name === preFilledProject)?.name || existingProjects[0]?.name || '')
+      : (existingProjects[0]?.name || '');
     setSaveDraftDialog({
       open: true,
-      mode: existingProjects.length ? 'existing' : 'new',
-      existingProjectName: existingProjects[0]?.name || '',
+      mode: 'existing',
+      lockedToExisting: !!preFilledProject,
+      existingProjectName: defaultProject,
       newProjectName: '',
       scriptName: draftSessionRef.current.title || 'Untitled Script',
       existingProjects,
@@ -482,23 +487,25 @@ function ScriptViewer({
           <div className="confirm-modal visible script-save-dialog" role="dialog" aria-modal="true" aria-label="Save draft dialog">
             <span className="panel-kicker">Save Draft</span>
             <p>Choose where this draft should live before autosave takes over.</p>
-            <div className="script-save-mode-grid">
-              <button
-                type="button"
-                className={`script-save-mode${saveDraftDialog.mode === 'existing' ? ' active' : ''}`}
-                onClick={() => setSaveDraftDialog((current) => ({ ...current, mode: 'existing' }))}
-                disabled={!saveDraftDialog.existingProjects.length}
-              >
-                Existing Project
-              </button>
-              <button
-                type="button"
-                className={`script-save-mode${saveDraftDialog.mode === 'new' ? ' active' : ''}`}
-                onClick={() => setSaveDraftDialog((current) => ({ ...current, mode: 'new' }))}
-              >
-                New Project
-              </button>
-            </div>
+            {!saveDraftDialog.lockedToExisting && (
+              <div className="script-save-mode-grid">
+                <button
+                  type="button"
+                  className={`script-save-mode${saveDraftDialog.mode === 'existing' ? ' active' : ''}`}
+                  onClick={() => setSaveDraftDialog((current) => ({ ...current, mode: 'existing' }))}
+                  disabled={!saveDraftDialog.existingProjects.length}
+                >
+                  Existing Project
+                </button>
+                <button
+                  type="button"
+                  className={`script-save-mode${saveDraftDialog.mode === 'new' ? ' active' : ''}`}
+                  onClick={() => setSaveDraftDialog((current) => ({ ...current, mode: 'new' }))}
+                >
+                  New Project
+                </button>
+              </div>
+            )}
             {saveDraftDialog.mode === 'existing' ? (
               <label className="script-save-field">
                 <span>Existing project</span>

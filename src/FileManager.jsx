@@ -6,12 +6,10 @@ import {
   useRef,
 } from 'react';
 import ConfirmModal from './ConfirmModal.jsx';
-import NewProjectModal from './NewProjectModal.jsx';
 import { toast } from 'react-hot-toast';
 import {
   parseDataTransferItems,
   buildImportPayload,
-  isSupportedImportFile,
 } from './utils/dragHelpers.js';
 
 const CONTEXT_MENU_WIDTH = 196;
@@ -112,12 +110,11 @@ const FileManager = forwardRef(function FileManager({
   const fileManagerRef = useRef(null);
   const tooltipTimerRef = useRef(null);
   const [projects, setProjects] = useState([]);
-  const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-  const [clientNames, setClientNames] = useState([]);
   const [renamingProject, setRenamingProject] = useState(null);
   const [renamingScript, setRenamingScript] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   const [collapsed, setCollapsed] = useState({});
+  const [collapsedClients, setCollapsedClients] = useState({});
   const [tooltipScript, setTooltipScript] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [sortBy, setSortBy] = useState({});
@@ -258,18 +255,6 @@ const FileManager = forwardRef(function FileManager({
     }
   };
 
-  const handleNewProject = async (name, clientName) => {
-    if (!window.electronAPI?.createNewProject) return;
-    setShowNewProjectModal(false);
-    const created = await window.electronAPI.createNewProject(name, clientName);
-    if (created) {
-      await loadProjects();
-      toast.success('Project created');
-    } else {
-      toast.error('Failed to create project');
-    }
-  };
-
   const handleImportClick = async (projectName) => {
     if (!window.electronAPI?.selectFiles || !window.electronAPI?.importScriptsToProject) return;
     const filePaths = await window.electronAPI.selectFiles();
@@ -326,8 +311,8 @@ const FileManager = forwardRef(function FileManager({
     await loadProjects();
   };
 
-  const handleNewScript = () => {
-    onCreateDraft?.();
+  const handleNewScript = (projectName = null) => {
+    onCreateDraft?.(projectName);
     setShowArchived(false);
   };
 
@@ -684,24 +669,136 @@ const FileManager = forwardRef(function FileManager({
   const totalScripts = visibleProjects.reduce((sum, project) => sum + project.scripts.length, 0);
   const archivedProjectCount = projects.filter((project) => project.archived).length;
 
+  // Group visible projects by clientName for the hierarchical display
+  const clientGroups = {};
+  visibleProjects.forEach((project) => {
+    const key = project.clientName || '';
+    if (!clientGroups[key]) clientGroups[key] = [];
+    clientGroups[key].push(project);
+  });
+  const sortedClientKeys = Object.keys(clientGroups).sort((a, b) => {
+    if (!a && b) return 1;
+    if (a && !b) return -1;
+    return a.localeCompare(b, undefined, { numeric: true });
+  });
+  const showClientHeaders = sortedClientKeys.length > 1 || (sortedClientKeys.length === 1 && sortedClientKeys[0] !== '');
+
+  const renderProject = (project, projectIndex) => {
+    const displayedScripts = getDisplayedScripts(project);
+    const visibleScripts = displayedScripts.filter((script) => matchesSearch(script.name, searchQuery));
+    const isOpen = !collapsed[project.name];
+    const accent = getProjectAccent(project.name, projectIndex);
+    const projectStyle = {
+      '--project-accent': accent.accent,
+      '--project-accent-strong': accent.strong,
+      '--project-accent-quiet': accent.quiet,
+      '--project-avatar-bg': accent.avatar,
+    };
+
+    return (
+      <div
+        className={`project-group surface-block${isOpen ? ' open' : ''}${hoverProjectDrop?.projectName === project.name ? ` drop-${hoverProjectDrop.position}` : ''}`}
+        key={project.name}
+        style={projectStyle}
+        onDragOver={(e) => handleProjectDragOver(e, project.name)}
+        onDrop={(e) => handleProjectDrop(e, project.name)}
+      >
+        <div
+          className={`project-header${dragInfo?.type !== 'project' && hoverProjectDrop?.projectName === project.name ? ' drop-target' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-expanded={!collapsed[project.name]}
+          onKeyDown={(e) => handleProjectHeaderKeyDown(e, project.name)}
+          onClick={() => toggleCollapse(project.name)}
+          onContextMenu={(e) => handleProjectMenu(e, project)}
+          onDragOver={handleDragOver}
+          onDrop={(e) => handleProjectDrop(e, project.name)}
+          draggable={!project.archived}
+          onDragStart={(e) => handleProjectDragStart(e, project.name)}
+          onDragEnd={handleDragEnd}
+          title="Drag to reorder projects"
+        >
+          {renamingProject === project.name ? (
+            <div className="rename-row">
+              <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onKeyDown={(e) => handleRenameKeyDown(e, () => confirmRenameProject(project.name))} autoFocus />
+              <button className="surface-button surface-button-primary" onClick={() => confirmRenameProject(project.name)}>Save</button>
+              <button className="surface-button surface-button-secondary" onClick={cancelRename}>Cancel</button>
+            </div>
+          ) : (
+            <>
+              <div className="project-title">
+                <span className="project-avatar" aria-hidden="true">{getProjectInitials(project.name)}</span>
+                <div className="project-title-copy">
+                  <h4 title={project.name}>{project.name}</h4>
+                  <span className="project-meta">{displayedScripts.length} script{displayedScripts.length === 1 ? '' : 's'}</span>
+                </div>
+              </div>
+              <div className="project-header-controls" onClick={(e) => e.stopPropagation()}>
+                {!project.archived && (
+                  <button
+                    className="new-script-btn"
+                    onClick={() => handleNewScript(project.name)}
+                    title={`New script in ${project.name}`}
+                    aria-label={`New script in ${project.name}`}
+                  >
+                    + Script
+                  </button>
+                )}
+                <button className="sort-trigger" onClick={(e) => handleSortMenu(e, project.name)}>Sort by</button>
+                <button className="icon-button quiet" onClick={(e) => handleProjectMenu(e, project)} aria-label="Project Options"><DotsIcon /></button>
+              </div>
+            </>
+          )}
+        </div>
+
+        <ul className={`project-script-list${collapsed[project.name] ? ' collapsed' : ''}`}>
+          {!collapsed[project.name] && visibleScripts.map((script, scriptIndex) => {
+            const scriptName = script.name;
+            const isPrompting = loadedProject === project.name && loadedScript === scriptName;
+            const isLoaded = currentProject === project.name && currentScript === scriptName;
+            const isRenaming = renamingScript && renamingScript.projectName === project.name && renamingScript.scriptName === scriptName;
+            return (
+              <li
+                key={scriptName}
+                draggable
+                onDragStart={(e) => handleScriptDragStart(e, project.name, scriptName)}
+                onDragOver={(e) => handleScriptDragOver(e, project.name, scriptName)}
+                onDrop={(e) => handleDrop(e, project.name, scriptName, false, getDropPosition(e.clientY, e.currentTarget.getBoundingClientRect()))}
+                onDragEnd={handleDragEnd}
+                className={`script-item${isPrompting ? ' prompting' : ''}${isLoaded ? ' loaded' : ''}${hoverScriptDrop?.projectName === project.name && hoverScriptDrop?.scriptName === scriptName ? ` drop-${hoverScriptDrop.position}` : ''}`}
+                title="Drag to reorder scripts"
+              >
+                {isRenaming ? (
+                  <div className="rename-row">
+                    <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
+                    <button className="surface-button surface-button-primary" onClick={() => confirmRenameScript(project.name, scriptName)}>Save</button>
+                    <button className="surface-button surface-button-secondary" onClick={cancelRename}>Cancel</button>
+                  </div>
+                ) : (
+                  <button className="script-button minimal" onClick={() => onScriptSelect(project.name, scriptName)} onContextMenu={(e) => handleScriptContextMenu(e, project.name, scriptName)} onMouseEnter={(e) => handleScriptMouseEnter(scriptName, e)} onMouseLeave={handleScriptMouseLeave} onMouseMove={handleScriptMouseMove} title={normalizeScriptName(scriptName)}>
+                    <span className="script-row-index">{String(scriptIndex + 1).padStart(2, '0')}</span>
+                    <span className="script-row-copy">
+                      <span className="script-button-title truncate-text">{normalizeScriptName(scriptName)}</span>
+                    </span>
+                    <span className="script-state-tags">
+                      {isPrompting && <span className="script-state-tag live">Live</span>}
+                    </span>
+                  </button>
+                )}
+              </li>
+            );
+          })}
+          {!collapsed[project.name] && visibleScripts.length === 0 && <li className="project-empty-state">{searchQuery ? 'No scripts match' : 'No scripts yet'}</li>}
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <div className="file-manager" ref={fileManagerRef}>
       <div className="library-header surface-block">
         <div className="library-header-copy">
           <h2 className="header-title">Scripts and Projects</h2>
-        </div>
-        <div className="library-header-actions">
-          <button className="surface-button surface-button-secondary" onClick={handleNewScript}>New Script</button>
-          <button
-            className="surface-button surface-button-primary"
-            onClick={async () => {
-              if (window.electronAPI?.lposGetClientNames) {
-                const names = await window.electronAPI.lposGetClientNames();
-                setClientNames(names || []);
-              }
-              setShowNewProjectModal(true);
-            }}
-          >New Project</button>
         </div>
         <div className="library-toolbar-row">
           <span className="library-count">{totalScripts} total script{totalScripts === 1 ? '' : 's'}</span>
@@ -717,104 +814,29 @@ const FileManager = forwardRef(function FileManager({
 
       <div className={`file-manager-list${rootDrag ? ' drop-target' : ''}`} onDragOver={handleRootDragOver} onDragEnter={handleRootDragEnter} onDragLeave={handleRootDragLeave} onDrop={handleRootDrop}>
         {!visibleProjects.length && <div className="library-empty-state surface-block">{showArchived ? 'No archived projects yet' : 'No projects yet'}</div>}
-        {visibleProjects.map((project, projectIndex) => {
-          const sortMode = getProjectSortMode(project.name);
-          const displayedScripts = getDisplayedScripts(project);
-          const visibleScripts = displayedScripts.filter((script) => matchesSearch(script.name, searchQuery));
-          const isOpen = !collapsed[project.name];
-          const accent = getProjectAccent(project.name, projectIndex);
-          const projectStyle = {
-            '--project-accent': accent.accent,
-            '--project-accent-strong': accent.strong,
-            '--project-accent-quiet': accent.quiet,
-            '--project-avatar-bg': accent.avatar,
-          };
+        {sortedClientKeys.map((clientKey) => {
+          const groupProjects = clientGroups[clientKey];
+          const clientLabel = clientKey || 'Uncategorized';
+          const isClientCollapsed = !!collapsedClients[clientKey];
 
           return (
-            <div
-              className={`project-group surface-block${isOpen ? ' open' : ''}${hoverProjectDrop?.projectName === project.name ? ` drop-${hoverProjectDrop.position}` : ''}`}
-              key={project.name}
-              style={projectStyle}
-              onDragOver={(e) => handleProjectDragOver(e, project.name)}
-              onDrop={(e) => handleProjectDrop(e, project.name)}
-            >
-              <div
-                className={`project-header${dragInfo?.type !== 'project' && hoverProjectDrop?.projectName === project.name ? ' drop-target' : ''}`}
-                role="button"
-                tabIndex={0}
-                aria-expanded={!collapsed[project.name]}
-                onKeyDown={(e) => handleProjectHeaderKeyDown(e, project.name)}
-                onClick={() => toggleCollapse(project.name)}
-                onContextMenu={(e) => handleProjectMenu(e, project)}
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleProjectDrop(e, project.name)}
-                draggable={!project.archived}
-                onDragStart={(e) => handleProjectDragStart(e, project.name)}
-                onDragEnd={handleDragEnd}
-                title="Drag to reorder projects"
-              >
-                {renamingProject === project.name ? (
-                  <div className="rename-row">
-                    <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} onKeyDown={(e) => handleRenameKeyDown(e, () => confirmRenameProject(project.name))} autoFocus />
-                    <button className="surface-button surface-button-primary" onClick={() => confirmRenameProject(project.name)}>Save</button>
-                    <button className="surface-button surface-button-secondary" onClick={cancelRename}>Cancel</button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="project-title">
-                      <span className="project-avatar" aria-hidden="true">{getProjectInitials(project.name)}</span>
-                      <div className="project-title-copy">
-                        <h4 title={project.name}>{project.name}</h4>
-                        <span className="project-meta">{displayedScripts.length} script{displayedScripts.length === 1 ? '' : 's'}</span>
-                      </div>
-                    </div>
-                    <div className="project-header-controls" onClick={(e) => e.stopPropagation()}>
-                      <button className="sort-trigger" onClick={(e) => handleSortMenu(e, project.name)}>Sort by</button>
-                      <button className="icon-button quiet" onClick={(e) => handleProjectMenu(e, project)} aria-label="Project Options"><DotsIcon /></button>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <ul className={`project-script-list${collapsed[project.name] ? ' collapsed' : ''}`}>
-                {!collapsed[project.name] && visibleScripts.map((script, scriptIndex) => {
-                  const scriptName = script.name;
-                  const isPrompting = loadedProject === project.name && loadedScript === scriptName;
-                  const isLoaded = currentProject === project.name && currentScript === scriptName;
-                  const isRenaming = renamingScript && renamingScript.projectName === project.name && renamingScript.scriptName === scriptName;
-                  return (
-                    <li
-                      key={scriptName}
-                      draggable
-                      onDragStart={(e) => handleScriptDragStart(e, project.name, scriptName)}
-                      onDragOver={(e) => handleScriptDragOver(e, project.name, scriptName)}
-                      onDrop={(e) => handleDrop(e, project.name, scriptName, false, getDropPosition(e.clientY, e.currentTarget.getBoundingClientRect()))}
-                      onDragEnd={handleDragEnd}
-                      className={`script-item${isPrompting ? ' prompting' : ''}${isLoaded ? ' loaded' : ''}${hoverScriptDrop?.projectName === project.name && hoverScriptDrop?.scriptName === scriptName ? ` drop-${hoverScriptDrop.position}` : ''}`}
-                      title="Drag to reorder scripts"
-                    >
-                      {isRenaming ? (
-                        <div className="rename-row">
-                          <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} />
-                          <button className="surface-button surface-button-primary" onClick={() => confirmRenameScript(project.name, scriptName)}>Save</button>
-                          <button className="surface-button surface-button-secondary" onClick={cancelRename}>Cancel</button>
-                        </div>
-                      ) : (
-                        <button className="script-button minimal" onClick={() => onScriptSelect(project.name, scriptName)} onContextMenu={(e) => handleScriptContextMenu(e, project.name, scriptName)} onMouseEnter={(e) => handleScriptMouseEnter(scriptName, e)} onMouseLeave={handleScriptMouseLeave} onMouseMove={handleScriptMouseMove} title={normalizeScriptName(scriptName)}>
-                          <span className="script-row-index">{String(scriptIndex + 1).padStart(2, '0')}</span>
-                          <span className="script-row-copy">
-                            <span className="script-button-title truncate-text">{normalizeScriptName(scriptName)}</span>
-                          </span>
-                          <span className="script-state-tags">
-                            {isPrompting && <span className="script-state-tag live">Live</span>}
-                          </span>
-                        </button>
-                      )}
-                    </li>
-                  );
-                })}
-                {!collapsed[project.name] && visibleScripts.length === 0 && <li className="project-empty-state">{searchQuery ? 'No scripts match' : 'No scripts yet'}</li>}
-              </ul>
+            <div key={clientKey || '__none__'} className="client-section">
+              {showClientHeaders && (
+                <button
+                  className={`client-section-header${isClientCollapsed ? ' collapsed' : ''}`}
+                  onClick={() => setCollapsedClients((prev) => ({ ...prev, [clientKey]: !prev[clientKey] }))}
+                  aria-expanded={!isClientCollapsed}
+                >
+                  <span className="client-section-chevron" aria-hidden="true">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points={isClientCollapsed ? '9 18 15 12 9 6' : '18 15 12 9 6 15'} />
+                    </svg>
+                  </span>
+                  <span className="client-section-name">{clientLabel}</span>
+                  <span className="client-section-count">{groupProjects.length} project{groupProjects.length !== 1 ? 's' : ''}</span>
+                </button>
+              )}
+              {!isClientCollapsed && groupProjects.map((project, i) => renderProject(project, i))}
             </div>
           );
         })}
@@ -853,13 +875,6 @@ const FileManager = forwardRef(function FileManager({
       )}
 
       {confirmState && <ConfirmModal message={confirmState.message} onConfirm={() => { const { action } = confirmState; setConfirmState(null); action(); }} onCancel={() => setConfirmState(null)} />}
-      {showNewProjectModal && (
-        <NewProjectModal
-          clientNames={clientNames}
-          onConfirm={handleNewProject}
-          onCancel={() => setShowNewProjectModal(false)}
-        />
-      )}
       {tooltipScript && <div className="script-tooltip" style={{ top: tooltipPosition.y, left: tooltipPosition.x }}>{tooltipScript}</div>}
     </div>
   );

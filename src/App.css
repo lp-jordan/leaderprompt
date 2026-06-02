@@ -356,6 +356,89 @@
   min-height: 40px;
 }
 
+/* ── Client section headers ──────────────────────────────────────────────────── */
+
+.client-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.client-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.3rem var(--space-3) 0.3rem var(--space-2);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(121, 136, 153, 0.18);
+  border-radius: 0;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-align: left;
+  text-transform: uppercase;
+  transition: color 0.15s;
+  box-shadow: none;
+  width: 100%;
+}
+
+.client-section-header:hover {
+  color: var(--color-text-soft);
+  transform: none;
+}
+
+.client-section-chevron {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.client-section-header:hover .client-section-chevron {
+  opacity: 1;
+}
+
+.client-section-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-section-count {
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+/* Per-project New Script button */
+.new-script-btn {
+  background: rgba(215, 170, 99, 0.1);
+  border: 1px solid rgba(215, 170, 99, 0.22);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.22rem 0.6rem;
+  transition: background 0.15s, border-color 0.15s;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.new-script-btn:hover {
+  background: rgba(215, 170, 99, 0.18);
+  border-color: rgba(215, 170, 99, 0.4);
+  color: var(--color-accent-strong);
+  transform: none;
+}
+
 .file-manager-list {
   display: flex;
   flex-direction: column;

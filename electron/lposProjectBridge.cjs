@@ -201,9 +201,10 @@ function buildIndexFromRaw(raw) {
       scriptMap[lpFilename] = { scriptId: s.scriptId, updatedAt: s.updatedAt };
     }
     index[p.name] = {
-      projectId: p.projectId,
-      added:     p.createdAt ? new Date(p.createdAt).getTime() : Date.now(),
-      scripts:   scriptMap,
+      projectId:  p.projectId,
+      added:      p.createdAt ? new Date(p.createdAt).getTime() : Date.now(),
+      scripts:    scriptMap,
+      clientName: (p.clientName || '').trim(),
       // archived is intentionally NOT stored — LP owns that flag locally
     };
   }
@@ -219,6 +220,7 @@ function indexToLpFormat() {
     archived:   name in archiveFlags,
     archivedAt: archiveFlags[name] || 0,
     added:      p.added,
+    clientName: p.clientName || '',
     scripts:    Object.keys(p.scripts).map((filename) => ({ name: filename })),
   }));
 }

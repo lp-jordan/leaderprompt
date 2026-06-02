@@ -104,7 +104,7 @@ function App() {
     setSendCallback(() => cb);
   }, []);
 
-  const handleCreateDraft = useCallback(() => {
+  const handleCreateDraft = useCallback((projectName = null) => {
     if (draftSession?.id) {
       toast.error('Save or discard the current draft first');
       return;
@@ -115,6 +115,7 @@ function App() {
       id: String(Date.now()),
       title: 'Untitled Draft',
       isDirty: false,
+      projectName: projectName || null,
     });
   }, [draftSession]);
 
