@@ -71,11 +71,6 @@ function normalizeScriptName(scriptName) {
   return scriptName.replace(/\.[^/.]+$/, '');
 }
 
-function matchesSearch(scriptName, query) {
-  if (!query) return true;
-  return normalizeScriptName(scriptName).toLowerCase().includes(query.toLowerCase());
-}
-
 function getDropPosition(clientY, rect) {
   return clientY < rect.top + rect.height / 2 ? 'before' : 'after';
 }
@@ -124,6 +119,7 @@ const FileManager = forwardRef(function FileManager({
   const [hoverProjectDrop, setHoverProjectDrop] = useState(null);
   const [rootDrag, setRootDrag] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchScope, setSearchScope] = useState('all');
   const [projectMenu, setProjectMenu] = useState(null);
   const [scriptMenu, setScriptMenu] = useState(null);
   const [sortMenu, setSortMenu] = useState(null);
@@ -168,6 +164,25 @@ const FileManager = forwardRef(function FileManager({
     if (sortMode === 'name') scripts.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
     else if (sortMode === 'date') scripts.sort((a, b) => (a.added || 0) - (b.added || 0));
     return scripts;
+  };
+
+  const trimmedQuery = searchQuery.trim();
+  const isSearching = trimmedQuery !== '';
+  const queryMatches = (value) => !!value && value.toLowerCase().includes(trimmedQuery.toLowerCase());
+
+  // Given a project and the active search, decide whether it should show and which scripts to list.
+  // Scope can target client name, project name, or script name (or all three).
+  const getSearchView = (project) => {
+    const displayed = getDisplayedScripts(project);
+    if (!isSearching) return { show: true, scripts: displayed };
+    const clientMatch = (searchScope === 'all' || searchScope === 'client') && queryMatches(project.clientName || '');
+    const projectMatch = (searchScope === 'all' || searchScope === 'project') && queryMatches(project.name);
+    if (clientMatch || projectMatch) return { show: true, scripts: displayed };
+    if (searchScope === 'all' || searchScope === 'script') {
+      const scripts = displayed.filter((s) => queryMatches(normalizeScriptName(s.name)));
+      return { show: scripts.length > 0, scripts };
+    }
+    return { show: false, scripts: [] };
   };
 
   const getProjectMenuItemCount = (project) => (project?.archived ? 5 : 6);
@@ -693,8 +708,10 @@ const FileManager = forwardRef(function FileManager({
 
   const renderProject = (project, projectIndex) => {
     const displayedScripts = getDisplayedScripts(project);
-    const visibleScripts = displayedScripts.filter((script) => matchesSearch(script.name, searchQuery));
-    const isOpen = !collapsed[project.name];
+    const visibleScripts = getSearchView(project).scripts;
+    // While searching, force projects open so matches are actually visible.
+    const projectCollapsed = isSearching ? false : collapsed[project.name];
+    const isOpen = !projectCollapsed;
     const accent = getProjectAccent(project.name, projectIndex);
     const projectStyle = {
       '--project-accent': accent.accent,
@@ -715,7 +732,7 @@ const FileManager = forwardRef(function FileManager({
           className={`project-header${dragInfo?.type !== 'project' && hoverProjectDrop?.projectName === project.name ? ' drop-target' : ''}`}
           role="button"
           tabIndex={0}
-          aria-expanded={!collapsed[project.name]}
+          aria-expanded={isOpen}
           onKeyDown={(e) => handleProjectHeaderKeyDown(e, project.name)}
           onClick={() => toggleCollapse(project.name)}
           onContextMenu={(e) => handleProjectMenu(e, project)}
@@ -759,8 +776,8 @@ const FileManager = forwardRef(function FileManager({
           )}
         </div>
 
-        <ul className={`project-script-list${collapsed[project.name] ? ' collapsed' : ''}`}>
-          {!collapsed[project.name] && visibleScripts.map((script, scriptIndex) => {
+        <ul className={`project-script-list${projectCollapsed ? ' collapsed' : ''}`}>
+          {!projectCollapsed && visibleScripts.map((script, scriptIndex) => {
             const scriptName = script.name;
             const isPrompting = loadedProject === project.name && loadedScript === scriptName;
             const isLoaded = currentProject === project.name && currentScript === scriptName;
@@ -796,7 +813,7 @@ const FileManager = forwardRef(function FileManager({
               </li>
             );
           })}
-          {!collapsed[project.name] && visibleScripts.length === 0 && <li className="project-empty-state">{searchQuery ? 'No scripts match' : 'No scripts yet'}</li>}
+          {!projectCollapsed && visibleScripts.length === 0 && <li className="project-empty-state">{searchQuery ? 'No scripts match' : 'No scripts yet'}</li>}
         </ul>
       </div>
     );
@@ -818,14 +835,34 @@ const FileManager = forwardRef(function FileManager({
         <div className="library-search-wrap compact">
           <input type="search" className="library-search-input" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={showArchived ? 'Search archived scripts' : 'Search all scripts'} aria-label="Search scripts" />
         </div>
+        <div className="library-scope-row" role="tablist" aria-label="Search scope">
+          {[['all', 'All'], ['client', 'Client'], ['project', 'Project'], ['script', 'Script']].map(([value, label]) => (
+            <button
+              key={value}
+              className={`library-view-pill${searchScope === value ? ' active' : ''}`}
+              role="tab"
+              aria-selected={searchScope === value}
+              onClick={() => setSearchScope(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className={`file-manager-list${rootDrag ? ' drop-target' : ''}`} onDragOver={handleRootDragOver} onDragEnter={handleRootDragEnter} onDragLeave={handleRootDragLeave} onDrop={handleRootDrop}>
         {!visibleProjects.length && <div className="library-empty-state surface-block">{showArchived ? 'No archived projects yet' : 'No projects yet'}</div>}
+        {isSearching && !sortedClientKeys.some((k) => clientGroups[k].some((p) => getSearchView(p).show)) && (
+          <div className="library-empty-state surface-block">No matches</div>
+        )}
         {sortedClientKeys.map((clientKey) => {
           const groupProjects = clientGroups[clientKey];
+          // While searching, only show projects with a match, and drop empty client groups entirely.
+          const shownProjects = isSearching ? groupProjects.filter((p) => getSearchView(p).show) : groupProjects;
+          if (isSearching && shownProjects.length === 0) return null;
           const clientLabel = clientKey || 'Uncategorized';
-          const isClientCollapsed = !!collapsedClients[clientKey];
+          // Force client groups open during search so matches inside them are visible.
+          const isClientCollapsed = isSearching ? false : !!collapsedClients[clientKey];
 
           return (
             <div key={clientKey || '__none__'} className="client-section">
@@ -841,10 +878,10 @@ const FileManager = forwardRef(function FileManager({
                     </svg>
                   </span>
                   <span className="client-section-name">{clientLabel}</span>
-                  <span className="client-section-count">{groupProjects.length} project{groupProjects.length !== 1 ? 's' : ''}</span>
+                  <span className="client-section-count">{shownProjects.length} project{shownProjects.length !== 1 ? 's' : ''}</span>
                 </button>
               )}
-              {!isClientCollapsed && groupProjects.map((project, i) => renderProject(project, i))}
+              {!isClientCollapsed && shownProjects.map((project, i) => renderProject(project, i))}
             </div>
           );
         })}
