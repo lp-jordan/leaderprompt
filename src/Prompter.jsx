@@ -509,6 +509,8 @@ function Prompter() {
   const speechFollowPresentationCopy =
     getSpeechFollowPresentationCopy(speechFollowPresentationState)
   const showSpeechDebug = import.meta.env.DEV
+  // Speech detect/follow UI is hidden for now. Flip to true to restore it.
+  const showSpeechFollowUI = false
   const speechFollowActive =
     speechFollow && speechFollowMicOn && !notecardMode && !isEditing
 
@@ -984,6 +986,12 @@ function Prompter() {
     if (!container) return
 
     const syncScroll = () => {
+      // While autoscroll drives the scroll, skip the editor write + setState.
+      // They only feed edit-mode entry and speech UI (neither active here) and
+      // are re-synced when the loop stops; running them per frame is the main
+      // source of the speed-dependent autoscroll stutter.
+      if (autoscrollRunningRef.current) return
+
       const editor = editorRef.current
       if (editor) {
         editor.view.dom.scrollTop = container.scrollTop
@@ -1591,11 +1599,18 @@ function Prompter() {
   const autoscrollSpeedRef = useRef(speed)
   useEffect(() => { autoscrollSpeedRef.current = speed }, [speed])
 
+  // True while the rAF autoscroll loop is driving scrollTop. The scroll handler
+  // reads this to skip its per-frame React setState + editor DOM write, which
+  // otherwise fire on every scrolled frame and get heavier the faster we scroll
+  // (more frames actually move), causing the speed-dependent stutter.
+  const autoscrollRunningRef = useRef(false)
+
   useEffect(() => {
     if (!autoscroll || speechFollowActive || notecardMode || isEditing) return undefined
     let requestId
     let lastTs = null
     let remainder = 0 // carry sub-pixel movement between frames
+    autoscrollRunningRef.current = true
     const step = (ts) => {
       const el = containerRef.current
       if (el) {
@@ -1617,8 +1632,17 @@ function Prompter() {
       requestId = requestAnimationFrame(step)
     }
     requestId = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(requestId)
-  }, [autoscroll, speechFollowActive, notecardMode, isEditing])
+    return () => {
+      autoscrollRunningRef.current = false
+      cancelAnimationFrame(requestId)
+      // Per-frame syncing was skipped during the loop; realign the hidden editor
+      // and viewport state once now that scrolling has stopped.
+      const el = containerRef.current
+      const editor = editorRef.current
+      if (el && editor) editor.view.dom.scrollTop = el.scrollTop
+      syncContainerViewport()
+    }
+  }, [autoscroll, speechFollowActive, notecardMode, isEditing, syncContainerViewport])
 
   const notecardSource = useMemo(
     () => (isEditing && editorRef.current ? editorRef.current.getHTML() : content),
@@ -2066,7 +2090,12 @@ function Prompter() {
         disabled={isEditing}
         aria-label="Settings"
       >
-        ?
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <path
+            fill="currentColor"
+            d="M19.14 12.94c.04-.31.06-.62.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.8a.5.5 0 0 0-.5.42l-.36 2.54a7 7 0 0 0-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.31 8.48a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.62-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.24.42.32.66.22l2.39-.96c.5.38 1.04.7 1.62.94l.36 2.54c.04.24.25.42.5.42h3.8c.25 0 .46-.18.5-.42l.36-2.54a7 7 0 0 0 1.62-.94l2.39.96c.24.1.53.02.66-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7Z"
+          />
+        </svg>
       </button>
       <div className={`main-settings ${mainSettingsOpen ? 'open' : ''}`}>
         <button
@@ -2100,6 +2129,7 @@ function Prompter() {
             disabled={notecardMode}
           />
         </label>
+        {showSpeechFollowUI && (
         <div className="speech-follow-panel">
           <div className="speech-follow-inline-header">
             <span className="setting-label">Speech Follow</span>
@@ -2194,26 +2224,7 @@ function Prompter() {
             )}
           </div>
         </div>
-        <button onClick={() => setSetting('mirrorX', !mirrorX)}>Flip Horizontally</button>
-        <button onClick={() => setSetting('mirrorY', !mirrorY)}>Flip Vertically</button>
-        <button
-          className={`toggle-btn ${notecardMode ? 'active' : ''}`}
-          onClick={() =>
-            updateSettings((current) => ({
-              notecardMode: !current.notecardMode,
-              autoscroll: current.notecardMode ? current.autoscroll : false,
-              speechFollow: current.notecardMode ? current.speechFollow : false,
-            }))
-          }
-        >
-          Notecard
-        </button>
-        <button
-          className={`toggle-btn ${transparentMode ? 'active' : ''}`}
-          onClick={() => setSetting('transparentMode', !transparentMode)}
-        >
-          Transparent
-        </button>
+        )}
         <h4>Text Styling</h4>
         <label>
           Font Size ({fontSize}rem):
@@ -2236,6 +2247,26 @@ function Prompter() {
             onChange={(e) => setSetting('margin', parseInt(e.target.value, 10))}
           />
         </label>
+        <button onClick={() => setSetting('mirrorX', !mirrorX)}>Flip Horizontally</button>
+        <button onClick={() => setSetting('mirrorY', !mirrorY)}>Flip Vertically</button>
+        <button
+          className={`toggle-btn ${notecardMode ? 'active' : ''}`}
+          onClick={() =>
+            updateSettings((current) => ({
+              notecardMode: !current.notecardMode,
+              autoscroll: current.notecardMode ? current.autoscroll : false,
+              speechFollow: current.notecardMode ? current.speechFollow : false,
+            }))
+          }
+        >
+          Notecard
+        </button>
+        <button
+          className={`toggle-btn ${transparentMode ? 'active' : ''}`}
+          onClick={() => setSetting('transparentMode', !transparentMode)}
+        >
+          Transparent
+        </button>
         <button onClick={resetSettings}>Reset to defaults</button>
         <h4>Advanced Settings</h4>
         <label>
@@ -2302,7 +2333,7 @@ function Prompter() {
           overflowY: notecardMode ? 'hidden' : 'scroll',
         }}
       >
-        {!isEditing && !notecardMode && containerViewport.clientHeight > 0 && (
+        {showSpeechFollowUI && !isEditing && !notecardMode && containerViewport.clientHeight > 0 && (
           <button
             type="button"
             className="speech-eyeline-marker"

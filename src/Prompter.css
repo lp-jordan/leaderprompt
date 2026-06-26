@@ -198,6 +198,10 @@
   z-index: 1;
   pointer-events: auto;
   user-select: none;
+  /* Promote to its own compositor layer so autoscroll shifts a pre-rasterized
+     layer instead of repainting the whole script every frame. */
+  will-change: transform;
+  transform: translateZ(0);
 }
 .script-output p {
   margin: 0 0 0.85em;
