@@ -1586,18 +1586,39 @@ function Prompter() {
     }
   }, [appendSpeechTrace, clampedSpeechEyelineRatio, isEditing, notecardMode, speed, speechFollowActive, speechOverlayRect])
 
+  // Keep the live speed in a ref so changing it does NOT tear down and restart
+  // the rAF loop (which caused a visible stutter on every speed adjustment).
+  const autoscrollSpeedRef = useRef(speed)
+  useEffect(() => { autoscrollSpeedRef.current = speed }, [speed])
+
   useEffect(() => {
     if (!autoscroll || speechFollowActive || notecardMode || isEditing) return undefined
     let requestId
-    const step = () => {
-      if (containerRef.current) {
-        containerRef.current.scrollTop += speed
+    let lastTs = null
+    let remainder = 0 // carry sub-pixel movement between frames
+    const step = (ts) => {
+      const el = containerRef.current
+      if (el) {
+        // Scale by elapsed time (normalised to a 60fps frame) so a dropped
+        // frame advances proportionally instead of stuttering. Clamp the delta
+        // so returning from a background tab doesn't teleport the scroll.
+        const dt = lastTs == null ? 0 : Math.min(ts - lastTs, 50)
+        lastTs = ts
+        remainder += autoscrollSpeedRef.current * (dt / (1000 / 60))
+        // scrollTop snaps to whole pixels, so only apply the integer part and
+        // keep the fraction for next frame — prevents the per-frame rounding
+        // loss that made low speeds jitter.
+        const whole = Math.trunc(remainder)
+        if (whole !== 0) {
+          el.scrollTop += whole
+          remainder -= whole
+        }
       }
       requestId = requestAnimationFrame(step)
     }
     requestId = requestAnimationFrame(step)
     return () => cancelAnimationFrame(requestId)
-  }, [autoscroll, speed, speechFollowActive, notecardMode, isEditing])
+  }, [autoscroll, speechFollowActive, notecardMode, isEditing])
 
   const notecardSource = useMemo(
     () => (isEditing && editorRef.current ? editorRef.current.getHTML() : content),
