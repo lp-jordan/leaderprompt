@@ -202,6 +202,14 @@ const FileManager = forwardRef(function FileManager({
         });
         return next;
       });
+      setCollapsedClients((prev) => {
+        const next = { ...prev };
+        result.forEach((project) => {
+          const key = project.clientName || '';
+          if (typeof next[key] === 'undefined') next[key] = true;
+        });
+        return next;
+      });
     }
   };
 
