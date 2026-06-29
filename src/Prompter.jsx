@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { toast } from 'react-hot-toast'
 import TipTapEditor from './TipTapEditor.jsx'
 import './Prompter.css'
@@ -49,6 +49,22 @@ const SPEECH_SCROLL_CONFIG = {
 const SPEECH_MIN_VISIBLE_MATCH_CONFIDENCE = 0.18
 const SPEECH_OVERLAY_LAST_GOOD_TTL_MS = 900
 const SPEECH_TRACE_LIMIT = 400
+
+// Layout distance (in unscrolled content coordinates) from an element's top to
+// the top of the scroll container's content. Walks the offsetParent chain so it
+// stays correct regardless of how the element is nested, and — because it reads
+// layout (not visual) geometry — is unaffected by the container's mirror/scale
+// transform. Used to translate a scroll position between the edit view and the
+// read view, which render the same script at different heights.
+function offsetTopWithin(el, container) {
+  let top = 0
+  let node = el
+  while (node && node !== container && container.contains(node)) {
+    top += node.offsetTop
+    node = node.offsetParent
+  }
+  return top
+}
 
 const SPEECH_TEST_SCRIPT_HTML = `
   <p>Welcome to the LeaderPrompt speech follow test.</p>
@@ -441,6 +457,7 @@ function Prompter() {
   const editorContainerRef = useRef(null)
   const isEditingRef = useRef(isEditing)
   const pendingRemoteHtmlRef = useRef(null)
+  const pendingExitAnchorRef = useRef(null)
   const updateTimeoutRef = useRef(null)
   const mountedRef = useRef(false)
   const slideCacheRef = useRef(new Map())
@@ -941,11 +958,61 @@ function Prompter() {
     window.electronAPI.sendUpdatedScript(html)
   }, [content])
 
+  // Capture which script block sits at the top of the editor viewport (and how
+  // far it is scrolled past the top), so the read view can be returned to the
+  // same place on exit. The two views render the same blocks at different
+  // heights, so a raw scrollTop carries over to the wrong line — we re-anchor by
+  // block index instead, with a proportional ratio as a fallback.
+  const captureEditAnchor = useCallback(() => {
+    if (notecardMode) return null
+    const container = containerRef.current
+    const editor = editorRef.current
+    const dom = editor?.view?.dom
+    if (!container || !dom) return null
+    const blocks = Array.from(dom.children)
+    if (!blocks.length) return null
+    const scrollTop = container.scrollTop
+    const maxScroll = Math.max(1, container.scrollHeight - container.clientHeight)
+    const ratio = scrollTop / maxScroll
+    for (let i = 0; i < blocks.length; i++) {
+      const top = offsetTopWithin(blocks[i], container)
+      if (top + blocks[i].offsetHeight > scrollTop + 1) {
+        return { index: i, within: scrollTop - top, ratio }
+      }
+    }
+    return { index: blocks.length - 1, within: 0, ratio }
+  }, [notecardMode])
+
+  const exitEditing = useCallback(() => {
+    pendingExitAnchorRef.current = captureEditAnchor()
+    flushEdit()
+    editorRef.current?.commands.blur()
+    setIsEditing(false)
+  }, [captureEditAnchor, flushEdit])
+
+  // After the read view re-mounts (synchronously, before paint) scroll it back
+  // to the block we were on in the editor, so exiting edit mode keeps your place.
+  useLayoutEffect(() => {
+    if (isEditing) return
+    const anchor = pendingExitAnchorRef.current
+    if (!anchor) return
+    pendingExitAnchorRef.current = null
+    const container = containerRef.current
+    if (!container) return
+    const blocks = outputRef.current ? Array.from(outputRef.current.children) : []
+    const target = blocks[anchor.index]
+    if (target) {
+      container.scrollTop = offsetTopWithin(target, container) + anchor.within
+    } else {
+      const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
+      container.scrollTop = anchor.ratio * maxScroll
+    }
+  }, [isEditing])
+
   const handleBlur = useCallback(() => {
     if (!isEditingRef.current) return
-    flushEdit()
-    setIsEditing(false)
-  }, [flushEdit])
+    exitEditing()
+  }, [exitEditing])
 
   useEffect(() => {
     window.addEventListener('blur', handleBlur)
@@ -954,9 +1021,7 @@ function Prompter() {
 
   const toggleEditing = () => {
     if (isEditing) {
-      flushEdit()
-      editorRef.current?.commands.blur()
-      setIsEditing(false)
+      exitEditing()
       return
     }
 
