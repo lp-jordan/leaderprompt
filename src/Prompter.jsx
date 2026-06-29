@@ -458,6 +458,7 @@ function Prompter() {
   const isEditingRef = useRef(isEditing)
   const pendingRemoteHtmlRef = useRef(null)
   const pendingExitAnchorRef = useRef(null)
+  const pendingEnterAnchorRef = useRef(null)
   const updateTimeoutRef = useRef(null)
   const mountedRef = useRef(false)
   const slideCacheRef = useRef(new Map())
@@ -958,18 +959,17 @@ function Prompter() {
     window.electronAPI.sendUpdatedScript(html)
   }, [content])
 
-  // Capture which script block sits at the top of the editor viewport (and how
-  // far it is scrolled past the top), so the read view can be returned to the
-  // same place on exit. The two views render the same blocks at different
-  // heights, so a raw scrollTop carries over to the wrong line — we re-anchor by
-  // block index instead, with a proportional ratio as a fallback.
-  const captureEditAnchor = useCallback(() => {
+  // Capture which top-level script block sits at the top of the currently
+  // visible surface (and how far it is scrolled past the top). The edit and read
+  // views render the same blocks at different heights, so a raw scrollTop carries
+  // over to the wrong line on toggle — we re-anchor by block index instead, with
+  // a proportional ratio as a fallback. `sourceEl` is whichever surface is
+  // visible right now (read view on entry, editor on exit).
+  const captureAnchorFrom = useCallback((sourceEl) => {
     if (notecardMode) return null
     const container = containerRef.current
-    const editor = editorRef.current
-    const dom = editor?.view?.dom
-    if (!container || !dom) return null
-    const blocks = Array.from(dom.children)
+    if (!container || !sourceEl) return null
+    const blocks = Array.from(sourceEl.children)
     if (!blocks.length) return null
     const scrollTop = container.scrollTop
     const maxScroll = Math.max(1, container.scrollHeight - container.clientHeight)
@@ -983,29 +983,38 @@ function Prompter() {
     return { index: blocks.length - 1, within: 0, ratio }
   }, [notecardMode])
 
-  const exitEditing = useCallback(() => {
-    pendingExitAnchorRef.current = captureEditAnchor()
-    flushEdit()
-    editorRef.current?.commands.blur()
-    setIsEditing(false)
-  }, [captureEditAnchor, flushEdit])
-
-  // After the read view re-mounts (synchronously, before paint) scroll it back
-  // to the block we were on in the editor, so exiting edit mode keeps your place.
-  useLayoutEffect(() => {
-    if (isEditing) return
-    const anchor = pendingExitAnchorRef.current
-    if (!anchor) return
-    pendingExitAnchorRef.current = null
+  // Re-align the container scroll to the captured block once the destination
+  // surface has been laid out (these run synchronously, before paint), so
+  // toggling edit mode in either direction keeps your place instead of bumping.
+  const restoreAnchor = (anchor, destEl) => {
     const container = containerRef.current
-    if (!container) return
-    const blocks = outputRef.current ? Array.from(outputRef.current.children) : []
+    if (!anchor || !container) return
+    const blocks = destEl ? Array.from(destEl.children) : []
     const target = blocks[anchor.index]
     if (target) {
       container.scrollTop = offsetTopWithin(target, container) + anchor.within
     } else {
       const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight)
       container.scrollTop = anchor.ratio * maxScroll
+    }
+  }
+
+  const exitEditing = useCallback(() => {
+    pendingExitAnchorRef.current = captureAnchorFrom(editorRef.current?.view?.dom)
+    flushEdit()
+    editorRef.current?.commands.blur()
+    setIsEditing(false)
+  }, [captureAnchorFrom, flushEdit])
+
+  useLayoutEffect(() => {
+    if (isEditing) {
+      const anchor = pendingEnterAnchorRef.current
+      pendingEnterAnchorRef.current = null
+      restoreAnchor(anchor, editorRef.current?.view?.dom)
+    } else {
+      const anchor = pendingExitAnchorRef.current
+      pendingExitAnchorRef.current = null
+      restoreAnchor(anchor, outputRef.current)
     }
   }, [isEditing])
 
@@ -1025,14 +1034,16 @@ function Prompter() {
       return
     }
 
+    // Capture the read-view position before it unmounts so the editor can be
+    // aligned to the same block (restoreAnchor runs in the layout effect above
+    // once the editor is laid out), then place the cursor at the visible top.
+    pendingEnterAnchorRef.current = captureAnchorFrom(outputRef.current)
     setIsEditing(true)
     setMainSettingsOpen(false)
-    const scrollTop = containerRef.current?.scrollTop || 0
     setTimeout(() => {
       const container = containerRef.current
       const editor = editorRef.current
       if (!container || !editor) return
-      editor.view.dom.scrollTop = scrollTop
       const rect = container.getBoundingClientRect()
       const pos = editor.view.posAtCoords({
         left: rect.left + 1,

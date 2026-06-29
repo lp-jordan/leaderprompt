@@ -41,13 +41,23 @@ function FindBar({ onClose }) {
   const inputRef = useRef(null);
   const barRef = useRef(null);
   const lastQueryRef = useRef('');
+  const onCloseRef = useRef(onClose);
+
+  // Keep the latest onClose without re-subscribing the listener effect — the
+  // parent (Prompter) passes a fresh onClose every render, and scrolling to a
+  // result re-renders it. If the effect below depended on onClose it would tear
+  // down and re-run on each of those renders, firing its clearHighlights cleanup
+  // and wiping the highlights a frame after the first search.
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     inputRef.current?.focus();
     const handleClick = (e) => {
       if (barRef.current && !barRef.current.contains(e.target)) {
         clearHighlights();
-        onClose?.();
+        onCloseRef.current?.();
       }
     };
     document.addEventListener('mousedown', handleClick);
@@ -55,7 +65,9 @@ function FindBar({ onClose }) {
       document.removeEventListener('mousedown', handleClick);
       clearHighlights();
     };
-  }, [onClose]);
+    // Mount once: cleanup (clearHighlights) must run only on real unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const clearHighlights = () => {
     const roots = new Set();
