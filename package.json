@@ -1,7 +1,7 @@
 {
   "name": "leaderprompt",
   "private": true,
-  "version": "1.0.10",
+  "version": "1.0.11",
   "repository": "https://github.com/lp-jordan/leaderprompt",
   "type": "module",
   "main": "electron/main.cjs",

@@ -1018,6 +1018,16 @@ function Prompter() {
     }
   }, [isEditing])
 
+  // The read view's innerHTML is set via dangerouslySetInnerHTML. React 19
+  // re-applies it whenever the prop *object* identity changes — even if the html
+  // string is unchanged — which resets the subtree and wipes any find-highlight
+  // spans Ctrl+F injects into it. Since a fresh `{__html}` object every render
+  // would do exactly that on each re-render (and find's own scroll triggers a
+  // re-render), memoize the object on the resolved html string so it stays
+  // stable and the highlights survive.
+  const outputHtml = notecardMode ? slides[currentSlide] || '' : content
+  const scriptOutputHtml = useMemo(() => ({ __html: outputHtml }), [outputHtml])
+
   const handleBlur = useCallback(() => {
     if (!isEditingRef.current) return
     exitEditing()
@@ -2440,9 +2450,7 @@ function Prompter() {
             key="render"
             ref={outputRef}
             className="script-output disable-links"
-            dangerouslySetInnerHTML={{
-              __html: notecardMode ? slides[currentSlide] || '' : content,
-            }}
+            dangerouslySetInnerHTML={scriptOutputHtml}
             style={{ userSelect: 'none' }}
           />
         )}
